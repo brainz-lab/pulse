@@ -1,0 +1,113 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-start">
+    <div>
+      <div class="flex items-center gap-3 mb-2">
+        <%= link_to '← Back to Queries', dashboard_queries_path(since: params[:since]),
+            class: "text-[13px]",
+            style: "color: #8B8780;" %>
+      </div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">N+1 Analysis</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;"><%= @trace.name %></p>
+    </div>
+    <%= link_to 'View Trace', dashboard_trace_path(@trace.trace_id),
+        class: "px-4 py-2 text-[13px] font-medium rounded-lg",
+        style: "background: #1A1A1A; color: #FFFFFE;" %>
+  </div>
+
+  <!-- Summary -->
+  <div class="grid grid-cols-3 gap-4">
+    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <div class="text-[13px] mb-1" style="color: #8B8780;">N+1 Patterns Found</div>
+      <div class="text-[24px] font-semibold" style="color: <%= @patterns.any? ? '#DC2626' : '#22C55E' %>;"><%= @patterns.size %></div>
+    </div>
+    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <div class="text-[13px] mb-1" style="color: #8B8780;">Total Repeated Queries</div>
+      <div class="text-[24px] font-semibold" style="color: #1A1A1A;"><%= @total_repeated %></div>
+    </div>
+    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <div class="text-[13px] mb-1" style="color: #8B8780;">Potential Savings</div>
+      <div class="text-[24px] font-semibold" style="color: #22C55E;"><%= @potential_savings.round(0) %>ms</div>
+    </div>
+  </div>
+
+  <% if @patterns.any? %>
+    <!-- Patterns Detail -->
+    <div class="space-y-4">
+      <h2 class="text-[16px] font-semibold" style="color: #1A1A1A;">Detected Patterns</h2>
+
+      <% @patterns.each_with_index do |pattern, index| %>
+        <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+          <div class="flex justify-between items-start mb-4">
+            <div class="flex items-center gap-3">
+              <span class="w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-semibold"
+                    style="background: #FEE2E2; color: #DC2626;">
+                <%= index + 1 %>
+              </span>
+              <div>
+                <div class="text-[14px] font-medium" style="color: #1A1A1A;"><%= pattern[:table] || 'Unknown Table' %></div>
+                <div class="text-[12px]" style="color: #8B8780;"><%= pattern[:operation] || 'QUERY' %></div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[18px] font-semibold" style="color: #DC2626;"><%= pattern[:count] %> queries</div>
+              <div class="text-[12px]" style="color: #8B8780;">
+                <%= pattern[:total_duration_ms].round(1) %>ms total · <%= pattern[:avg_duration_ms] %>ms avg
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <div class="text-[11px] uppercase font-medium mb-1" style="color: #8B8780;">Normalized Pattern</div>
+              <div class="p-3 rounded-lg font-mono text-[12px] leading-relaxed" style="background: #FAF9F7; color: #1A1A1A;">
+                <%= pattern[:normalized_sql] %>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-[11px] uppercase font-medium mb-1" style="color: #8B8780;">Example Query</div>
+              <div class="p-3 rounded-lg font-mono text-[12px] leading-relaxed overflow-x-auto" style="background: #FAF9F7; color: #8B8780;">
+                <%= pattern[:example_sql] %>
+              </div>
+            </div>
+
+            <% potential_savings = pattern[:total_duration_ms] * (1 - 1.0 / pattern[:count]) %>
+            <div class="flex items-center gap-2 pt-2" style="border-top: 1px solid #F0EFED;">
+              <span class="text-[12px]" style="color: #8B8780;">Potential savings if optimized:</span>
+              <span class="text-[13px] font-semibold" style="color: #22C55E;"><%= potential_savings.round(0) %>ms</span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h2 class="text-[16px] font-semibold mb-3" style="color: #1A1A1A;">Recommendations</h2>
+      <ul class="space-y-2 text-[14px]" style="color: #6B6760;">
+        <li class="flex gap-2">
+          <span style="color: #6366F1;">•</span>
+          Use <code class="px-1.5 py-0.5 rounded text-[12px]" style="background: #F0EFED;">includes()</code> or <code class="px-1.5 py-0.5 rounded text-[12px]" style="background: #F0EFED;">preload()</code> to eager load associations
+        </li>
+        <li class="flex gap-2">
+          <span style="color: #6366F1;">•</span>
+          Consider using <code class="px-1.5 py-0.5 rounded text-[12px]" style="background: #F0EFED;">joins()</code> with <code class="px-1.5 py-0.5 rounded text-[12px]" style="background: #F0EFED;">select()</code> for filtered queries
+        </li>
+        <li class="flex gap-2">
+          <span style="color: #6366F1;">•</span>
+          Use the <code class="px-1.5 py-0.5 rounded text-[12px]" style="background: #F0EFED;">bullet</code> gem in development to catch N+1 queries early
+        </li>
+        <li class="flex gap-2">
+          <span style="color: #6366F1;">•</span>
+          Review the trace timeline to understand the query sequence
+        </li>
+      </ul>
+    </div>
+  <% else %>
+    <div class="rounded-xl p-8 text-center" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <div class="text-[24px] mb-2">✓</div>
+      <div class="text-[16px] font-medium" style="color: #1A1A1A;">No N+1 Patterns Detected</div>
+      <div class="text-[14px] mt-1" style="color: #8B8780;">This trace doesn't have any obvious N+1 query patterns.</div>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,70 @@
+<div class="space-y-4">
+  <!-- Threshold Filter -->
+  <div class="flex gap-2 items-center">
+    <span class="text-[13px]" style="color: #8B8780;">Threshold:</span>
+    <% [[100, '>100ms'], [500, '>500ms'], [1000, '>1s']].each do |value, label| %>
+      <% active = @threshold == value %>
+      <%= link_to label, dashboard_queries_path(since: params[:since], tab: 'slow', threshold: value),
+          class: "px-3 py-1 text-[12px] font-medium rounded-md",
+          style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+    <% end %>
+  </div>
+
+  <!-- Slow Queries Table -->
+  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <table class="w-full">
+      <thead style="border-bottom: 1px solid #F0EFED;">
+        <tr class="text-left text-[13px]" style="color: #8B8780;">
+          <th class="p-4 font-medium">SQL Query</th>
+          <th class="p-4 font-medium">Table</th>
+          <th class="p-4 font-medium">Operation</th>
+          <th class="p-4 font-medium text-right">Duration</th>
+          <th class="p-4 font-medium">Trace</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @slow_queries.each do |query| %>
+          <tr style="border-bottom: 1px solid #F0EFED;">
+            <td class="p-4">
+              <div class="font-mono text-[12px] leading-relaxed max-w-lg" style="color: #1A1A1A;">
+                <div class="truncate" title="<%= query[:sql] %>"><%= query[:sql] %></div>
+              </div>
+            </td>
+            <td class="p-4 text-[13px]" style="color: #8B8780;"><%= query[:table] || '-' %></td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-medium uppercase"
+                    style="<%= case query[:operation]
+                      when 'SELECT' then 'background: #DBEAFE; color: #1D4ED8;'
+                      when 'INSERT' then 'background: #D1FAE5; color: #047857;'
+                      when 'UPDATE' then 'background: #FEF3C7; color: #B45309;'
+                      when 'DELETE' then 'background: #FEE2E2; color: #DC2626;'
+                      else 'background: #F0EFED; color: #6B6760;'
+                    end %>">
+                <%= query[:operation] || 'QUERY' %>
+              </span>
+            </td>
+            <td class="p-4 text-right">
+              <span class="font-mono text-[13px] font-medium" style="color: <%= query[:duration_ms] >= 500 ? '#DC2626' : '#F59E0B' %>;">
+                <%= query[:duration_ms].round(1) %>ms
+              </span>
+            </td>
+            <td class="p-4">
+              <%= link_to query[:trace_name], dashboard_trace_path(query[:trace_id], since: params[:since]),
+                  class: "text-[13px] hover:underline",
+                  style: "color: #6366F1;" %>
+            </td>
+          </tr>
+        <% end %>
+
+        <% if @slow_queries.empty? %>
+          <tr>
+            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              <div class="text-[20px] mb-2">✓</div>
+              No queries slower than <%= @threshold %>ms found
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

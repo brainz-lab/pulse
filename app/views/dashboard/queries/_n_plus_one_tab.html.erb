@@ -1,0 +1,81 @@
+<div class="space-y-6">
+  <!-- Detected Patterns -->
+  <div>
+    <h2 class="text-[16px] font-semibold mb-3" style="color: #1A1A1A;">Detected Patterns</h2>
+    <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <table class="w-full">
+        <thead style="border-bottom: 1px solid #F0EFED;">
+          <tr class="text-left text-[13px]" style="color: #8B8780;">
+            <th class="p-4 font-medium">Query Pattern</th>
+            <th class="p-4 font-medium">Table</th>
+            <th class="p-4 font-medium text-right">Count</th>
+            <th class="p-4 font-medium text-right">Traces</th>
+            <th class="p-4 font-medium text-right">Total Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @n_plus_one_patterns.each do |pattern| %>
+            <tr style="border-bottom: 1px solid #F0EFED;">
+              <td class="p-4">
+                <div class="font-mono text-[12px] leading-relaxed max-w-xl truncate" style="color: #1A1A1A;" title="<%= pattern[:normalized_sql] %>">
+                  <%= pattern[:normalized_sql] %>
+                </div>
+              </td>
+              <td class="p-4 text-[13px]" style="color: #8B8780;"><%= pattern[:table] || '-' %></td>
+              <td class="p-4 text-[13px] text-right font-medium" style="color: #DC2626;"><%= number_with_delimiter(pattern[:count]) %></td>
+              <td class="p-4 text-[13px] text-right" style="color: #1A1A1A;"><%= pattern[:trace_count] %></td>
+              <td class="p-4 text-[13px] text-right font-mono" style="color: #8B8780;"><%= pattern[:total_duration_ms].round(0) %>ms</td>
+            </tr>
+          <% end %>
+
+          <% if @n_plus_one_patterns.empty? %>
+            <tr>
+              <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+                <div class="text-[20px] mb-2">✓</div>
+                No N+1 patterns detected
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Affected Traces -->
+  <% if @affected_traces.any? %>
+    <div>
+      <h2 class="text-[16px] font-semibold mb-3" style="color: #1A1A1A;">Affected Traces</h2>
+      <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+        <table class="w-full">
+          <thead style="border-bottom: 1px solid #F0EFED;">
+            <tr class="text-left text-[13px]" style="color: #8B8780;">
+              <th class="p-4 font-medium">Trace</th>
+              <th class="p-4 font-medium text-right">Patterns</th>
+              <th class="p-4 font-medium text-right">Repeated Queries</th>
+              <th class="p-4 font-medium text-right">Potential Savings</th>
+              <th class="p-4 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @affected_traces.each do |affected| %>
+              <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+                <td class="p-4">
+                  <div class="text-[14px] font-medium" style="color: #1A1A1A;"><%= affected[:trace].name %></div>
+                  <div class="text-[12px]" style="color: #8B8780;"><%= affected[:trace].started_at.strftime('%H:%M:%S') %></div>
+                </td>
+                <td class="p-4 text-[13px] text-right" style="color: #1A1A1A;"><%= affected[:patterns].size %></td>
+                <td class="p-4 text-[13px] text-right font-medium" style="color: #DC2626;"><%= affected[:total_repeated_queries] %></td>
+                <td class="p-4 text-[13px] text-right font-mono" style="color: #22C55E;"><%= affected[:potential_savings_ms].round(0) %>ms</td>
+                <td class="p-4 text-right">
+                  <%= link_to 'Analyze', dashboard_query_path(affected[:trace].trace_id, since: params[:since]),
+                      class: "text-[13px] font-medium px-3 py-1.5 rounded-md",
+                      style: "background: #1A1A1A; color: #FFFFFE;" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+</div>

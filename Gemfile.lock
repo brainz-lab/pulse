@@ -1,3 +1,10 @@
+PATH
+  remote: /brainzlab-sdk
+  specs:
+    brainzlab-sdk (0.1.0)
+      concurrent-ruby (~> 1.0)
+      logger
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -373,6 +380,7 @@ PLATFORMS
 
 DEPENDENCIES
   bootsnap
+  brainzlab-sdk!
   brakeman
   bundler-audit
   debug

@@ -41,8 +41,9 @@ Rails.application.routes.draw do
     resources :requests, only: [:index, :show]
     resources :traces, only: [:index, :show]
     resources :jobs, only: [:index]
+    resources :queries, only: [:index, :show]
     resources :metrics, only: [:index, :show]
-    resources :endpoints, only: [:index]
+    resources :endpoints, only: [:index, :show]
   end
 
   # Health check

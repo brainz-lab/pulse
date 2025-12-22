@@ -14,26 +14,36 @@
   <div class="min-h-full">
     <header class="border-b" style="border-color: #E8E5E0; background: #FFFFFE;">
       <div class="mx-auto max-w-5xl px-6">
-        <div class="flex h-14 items-center justify-between">
-          <div class="flex items-center gap-4">
-            <%= link_to dashboard_root_path, class: "flex items-center gap-2 font-medium" do %>
-              <span style="color: #22C55E;">♥</span>
-              <span style="color: #1A1A1A;">Pulse</span>
+        <div class="flex h-16 items-center justify-between">
+          <%= link_to dashboard_root_path, class: "flex items-center gap-2.5" do %>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 4C8.5 2 6 2 4.5 4C3 6 3 9 5 11L10 17L15 11C17 9 17 6 15.5 4C14 2 11.5 2 10 4Z" fill="#22C55E"/>
+            </svg>
+            <span class="text-[15px] font-semibold tracking-tight" style="color: #1A1A1A;">Pulse</span>
+          <% end %>
+
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-3">
+              <span style="color: #C4C0B8;">/</span>
+              <span class="text-[14px]" style="color: #6B6760;"><%= current_project&.name || 'Project' %></span>
+            </div>
+            <nav class="flex items-center gap-4 text-[13px]">
+              <%= link_to "Overview", dashboard_overview_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'overview' ? '#1A1A1A' : '#8B8780'};" %>
+              <%= link_to "Requests", dashboard_requests_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'requests' || controller_name == 'traces' ? '#1A1A1A' : '#8B8780'};" %>
+              <%= link_to "Jobs", dashboard_jobs_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'jobs' ? '#1A1A1A' : '#8B8780'};" %>
+              <%= link_to "Endpoints", dashboard_endpoints_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'endpoints' ? '#1A1A1A' : '#8B8780'};" %>
+              <%= link_to "Queries", dashboard_queries_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'queries' ? '#1A1A1A' : '#8B8780'};" %>
+              <%= link_to "Metrics", dashboard_metrics_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'metrics' ? '#1A1A1A' : '#8B8780'};" %>
+            </nav>
+            <%= link_to "#{ENV['BRAINZLAB_PLATFORM_URL'] || 'http://platform.localhost'}/dashboard/projects", class: "text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80", style: "background: #F0EFED; color: #6B6760;" do %>
+              Projects
             <% end %>
           </div>
-
-          <nav class="flex items-center gap-6 text-[13px]">
-            <%= link_to "Overview", dashboard_overview_path, class: "hover:opacity-70", style: "color: #{controller_name == 'overview' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'overview' ? '500' : '400'};" %>
-            <%= link_to "Requests", dashboard_requests_path, class: "hover:opacity-70", style: "color: #{controller_name == 'requests' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'requests' ? '500' : '400'};" %>
-            <%= link_to "Jobs", dashboard_jobs_path, class: "hover:opacity-70", style: "color: #{controller_name == 'jobs' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'jobs' ? '500' : '400'};" %>
-            <%= link_to "Endpoints", dashboard_endpoints_path, class: "hover:opacity-70", style: "color: #{controller_name == 'endpoints' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'endpoints' ? '500' : '400'};" %>
-            <%= link_to "Metrics", dashboard_metrics_path, class: "hover:opacity-70", style: "color: #{controller_name == 'metrics' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'metrics' ? '500' : '400'};" %>
-          </nav>
         </div>
       </div>
     </header>
 
-    <main class="mx-auto max-w-5xl px-6 py-8">
+    <main class="mx-auto max-w-5xl px-6 py-10">
       <%= yield %>
     </main>
   </div>

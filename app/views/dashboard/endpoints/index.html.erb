@@ -27,8 +27,10 @@
       </thead>
       <tbody>
         <% @endpoints.each do |endpoint| %>
-          <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
-            <td class="p-4 text-[14px] font-medium" style="color: #1A1A1A;"><%= endpoint.name %></td>
+          <tr class="hover:opacity-80 cursor-pointer" style="border-bottom: 1px solid #F0EFED;" onclick="window.location='<%= dashboard_endpoint_path(endpoint.name, since: params[:since]) %>'">
+            <td class="p-4 text-[14px] font-medium hover:underline" style="color: #1A1A1A;">
+              <%= link_to endpoint.name, dashboard_endpoint_path(endpoint.name, since: params[:since]), style: "color: inherit;" %>
+            </td>
             <td class="p-4 text-[13px]" style="color: #1A1A1A;"><%= number_with_delimiter(endpoint.count) %></td>
             <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;"><%= endpoint.avg_duration.round(0) %>ms</td>
             <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= endpoint.max_duration.round(0) %>ms</td>
