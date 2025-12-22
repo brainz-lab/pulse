@@ -1,0 +1,43 @@
+<div class="space-y-6">
+  <div>
+    <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Metrics</h1>
+    <p class="text-[14px] mt-1" style="color: #8B8780;">Custom application metrics</p>
+  </div>
+
+  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <table class="w-full">
+      <thead style="border-bottom: 1px solid #F0EFED;">
+        <tr class="text-left text-[13px]" style="color: #8B8780;">
+          <th class="p-4 font-medium">Name</th>
+          <th class="p-4 font-medium">Type</th>
+          <th class="p-4 font-medium">Unit</th>
+          <th class="p-4 font-medium">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @metrics.each do |metric| %>
+          <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+            <td class="p-4">
+              <%= link_to metric.name, dashboard_metric_path(metric), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
+            </td>
+            <td class="p-4">
+              <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #6B6760;">
+                <%= metric.kind %>
+              </span>
+            </td>
+            <td class="p-4 text-[13px]" style="color: #8B8780;"><%= metric.unit || '-' %></td>
+            <td class="p-4 text-[13px]" style="color: #8B8780;"><%= metric.description || '-' %></td>
+          </tr>
+        <% end %>
+
+        <% if @metrics.empty? %>
+          <tr>
+            <td colspan="4" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              No custom metrics recorded yet
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

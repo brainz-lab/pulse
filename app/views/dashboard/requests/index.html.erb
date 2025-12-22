@@ -1,0 +1,61 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Requests</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Recent HTTP requests and background jobs</p>
+    </div>
+    <div class="flex gap-2">
+      <% [['All', nil], ['Slow', :slow], ['Errors', :errors]].each do |label, filter| %>
+        <% active = (filter == :slow && params[:slow]) || (filter == :errors && params[:errors]) || (filter.nil? && !params[:slow] && !params[:errors]) %>
+        <%= link_to label, filter ? dashboard_requests_path(filter => true) : dashboard_requests_path,
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
+            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <table class="w-full">
+      <thead style="border-bottom: 1px solid #F0EFED;">
+        <tr class="text-left text-[13px]" style="color: #8B8780;">
+          <th class="p-4 font-medium">Name</th>
+          <th class="p-4 font-medium">Status</th>
+          <th class="p-4 font-medium">Duration</th>
+          <th class="p-4 font-medium">DB</th>
+          <th class="p-4 font-medium">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @traces.each do |trace| %>
+          <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+            <td class="p-4">
+              <%= link_to trace.name, dashboard_trace_path(trace), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
+            </td>
+            <td class="p-4">
+              <span class="text-[13px]" style="color: <%= trace.error ? '#DC2626' : '#22C55E' %>;">
+                <%= trace.status || (trace.error ? 'Error' : 'OK') %>
+              </span>
+            </td>
+            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;">
+              <%= trace.duration_ms&.round(0) || '-' %>ms
+            </td>
+            <td class="p-4 text-[13px]" style="color: #8B8780;">
+              <%= trace.db_duration_ms&.round(0) || 0 %>ms
+            </td>
+            <td class="p-4 text-[13px]" style="color: #8B8780;">
+              <%= time_ago_in_words(trace.started_at) %> ago
+            </td>
+          </tr>
+        <% end %>
+
+        <% if @traces.empty? %>
+          <tr>
+            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              No requests found
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

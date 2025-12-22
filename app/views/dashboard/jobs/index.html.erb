@@ -1,0 +1,115 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Background Jobs</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Monitor Sidekiq, Solid Queue, and other job processors</p>
+    </div>
+    <div class="flex gap-2">
+      <% %w[1h 6h 24h 7d].each do |range| %>
+        <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
+        <%= link_to range, dashboard_jobs_path(since: range),
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
+            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Job Stats -->
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="p-5" style="border-bottom: 1px solid #F0EFED;">
+      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Job Performance</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead style="border-bottom: 1px solid #F0EFED;">
+          <tr class="text-left text-[13px]" style="color: #8B8780;">
+            <th class="p-4 font-medium">Job Class</th>
+            <th class="p-4 font-medium">Executions</th>
+            <th class="p-4 font-medium">Avg Duration</th>
+            <th class="p-4 font-medium">Max Duration</th>
+            <th class="p-4 font-medium">Error Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @job_stats.each do |job| %>
+            <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+              <td class="p-4 text-[14px] font-medium" style="color: #1A1A1A;"><%= job.name %></td>
+              <td class="p-4 text-[13px]" style="color: #1A1A1A;"><%= number_with_delimiter(job.count) %></td>
+              <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;"><%= job.avg_duration&.round(0) %>ms</td>
+              <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= job.max_duration&.round(0) %>ms</td>
+              <td class="p-4">
+                <% error_rate = job.count > 0 ? (job.error_count.to_f / job.count * 100).round(2) : 0 %>
+                <span class="text-[13px]" style="color: <%= error_rate > 1 ? '#DC2626' : '#22C55E' %>;">
+                  <%= error_rate %>%
+                </span>
+              </td>
+            </tr>
+          <% end %>
+
+          <% if @job_stats.empty? %>
+            <tr>
+              <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+                No background jobs recorded
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Jobs -->
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="p-5" style="border-bottom: 1px solid #F0EFED;">
+      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Recent Executions</h3>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead style="border-bottom: 1px solid #F0EFED;">
+          <tr class="text-left text-[13px]" style="color: #8B8780;">
+            <th class="p-4 font-medium">Job</th>
+            <th class="p-4 font-medium">Queue</th>
+            <th class="p-4 font-medium">Status</th>
+            <th class="p-4 font-medium">Duration</th>
+            <th class="p-4 font-medium">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+              <td class="p-4">
+                <%= link_to job.name, dashboard_trace_path(job), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
+              </td>
+              <td class="p-4">
+                <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #6B6760;">
+                  <%= job.queue || 'default' %>
+                </span>
+              </td>
+              <td class="p-4">
+                <span class="text-[13px]" style="color: <%= job.error ? '#DC2626' : '#22C55E' %>;">
+                  <%= job.error ? 'Failed' : 'Completed' %>
+                </span>
+              </td>
+              <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;">
+                <%= job.duration_ms&.round(0) || '-' %>ms
+              </td>
+              <td class="p-4 text-[13px]" style="color: #8B8780;">
+                <%= time_ago_in_words(job.started_at) %> ago
+              </td>
+            </tr>
+          <% end %>
+
+          <% if @jobs.empty? %>
+            <tr>
+              <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+                No background jobs found
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Endpoints</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Performance breakdown by endpoint</p>
+    </div>
+    <div class="flex gap-2">
+      <% %w[1h 6h 24h 7d].each do |range| %>
+        <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
+        <%= link_to range, dashboard_endpoints_path(since: range),
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
+            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <table class="w-full">
+      <thead style="border-bottom: 1px solid #F0EFED;">
+        <tr class="text-left text-[13px]" style="color: #8B8780;">
+          <th class="p-4 font-medium">Endpoint</th>
+          <th class="p-4 font-medium">Requests</th>
+          <th class="p-4 font-medium">Avg Duration</th>
+          <th class="p-4 font-medium">Max Duration</th>
+          <th class="p-4 font-medium">Error Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @endpoints.each do |endpoint| %>
+          <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+            <td class="p-4 text-[14px] font-medium" style="color: #1A1A1A;"><%= endpoint.name %></td>
+            <td class="p-4 text-[13px]" style="color: #1A1A1A;"><%= number_with_delimiter(endpoint.count) %></td>
+            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;"><%= endpoint.avg_duration.round(0) %>ms</td>
+            <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= endpoint.max_duration.round(0) %>ms</td>
+            <td class="p-4">
+              <% error_rate = (endpoint.error_count.to_f / endpoint.count * 100).round(2) %>
+              <span class="text-[13px]" style="color: <%= error_rate > 1 ? '#DC2626' : '#22C55E' %>;">
+                <%= error_rate %>%
+              </span>
+            </td>
+          </tr>
+        <% end %>
+
+        <% if @endpoints.empty? %>
+          <tr>
+            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              No endpoints found
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

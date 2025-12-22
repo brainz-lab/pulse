@@ -1,0 +1,99 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-4">
+    <%= link_to "← Back", dashboard_requests_path, class: "text-[13px] hover:opacity-70", style: "color: #8B8780;" %>
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @trace.name %></h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;"><%= @trace.started_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-4 gap-4">
+    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <span class="text-[13px]" style="color: #8B8780;">Duration</span>
+      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.duration_ms&.round(0) || '-' %><span class="text-[14px] font-normal">ms</span></p>
+    </div>
+    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <span class="text-[13px]" style="color: #8B8780;">Status</span>
+      <p class="text-[20px] font-semibold mt-1" style="color: <%= @trace.error ? '#DC2626' : '#22C55E' %>;"><%= @trace.status || (@trace.error ? 'Error' : 'OK') %></p>
+    </div>
+    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <span class="text-[13px]" style="color: #8B8780;">DB Time</span>
+      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.db_duration_ms&.round(0) || 0 %><span class="text-[14px] font-normal">ms</span></p>
+    </div>
+    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <span class="text-[13px]" style="color: #8B8780;">Spans</span>
+      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.span_count || @trace.spans.count %></p>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Details</h3>
+    <div class="grid grid-cols-2 gap-4 text-[13px]">
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Trace ID</span>
+        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.trace_id %></span>
+      </div>
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Request ID</span>
+        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.request_id || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Controller</span>
+        <span style="color: #1A1A1A;"><%= @trace.controller || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Action</span>
+        <span style="color: #1A1A1A;"><%= @trace.action || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Host</span>
+        <span style="color: #1A1A1A;"><%= @trace.host || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+        <span style="color: #8B8780;">Commit</span>
+        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.commit || '-' %></span>
+      </div>
+      <% if @trace.user_id %>
+        <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
+          <span style="color: #8B8780;">User ID</span>
+          <span style="color: #1A1A1A;"><%= @trace.user_id %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @trace.error %>
+    <div class="rounded-xl p-5" style="background: #FEF2F2; border: 1px solid #FECACA;">
+      <h3 class="text-[14px] font-medium mb-2" style="color: #DC2626;"><%= @trace.error_class || 'Error' %></h3>
+      <p class="text-[13px]" style="color: #991B1B;"><%= @trace.error_message %></p>
+    </div>
+  <% end %>
+
+  <!-- Spans -->
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="p-5" style="border-bottom: 1px solid #F0EFED;">
+      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Spans</h3>
+    </div>
+    <div>
+      <% @trace.spans.order(:started_at).each do |span| %>
+        <div class="p-4 flex items-center gap-4" style="border-bottom: 1px solid #F0EFED;">
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: <%= span_kind_bg(span.kind) %>; color: <%= span_kind_color(span.kind) %>;">
+            <%= span.kind.upcase %>
+          </span>
+          <div class="flex-1 min-w-0">
+            <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= span.display_name %></p>
+          </div>
+          <span class="text-[13px] font-mono" style="color: #8B8780;"><%= span.duration_ms&.round(2) || '-' %>ms</span>
+        </div>
+      <% end %>
+
+      <% if @trace.spans.empty? %>
+        <div class="p-8 text-center text-[14px]" style="color: #8B8780;">
+          No spans recorded
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

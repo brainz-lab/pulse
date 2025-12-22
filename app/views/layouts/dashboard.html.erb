@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <title>Pulse - APM</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= javascript_importmap_tags %>
+</head>
+<body class="h-full antialiased" style="font-family: 'Inter', system-ui, sans-serif; background: #FAF9F7;">
+  <div class="min-h-full">
+    <header class="border-b" style="border-color: #E8E5E0; background: #FFFFFE;">
+      <div class="mx-auto max-w-5xl px-6">
+        <div class="flex h-14 items-center justify-between">
+          <div class="flex items-center gap-4">
+            <%= link_to dashboard_root_path, class: "flex items-center gap-2 font-medium" do %>
+              <span style="color: #22C55E;">♥</span>
+              <span style="color: #1A1A1A;">Pulse</span>
+            <% end %>
+          </div>
+
+          <nav class="flex items-center gap-6 text-[13px]">
+            <%= link_to "Overview", dashboard_overview_path, class: "hover:opacity-70", style: "color: #{controller_name == 'overview' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'overview' ? '500' : '400'};" %>
+            <%= link_to "Requests", dashboard_requests_path, class: "hover:opacity-70", style: "color: #{controller_name == 'requests' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'requests' ? '500' : '400'};" %>
+            <%= link_to "Jobs", dashboard_jobs_path, class: "hover:opacity-70", style: "color: #{controller_name == 'jobs' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'jobs' ? '500' : '400'};" %>
+            <%= link_to "Endpoints", dashboard_endpoints_path, class: "hover:opacity-70", style: "color: #{controller_name == 'endpoints' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'endpoints' ? '500' : '400'};" %>
+            <%= link_to "Metrics", dashboard_metrics_path, class: "hover:opacity-70", style: "color: #{controller_name == 'metrics' ? '#1A1A1A' : '#6B6760'}; font-weight: #{controller_name == 'metrics' ? '500' : '400'};" %>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-6 py-8">
+      <%= yield %>
+    </main>
+  </div>
+</body>
+</html>
