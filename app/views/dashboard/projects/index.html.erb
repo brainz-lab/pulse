@@ -1,0 +1,35 @@
+<div class="space-y-8">
+  <div class="flex items-center justify-between">
+    <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Projects</h1>
+  </div>
+
+  <% if @projects.any? %>
+    <div class="space-y-3">
+      <% @projects.each do |project| %>
+        <%= link_to overview_dashboard_project_path(project), class: "block group" do %>
+          <div class="px-5 py-4 rounded-xl transition-all" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+            <div class="flex items-center justify-between">
+              <div class="space-y-1">
+                <h3 class="text-[15px] font-medium group-hover:underline" style="color: #1A1A1A;"><%= project.name || 'Unnamed Project' %></h3>
+                <p class="text-[13px]" style="color: #8B8780;"><%= pluralize(project.traces.count, 'trace') %></p>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-[12px] font-mono" style="color: #B0ACA5;"><%= project.environment || 'live' %></span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color: #C4C0B8;">
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-16 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <div class="space-y-3">
+        <p class="text-[15px]" style="color: #6B6760;">No projects yet</p>
+        <p class="text-[13px]" style="color: #8B8780;">Projects are created automatically when you send traces via the SDK.</p>
+      </div>
+    </div>
+  <% end %>
+</div>

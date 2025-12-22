@@ -34,7 +34,18 @@ Rails.application.routes.draw do
 
   # Dashboard
   namespace :dashboard do
-    root to: 'overview#show'
+    root to: 'projects#index'
+
+    resources :projects, only: [:index] do
+      member do
+        get 'overview'
+        get 'requests'
+        get 'jobs'
+        get 'endpoints'
+        get 'queries'
+        get 'metrics'
+      end
+    end
 
     get 'overview', to: 'overview#show'
 

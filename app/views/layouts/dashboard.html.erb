@@ -35,7 +35,7 @@
               <%= link_to "Queries", dashboard_queries_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'queries' ? '#1A1A1A' : '#8B8780'};" %>
               <%= link_to "Metrics", dashboard_metrics_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'metrics' ? '#1A1A1A' : '#8B8780'};" %>
             </nav>
-            <%= link_to "#{ENV['BRAINZLAB_PLATFORM_URL'] || 'http://platform.localhost'}/dashboard/projects", class: "text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80", style: "background: #F0EFED; color: #6B6760;" do %>
+            <%= link_to dashboard_projects_path, class: "text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80", style: "background: #F0EFED; color: #6B6760;" do %>
               Projects
             <% end %>
           </div>
