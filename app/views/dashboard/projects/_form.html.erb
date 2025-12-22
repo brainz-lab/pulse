@@ -1,0 +1,26 @@
+<%= form_with model: [:dashboard, project], class: "space-y-6" do |f| %>
+  <% if project.errors.any? %>
+    <div class="px-4 py-3 rounded-lg text-[14px]" style="background: #FEE8E8; color: #8B2D2D;">
+      <ul class="list-disc list-inside space-y-1">
+        <% project.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="space-y-2">
+    <%= f.label :name, class: "block text-[13px] font-medium", style: "color: #6B6760;" %>
+    <%= f.text_field :name, class: "w-full px-4 py-3 text-[15px] rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A; outline: none;", placeholder: "My Project" %>
+  </div>
+
+  <div class="space-y-2">
+    <%= f.label :environment, class: "block text-[13px] font-medium", style: "color: #6B6760;" %>
+    <%= f.select :environment, [['Production', 'production'], ['Staging', 'staging'], ['Development', 'development']], {}, class: "w-full px-4 py-3 text-[15px] rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A; outline: none;" %>
+  </div>
+
+  <div class="flex items-center gap-4 pt-2">
+    <%= f.submit class: "px-5 py-2.5 text-[14px] font-medium rounded-lg cursor-pointer transition-colors hover:opacity-80", style: "background: #1A1A1A; color: #FFFFFE;" %>
+    <%= link_to 'Cancel', dashboard_projects_path, class: "px-5 py-2.5 text-[14px] font-medium rounded-lg transition-colors hover:opacity-70", style: "color: #6B6760;" %>
+  </div>
+<% end %>

@@ -36,7 +36,7 @@ Rails.application.routes.draw do
   namespace :dashboard do
     root to: 'projects#index'
 
-    resources :projects, only: [:index] do
+    resources :projects, only: [:index, :new, :create] do
       member do
         get 'overview'
         get 'requests'
@@ -63,5 +63,5 @@ Rails.application.routes.draw do
   # WebSocket
   mount ActionCable.server => '/cable'
 
-  root 'dashboard/overview#show'
+  root 'dashboard/projects#index'
 end
