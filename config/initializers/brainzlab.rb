@@ -29,7 +29,7 @@ Rails.application.config.after_initialize do
     event = ActiveSupport::Notifications::Event.new(*args)
     payload = event.payload
 
-    BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}", {
+    BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}",
       controller: payload[:controller],
       action: payload[:action],
       status: payload[:status],
@@ -38,7 +38,7 @@ Rails.application.config.after_initialize do
       db_ms: payload[:db_runtime]&.round(1),
       format: payload[:format],
       params: payload[:params].except("controller", "action").to_h
-    })
+    )
   end
 
   Rails.logger.info "[BrainzLab] Recall logging enabled for pulse"
