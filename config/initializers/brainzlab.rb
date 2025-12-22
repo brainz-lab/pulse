@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 BrainzLab.configure do |config|
-  # App name for auto-provisioning Recall project
+  # App name for auto-provisioning projects
   config.app_name = "pulse"
 
   # Recall logging configuration
@@ -9,18 +9,28 @@ BrainzLab.configure do |config|
   config.recall_master_key = ENV["RECALL_MASTER_KEY"]
   config.recall_min_level = Rails.env.production? ? :info : :debug
 
+  # Reflex error tracking configuration
+  config.reflex_enabled = true
+  config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex.localhost")
+  config.reflex_master_key = ENV["REFLEX_MASTER_KEY"]
+
+  # Exclude common Rails exceptions
+  config.reflex_excluded_exceptions = [
+    "ActionController::RoutingError",
+    "ActionController::InvalidAuthenticityToken",
+    "ActionController::UnknownFormat"
+  ]
+
   # Service identification
   config.service = "pulse"
   config.environment = Rails.env
-
-  # Disable Reflex error tracking (can enable if you want Pulse errors in Reflex)
-  config.reflex_enabled = false
 end
 
 # Hook into Rails request logging via notifications
 Rails.application.config.after_initialize do
-  # Provision the project early so we have credentials
+  # Provision the projects early so we have credentials
   BrainzLab::Recall.ensure_provisioned!
+  BrainzLab::Reflex.ensure_provisioned!
 
   next unless BrainzLab.configuration.valid?
 
@@ -42,4 +52,5 @@ Rails.application.config.after_initialize do
   end
 
   Rails.logger.info "[BrainzLab] Recall logging enabled for pulse"
+  Rails.logger.info "[BrainzLab] Reflex error tracking: #{BrainzLab.configuration.reflex_enabled ? 'enabled' : 'disabled'}"
 end
