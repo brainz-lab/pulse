@@ -17,15 +17,29 @@ BrainzLab.configure do |config|
   config.reflex_enabled = false
 end
 
-# Hook into Rails logging - send all logs to Recall
+# Hook into Rails request logging via notifications
 Rails.application.config.after_initialize do
   # Provision the project early so we have credentials
   BrainzLab::Recall.ensure_provisioned!
 
-  # Create a logger that sends to both Recall and the original Rails logger
-  if BrainzLab.configuration.valid?
-    original_logger = Rails.logger
-    Rails.logger = BrainzLab::Recall::Logger.new(broadcast_to: original_logger)
-    Rails.logger.info "BrainzLab Recall logging enabled for pulse"
+  next unless BrainzLab.configuration.valid?
+
+  # Subscribe to request completion events
+  ActiveSupport::Notifications.subscribe("process_action.action_controller") do |*args|
+    event = ActiveSupport::Notifications::Event.new(*args)
+    payload = event.payload
+
+    BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}", {
+      controller: payload[:controller],
+      action: payload[:action],
+      status: payload[:status],
+      duration_ms: event.duration.round(1),
+      view_ms: payload[:view_runtime]&.round(1),
+      db_ms: payload[:db_runtime]&.round(1),
+      format: payload[:format],
+      params: payload[:params].except("controller", "action").to_h
+    })
   end
+
+  Rails.logger.info "[BrainzLab] Recall logging enabled for pulse"
 end
