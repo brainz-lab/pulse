@@ -42,6 +42,9 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
+# AWS SDK for S3-compatible storage (MinIO in development)
+gem "aws-sdk-s3", require: false
+
 # BrainzLab SDK - use local path in Docker, published gem otherwise
 if File.exist?("/brainzlab-sdk")
   gem "brainzlab", path: "/brainzlab-sdk"
