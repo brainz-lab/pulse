@@ -1,0 +1,2 @@
+// ActionCable channels
+import "./consumer"

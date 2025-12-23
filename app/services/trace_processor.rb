@@ -48,9 +48,16 @@ class TraceProcessor
       t.action = @payload[:action]
       t.status = @payload[:status]
 
+      # Timing breakdown
+      t.view_duration_ms = @payload[:view_ms] || 0.0
+      t.db_duration_ms = @payload[:db_ms] || 0.0
+      t.external_duration_ms = @payload[:external_ms] || 0.0
+
       t.job_class = @payload[:job_class]
       t.job_id = @payload[:job_id]
       t.queue = @payload[:queue]
+      t.queue_wait_ms = @payload[:queue_wait_ms]
+      t.executions = @payload[:executions] || 1
 
       t.environment = @payload[:environment]
       t.commit = @payload[:commit]

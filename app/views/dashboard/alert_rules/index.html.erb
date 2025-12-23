@@ -1,0 +1,51 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Alert Rules</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Configure when to trigger alerts</p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "Alerts", dashboard_alerts_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <%= link_to "New Rule", new_dashboard_alert_rule_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #1A1A1A; color: #FFFFFE;" %>
+    </div>
+  </div>
+
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <% if @alert_rules.any? %>
+      <div>
+        <% @alert_rules.each do |rule| %>
+          <%= link_to dashboard_alert_rule_path(rule), class: "flex items-center gap-4 p-4 hover:bg-stone-50", style: "border-bottom: 1px solid #F0EFED;" do %>
+            <span class="w-2 h-2 rounded-full" style="background: <%= rule.enabled? ? (rule.status == 'alerting' ? '#DC2626' : '#22C55E') : '#8B8780' %>;"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= rule.name %></p>
+              <p class="text-[13px]" style="color: #6B6760;"><%= rule.human_condition %> over <%= rule.window_minutes %>min</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= rule.severity == 'critical' ? 'bg-red-100 text-red-800' : rule.severity == 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600' %>">
+                <%= rule.severity.upcase %>
+              </span>
+              <% if !rule.enabled? %>
+                <span class="px-2 py-0.5 text-[11px] font-medium rounded bg-stone-100 text-stone-600">
+                  DISABLED
+                </span>
+              <% elsif rule.status == 'alerting' %>
+                <span class="px-2 py-0.5 text-[11px] font-medium rounded bg-red-100 text-red-800 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500"></span>
+                  ALERTING
+                </span>
+              <% end %>
+            </div>
+            <span class="text-[13px]" style="color: #8B8780;">
+              <%= rule.notification_channels.count %> channels
+            </span>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-8 text-center">
+        <p class="text-[14px]" style="color: #8B8780;">No alert rules configured</p>
+        <%= link_to "Create your first rule", new_dashboard_alert_rule_path, class: "text-[14px] font-medium mt-2 inline-block", style: "color: #1A1A1A;" %>
+      </div>
+    <% end %>
+  </div>
+</div>

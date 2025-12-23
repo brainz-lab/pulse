@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# Self-tracking for Pulse APM
+# Uses direct database inserts for traces to avoid HTTP infinite loops
+# Uses SDK for Recall logging and Reflex error tracking
+#
+# Set BRAINZLAB_SDK_ENABLED=false to disable SDK initialization
+# Useful for running migrations before SDK is ready
+
+return if ENV["BRAINZLAB_SDK_ENABLED"] == "false"
+
 BrainzLab.configure do |config|
   # App name for auto-provisioning projects
   config.app_name = "pulse"
@@ -14,6 +23,9 @@ BrainzLab.configure do |config|
   config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex.localhost")
   config.reflex_master_key = ENV["REFLEX_MASTER_KEY"]
 
+  # Disable Pulse SDK (we use direct DB inserts for self-tracking)
+  config.pulse_enabled = false
+
   # Exclude common Rails exceptions
   config.reflex_excluded_exceptions = [
     "ActionController::RoutingError",
@@ -26,31 +38,188 @@ BrainzLab.configure do |config|
   config.environment = Rails.env
 end
 
-# Hook into Rails request logging via notifications
+# Middleware to capture request timing for self-tracking
+class PulseSelfTrackMiddleware
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    request = ActionDispatch::Request.new(env)
+    Thread.current[:pulse_request_id] = request.request_id
+    Thread.current[:pulse_request_started_at] = Time.now.utc
+    Thread.current[:pulse_request_method] = request.request_method
+    Thread.current[:pulse_request_path] = request.path
+
+    status, headers, response = @app.call(env)
+
+    [status, headers, response]
+  ensure
+    Thread.current[:pulse_request_id] = nil
+    Thread.current[:pulse_request_started_at] = nil
+    Thread.current[:pulse_request_method] = nil
+    Thread.current[:pulse_request_path] = nil
+  end
+end
+
+Rails.application.config.middleware.insert_after ActionDispatch::RequestId, PulseSelfTrackMiddleware
+
 Rails.application.config.after_initialize do
-  # Provision the projects early so we have credentials
+  # Provision Recall and Reflex projects early so we have credentials
   BrainzLab::Recall.ensure_provisioned!
   BrainzLab::Reflex.ensure_provisioned!
 
-  next unless BrainzLab.configuration.valid?
+  # Find or create the pulse project for self-tracking
+  project = Project.find_or_create_by!(name: "pulse") do |p|
+    p.platform_project_id = "pls_self_#{SecureRandom.hex(8)}"
+    p.environment = Rails.env
+  end
 
-  # Subscribe to request completion events
+  # Generate API key if not present (only if settings column exists)
+  if project.respond_to?(:settings) && project.settings.is_a?(Hash)
+    unless project.settings["api_key"]
+      project.settings["api_key"] = "pls_self_#{SecureRandom.hex(24)}"
+      project.save!
+    end
+  end
+
+  Rails.logger.info "[Pulse] Self-tracking enabled for project: #{project.id}"
+  Rails.logger.info "[Pulse] Recall logging: #{BrainzLab.configuration.valid? ? 'enabled' : 'disabled'}"
+  Rails.logger.info "[Pulse] Reflex error tracking: #{BrainzLab.configuration.reflex_enabled ? 'enabled' : 'disabled'}"
+
+  # Subscribe to request completion events for Recall logging and self-tracking
   ActiveSupport::Notifications.subscribe("process_action.action_controller") do |*args|
     event = ActiveSupport::Notifications::Event.new(*args)
     payload = event.payload
 
-    BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}",
-      controller: payload[:controller],
-      action: payload[:action],
-      status: payload[:status],
-      duration_ms: event.duration.round(1),
-      view_ms: payload[:view_runtime]&.round(1),
-      db_ms: payload[:db_runtime]&.round(1),
-      format: payload[:format],
-      params: payload[:params].except("controller", "action").to_h
-    )
+    # Skip ingest endpoints to reduce noise
+    next if payload[:controller]&.include?("TracesController")
+    next if payload[:controller]&.include?("MetricsController")
+    next if payload[:path]&.start_with?("/api/v1/traces")
+    next if payload[:path]&.start_with?("/api/v1/metrics")
+
+    # Log to Recall
+    if BrainzLab.configuration.valid?
+      BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}",
+        controller: payload[:controller],
+        action: payload[:action],
+        status: payload[:status],
+        duration_ms: event.duration.round(1),
+        view_ms: payload[:view_runtime]&.round(1),
+        db_ms: payload[:db_runtime]&.round(1),
+        format: payload[:format],
+        params: payload[:params].except("controller", "action").to_h
+      )
+    end
+
+    # Self-track to Pulse via direct DB insert
+    started_at = Thread.current[:pulse_request_started_at]
+    next unless started_at
+
+    ended_at = Time.now.utc
+    duration_ms = ((ended_at - started_at) * 1000).round(2)
+
+    begin
+      Trace.create!(
+        project: project,
+        trace_id: Thread.current[:pulse_request_id] || SecureRandom.uuid,
+        name: "#{payload[:method]} #{payload[:path]}",
+        kind: "request",
+        started_at: started_at,
+        ended_at: ended_at,
+        duration_ms: duration_ms,
+        request_method: payload[:method],
+        request_path: payload[:path],
+        controller: payload[:controller],
+        action: payload[:action],
+        status: payload[:status],
+        environment: Rails.env,
+        host: Socket.gethostname,
+        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
+        error: payload[:status].to_i >= 500,
+        data: {
+          view_ms: payload[:view_runtime]&.round(1),
+          db_ms: payload[:db_runtime]&.round(1),
+          format: payload[:format]
+        }
+      )
+    rescue StandardError => e
+      Rails.logger.error "[Pulse] Self-tracking failed: #{e.message}"
+    end
   end
 
-  Rails.logger.info "[BrainzLab] Recall logging enabled for pulse"
-  Rails.logger.info "[BrainzLab] Reflex error tracking: #{BrainzLab.configuration.reflex_enabled ? 'enabled' : 'disabled'}"
+  # Subscribe to ActiveJob events for job tracing
+  ActiveSupport::Notifications.subscribe("perform.active_job") do |*args|
+    event = ActiveSupport::Notifications::Event.new(*args)
+    job = event.payload[:job]
+
+    started_at = event.time
+    ended_at = event.end
+    duration_ms = event.duration.round(2)
+
+    begin
+      Trace.create!(
+        project: project,
+        trace_id: job.job_id || SecureRandom.uuid,
+        name: "Job #{job.class.name}",
+        kind: "job",
+        started_at: started_at,
+        ended_at: ended_at,
+        duration_ms: duration_ms,
+        job_class: job.class.name,
+        job_id: job.job_id,
+        queue: job.queue_name,
+        environment: Rails.env,
+        host: Socket.gethostname,
+        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
+        error: false,
+        data: {
+          executions: job.executions,
+          arguments: job.arguments.map(&:to_s).first(5)
+        }
+      )
+    rescue StandardError => e
+      Rails.logger.error "[Pulse] Job self-tracking failed: #{e.message}"
+    end
+  end
+
+  # Subscribe to job errors
+  ActiveSupport::Notifications.subscribe("discard.active_job") do |*args|
+    event = ActiveSupport::Notifications::Event.new(*args)
+    job = event.payload[:job]
+    error = event.payload[:error]
+
+    next unless error
+
+    started_at = event.time
+    ended_at = event.end
+    duration_ms = event.duration.round(2)
+
+    begin
+      Trace.create!(
+        project: project,
+        trace_id: job.job_id || SecureRandom.uuid,
+        name: "Job #{job.class.name}",
+        kind: "job",
+        started_at: started_at,
+        ended_at: ended_at,
+        duration_ms: duration_ms,
+        job_class: job.class.name,
+        job_id: job.job_id,
+        queue: job.queue_name,
+        environment: Rails.env,
+        host: Socket.gethostname,
+        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
+        error: true,
+        error_class: error.class.name,
+        error_message: error.message,
+        data: {
+          executions: job.executions,
+          arguments: job.arguments.map(&:to_s).first(5)
+        }
+      )
+    rescue StandardError => e
+      Rails.logger.error "[Pulse] Job error self-tracking failed: #{e.message}"
+    end
+  end
 end

@@ -1,0 +1,42 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to dashboard_notification_channels_path, class: "text-[14px] hover:opacity-70", style: "color: #6B6760;" do %>
+      &larr; Notification Channels
+    <% end %>
+  </div>
+
+  <div class="flex justify-between items-start">
+    <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @channel.name %></h1>
+    <div class="flex gap-2">
+      <%= button_to dashboard_notification_channel_path(@channel), method: :delete, data: { confirm: "Delete this notification channel?" }, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #FECACA; color: #DC2626;" do %>
+        Delete
+      <% end %>
+    </div>
+  </div>
+
+  <%= form_with model: [:dashboard, @channel], local: true do |f| %>
+    <%= render 'form', f: f %>
+  <% end %>
+
+  <!-- Stats -->
+  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Statistics</h3>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Notifications Sent</p>
+        <p class="text-[24px] font-semibold mt-1" style="color: #1A1A1A;"><%= @channel.success_count %></p>
+      </div>
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Failed</p>
+        <p class="text-[24px] font-semibold mt-1" style="color: <%= @channel.failure_count > 0 ? '#DC2626' : '#1A1A1A' %>;"><%= @channel.failure_count %></p>
+      </div>
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Last Used</p>
+        <p class="text-[14px] font-medium mt-2" style="color: #1A1A1A;">
+          <%= @channel.last_used_at ? time_ago_in_words(@channel.last_used_at) + ' ago' : 'Never' %>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

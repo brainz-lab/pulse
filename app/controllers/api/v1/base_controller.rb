@@ -10,6 +10,25 @@ module Api
 
       def authenticate!
         raw_key = extract_api_key
+
+        # Check if it's a standalone pls_ API key (from auto-provisioning)
+        if raw_key&.start_with?("pls_")
+          @current_project = Project.find_by("settings->>'api_key' = ?", raw_key)
+          unless @current_project
+            render json: { error: "Invalid API key" }, status: :unauthorized
+            return
+          end
+          @key_info = {
+            valid: true,
+            project_id: @current_project.platform_project_id,
+            project_name: @current_project.name,
+            environment: @current_project.environment,
+            features: { pulse: true }
+          }
+          return
+        end
+
+        # Otherwise validate with Platform
         @key_info = PlatformClient.validate_key(raw_key)
 
         unless @key_info[:valid]

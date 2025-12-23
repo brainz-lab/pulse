@@ -1,10 +1,16 @@
-<div class="space-y-8">
+<div class="space-y-8" data-controller="realtime-metrics" data-realtime-metrics-project-id-value="<%= current_project.id %>">
 
   <!-- Time range selector -->
   <div class="flex justify-between items-center">
     <div>
       <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Overview</h1>
-      <p class="text-[14px] mt-1" style="color: #8B8780;">Application performance at a glance</p>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">
+        Application performance at a glance
+        <span class="inline-flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full text-[11px] font-medium" style="background: #DCFCE7; color: #166534;">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background: #22C55E;"></span>
+          Live
+        </span>
+      </p>
     </div>
     <div class="flex gap-2">
       <% %w[1h 6h 24h 7d].each do |range| %>
@@ -22,26 +28,26 @@
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <div class="flex items-center justify-between">
         <span class="text-[13px]" style="color: #8B8780;">Apdex</span>
-        <span class="w-3 h-3 rounded-full <%= apdex_color(@overview[:apdex]) %>"></span>
+        <span class="w-3 h-3 rounded-full <%= apdex_color(@overview[:apdex]) %>" data-realtime-metrics-target="apdexIndicator"></span>
       </div>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @overview[:apdex] %></p>
+      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;" data-realtime-metrics-target="apdex"><%= @overview[:apdex] %></p>
       <p class="text-[12px] mt-1" style="color: #8B8780;">T = <%= current_project.apdex_t %>s</p>
     </div>
 
     <!-- Throughput -->
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <span class="text-[13px]" style="color: #8B8780;">Throughput</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= number_with_delimiter(@overview[:rpm]) %></p>
+      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;" data-realtime-metrics-target="throughput"><%= number_with_delimiter(@overview[:rpm]) %></p>
       <p class="text-[12px] mt-1" style="color: #8B8780;">requests/min</p>
     </div>
 
     <!-- Response Time -->
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <span class="text-[13px]" style="color: #8B8780;">Response Time</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @overview[:avg_duration]&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;" data-realtime-metrics-target="responseTime"><%= @overview[:avg_duration]&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
       <p class="text-[12px] mt-1" style="color: #8B8780;">
-        P95: <%= @overview[:p95_duration]&.round(0) || '-' %>ms
-        P99: <%= @overview[:p99_duration]&.round(0) || '-' %>ms
+        <span data-realtime-metrics-target="responseTimeP95">P95: <%= @overview[:p95_duration]&.round(0) || '-' %>ms</span>
+        <span data-realtime-metrics-target="responseTimeP99">P99: <%= @overview[:p99_duration]&.round(0) || '-' %>ms</span>
       </p>
     </div>
 
@@ -49,14 +55,12 @@
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <div class="flex items-center justify-between">
         <span class="text-[13px]" style="color: #8B8780;">Error Rate</span>
-        <% if @overview[:error_rate] > 1 %>
-          <span class="w-2 h-2 rounded-full" style="background: #DC2626;"></span>
-        <% end %>
+        <span class="w-2 h-2 rounded-full" style="background: #DC2626; display: <%= @overview[:error_rate] > 1 ? 'block' : 'none' %>;" data-realtime-metrics-target="errorIndicator"></span>
       </div>
-      <p class="text-[28px] font-semibold mt-2" style="color: <%= @overview[:error_rate] > 1 ? '#DC2626' : '#1A1A1A' %>;">
+      <p class="text-[28px] font-semibold mt-2" style="color: <%= @overview[:error_rate] > 1 ? '#DC2626' : '#1A1A1A' %>;" data-realtime-metrics-target="errorRate">
         <%= @overview[:error_rate] %>%
       </p>
-      <p class="text-[12px] mt-1" style="color: #8B8780;"><%= @overview[:error_count] %> errors</p>
+      <p class="text-[12px] mt-1" style="color: #8B8780;" data-realtime-metrics-target="errorCount"><%= @overview[:error_count] %> errors</p>
     </div>
   </div>
 
@@ -65,7 +69,7 @@
     <!-- Throughput chart -->
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Throughput</h3>
-      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @throughput_data.to_json %>">
+      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-metric-value="throughput" data-chart-data-value="<%= @throughput_data.to_json %>">
         <canvas></canvas>
       </div>
     </div>
@@ -73,7 +77,7 @@
     <!-- Response time chart -->
     <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Response Time</h3>
-      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @response_time_data.to_json %>">
+      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-metric-value="response_time" data-chart-data-value="<%= @response_time_data.to_json %>">
         <canvas></canvas>
       </div>
     </div>

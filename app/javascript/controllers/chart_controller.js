@@ -3,16 +3,100 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static values = {
     type: { type: String, default: "line" },
-    data: Array
+    data: Array,
+    metric: String, // "throughput" or "response_time"
+    maxPoints: { type: Number, default: 60 }
   }
 
   connect() {
     this.initChart()
+
+    // Listen for real-time trace events
+    if (this.metricValue) {
+      this.boundHandleTrace = this.handleTrace.bind(this)
+      document.addEventListener("realtime-metrics:trace", this.boundHandleTrace)
+    }
   }
 
   disconnect() {
     if (this.chart) {
       this.chart.destroy()
+    }
+    if (this.boundHandleTrace) {
+      document.removeEventListener("realtime-metrics:trace", this.boundHandleTrace)
+    }
+  }
+
+  handleTrace(event) {
+    const trace = event.detail
+
+    if (this.metricValue === "throughput") {
+      this.incrementCurrentPoint()
+    } else if (this.metricValue === "response_time" && trace.duration_ms) {
+      this.updateCurrentAverage(trace.duration_ms)
+    }
+  }
+
+  incrementCurrentPoint() {
+    if (!this.chart) return
+
+    const data = this.chart.data.datasets[0].data
+    const labels = this.chart.data.labels
+
+    // Get current minute
+    const now = new Date()
+    const currentLabel = this.formatLabel(now.toISOString())
+
+    // Check if we're still in the same minute
+    if (labels[labels.length - 1] === currentLabel) {
+      // Increment last point
+      data[data.length - 1] = (data[data.length - 1] || 0) + 1
+    } else {
+      // Add new point
+      this.addDataPoint(currentLabel, 1)
+    }
+
+    this.chart.update("none") // no animation for real-time
+  }
+
+  updateCurrentAverage(duration) {
+    if (!this.chart) return
+
+    const data = this.chart.data.datasets[0].data
+    const labels = this.chart.data.labels
+
+    const now = new Date()
+    const currentLabel = this.formatLabel(now.toISOString())
+
+    if (!this.avgState) {
+      this.avgState = { sum: 0, count: 0 }
+    }
+
+    if (labels[labels.length - 1] === currentLabel) {
+      // Update running average
+      this.avgState.sum += duration
+      this.avgState.count++
+      data[data.length - 1] = Math.round(this.avgState.sum / this.avgState.count)
+    } else {
+      // Reset for new minute
+      this.avgState = { sum: duration, count: 1 }
+      this.addDataPoint(currentLabel, duration)
+    }
+
+    this.chart.update("none")
+  }
+
+  addDataPoint(label, value) {
+    const data = this.chart.data.datasets[0].data
+    const labels = this.chart.data.labels
+
+    labels.push(label)
+    data.push(value)
+
+    // Remove oldest if over max
+    while (labels.length > this.maxPointsValue) {
+      labels.shift()
+      data.shift()
     }
   }
 
@@ -44,6 +128,9 @@ export default class extends Controller {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+          duration: 0 // disable for real-time performance
+        },
         interaction: {
           intersect: false,
           mode: "index"

@@ -1,0 +1,53 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Notification Channels</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Configure where to send alerts</p>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to "Alerts", dashboard_alerts_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <%= link_to "New Channel", new_dashboard_notification_channel_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #1A1A1A; color: #FFFFFE;" %>
+    </div>
+  </div>
+
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <% if @channels.any? %>
+      <div>
+        <% @channels.each do |channel| %>
+          <%= link_to dashboard_notification_channel_path(channel), class: "flex items-center gap-4 p-4 hover:bg-stone-50", style: "border-bottom: 1px solid #F0EFED;" do %>
+            <span class="w-8 h-8 rounded-lg flex items-center justify-center text-[14px]" style="background: #F0EFED;">
+              <% case channel.kind %>
+              <% when 'webhook' %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+              <% when 'email' %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              <% when 'slack' %>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"></path></svg>
+              <% when 'pagerduty' %>
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.072.451c-4.764 0-8.267 3.25-8.267 8.267 0 4.966 3.503 8.267 8.267 8.267h4.418v-3.453h-4.418c-2.71 0-4.814-1.963-4.814-4.814 0-2.902 2.104-4.814 4.814-4.814 2.902 0 4.814 2.054 4.814 4.814v6.928c0 2.105-.452 3.55-1.452 4.614-1 1.063-2.514 1.59-4.555 1.59H6.31V24h3.568c2.96 0 5.347-.857 7.06-2.57 1.712-1.714 2.569-4.203 2.569-7.47V8.718c0-5.017-3.504-8.267-7.435-8.267z"></path></svg>
+              <% end %>
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= channel.name %></p>
+              <p class="text-[13px]" style="color: #6B6760;"><%= channel.kind.titleize %></p>
+            </div>
+            <div class="flex items-center gap-3 text-[13px]" style="color: #8B8780;">
+              <span><%= channel.success_count %> sent</span>
+              <% if channel.failure_count > 0 %>
+                <span style="color: #DC2626;"><%= channel.failure_count %> failed</span>
+              <% end %>
+              <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= channel.enabled? ? 'bg-green-100 text-green-800' : 'bg-stone-100 text-stone-600' %>">
+                <%= channel.enabled? ? 'ENABLED' : 'DISABLED' %>
+              </span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-8 text-center">
+        <p class="text-[14px]" style="color: #8B8780;">No notification channels configured</p>
+        <%= link_to "Create your first channel", new_dashboard_notification_channel_path, class: "text-[14px] font-medium mt-2 inline-block", style: "color: #1A1A1A;" %>
+      </div>
+    <% end %>
+  </div>
+</div>

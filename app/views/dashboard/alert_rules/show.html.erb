@@ -1,0 +1,59 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to dashboard_alert_rules_path, class: "text-[14px] hover:opacity-70", style: "color: #6B6760;" do %>
+      &larr; Alert Rules
+    <% end %>
+  </div>
+
+  <div class="flex justify-between items-start">
+    <div class="flex items-center gap-3">
+      <span class="w-2 h-2 rounded-full" style="background: <%= @alert_rule.enabled? ? (@alert_rule.status == 'alerting' ? '#DC2626' : '#22C55E') : '#8B8780' %>;"></span>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @alert_rule.name %></h1>
+      <% if @alert_rule.status == 'alerting' %>
+        <span class="px-2 py-0.5 text-[11px] font-medium rounded bg-red-100 text-red-800 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse bg-red-500"></span>
+          ALERTING
+        </span>
+      <% end %>
+    </div>
+    <div class="flex gap-2">
+      <%= button_to dashboard_alert_rule_path(@alert_rule), method: :delete, data: { confirm: "Delete this alert rule?" }, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #FECACA; color: #DC2626;" do %>
+        Delete
+      <% end %>
+    </div>
+  </div>
+
+  <%= form_with model: [:dashboard, @alert_rule], local: true do |f| %>
+    <%= render 'form', f: f %>
+  <% end %>
+
+  <!-- Recent Alerts -->
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="p-4" style="border-bottom: 1px solid #F0EFED;">
+      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Recent Alerts</h3>
+    </div>
+
+    <% if @recent_alerts.any? %>
+      <div>
+        <% @recent_alerts.each do |alert| %>
+          <%= link_to dashboard_alert_path(alert), class: "flex items-center gap-4 p-4 hover:bg-stone-50", style: "border-bottom: 1px solid #F0EFED;" do %>
+            <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= alert.firing? ? alert.severity_badge_class : 'bg-green-100 text-green-800' %>">
+              <%= alert.firing? ? alert.severity.upcase : 'RESOLVED' %>
+            </span>
+            <div class="flex-1 min-w-0">
+              <p class="text-[13px] truncate" style="color: #6B6760;"><%= alert.message %></p>
+            </div>
+            <div class="text-right text-[13px]" style="color: #8B8780;">
+              <p><%= time_ago_in_words(alert.triggered_at) %> ago</p>
+              <p><%= alert.duration_text %></p>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-8 text-center text-[14px]" style="color: #8B8780;">
+        No alerts triggered yet
+      </div>
+    <% end %>
+  </div>
+</div>

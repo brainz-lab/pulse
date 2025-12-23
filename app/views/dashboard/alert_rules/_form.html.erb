@@ -1,0 +1,136 @@
+<div class="space-y-6">
+  <% if @alert_rule.errors.any? %>
+    <div class="rounded-xl p-4" style="background: #FEF2F2; border: 1px solid #FECACA;">
+      <p class="text-[14px] font-medium" style="color: #991B1B;"><%= pluralize(@alert_rule.errors.count, "error") %> prevented this rule from being saved:</p>
+      <ul class="mt-2 text-[13px] list-disc list-inside" style="color: #991B1B;">
+        <% @alert_rule.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Basic Info -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Basic Info</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Name</label>
+          <%= f.text_field :name, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "High error rate" %>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Description</label>
+          <%= f.text_area :description, rows: 2, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "Alert when error rate exceeds threshold" %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= f.check_box :enabled, class: "rounded", style: "accent-color: #22C55E;" %>
+          <label class="text-[13px]" style="color: #6B6760;">Enabled</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Condition -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Condition</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Metric</label>
+          <%= f.select :metric_type, AlertRule::METRIC_TYPES.map { |t| [t.titleize, t] }, {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Operator</label>
+            <%= f.select :operator, [['>', 'gt'], ['>=', 'gte'], ['<', 'lt'], ['<=', 'lte'], ['=', 'eq']], {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+          </div>
+
+          <div>
+            <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Threshold</label>
+            <%= f.number_field :threshold, step: "any", class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "5" %>
+          </div>
+
+          <div>
+            <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Aggregation</label>
+            <%= f.select :aggregation, AlertRule::AGGREGATIONS.map { |a| [a.upcase, a] }, {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Time Window (minutes)</label>
+          <%= f.number_field :window_minutes, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "5" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Filters -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Filters (Optional)</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Endpoint</label>
+          <%= f.text_field :endpoint, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "/api/v1/users" %>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Environment</label>
+          <%= f.text_field :environment, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "production" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Settings -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Notification Settings</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Severity</label>
+          <%= f.select :severity, AlertRule::SEVERITIES.map { |s| [s.titleize, s] }, {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Cooldown (minutes)</label>
+          <%= f.number_field :cooldown_minutes, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "60" %>
+          <p class="text-[12px] mt-1" style="color: #8B8780;">Don't re-alert within this period</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Channels -->
+  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Notification Channels</h3>
+
+    <% if @notification_channels.any? %>
+      <div class="space-y-2">
+        <% @notification_channels.each do |channel| %>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-stone-50" style="border: 1px solid #E8E5E0;">
+            <%= check_box_tag "alert_rule[notification_channel_ids][]", channel.id, @alert_rule.notification_channel_ids.include?(channel.id), class: "rounded", style: "accent-color: #22C55E;" %>
+            <div class="flex-1">
+              <p class="text-[14px] font-medium" style="color: #1A1A1A;"><%= channel.name %></p>
+              <p class="text-[13px]" style="color: #6B6760;"><%= channel.kind.titleize %></p>
+            </div>
+          </label>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="text-[14px]" style="color: #8B8780;">
+        No notification channels configured.
+        <%= link_to "Create one", new_dashboard_notification_channel_path, style: "color: #1A1A1A;" %>
+      </p>
+    <% end %>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <%= link_to "Cancel", dashboard_alert_rules_path, class: "px-4 py-2 text-[14px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+    <%= f.submit "Save Rule", class: "px-4 py-2 text-[14px] font-medium rounded-lg cursor-pointer", style: "background: #1A1A1A; color: #FFFFFE;" %>
+  </div>
+</div>

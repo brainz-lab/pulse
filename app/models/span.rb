@@ -2,7 +2,7 @@ class Span < ApplicationRecord
   belongs_to :trace
   belongs_to :project
 
-  KINDS = %w[db http cache render custom].freeze
+  KINDS = %w[db http cache render job cable custom].freeze
 
   validates :span_id, presence: true
   validates :name, presence: true

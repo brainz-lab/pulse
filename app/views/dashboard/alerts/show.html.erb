@@ -1,0 +1,89 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to dashboard_alerts_path, class: "text-[14px] hover:opacity-70", style: "color: #6B6760;" do %>
+      &larr; Alerts
+    <% end %>
+  </div>
+
+  <div class="rounded-xl p-6" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= @alert.firing? ? @alert.severity_badge_class : 'bg-green-100 text-green-800' %>">
+            <%= @alert.firing? ? @alert.severity.upcase : 'RESOLVED' %>
+          </span>
+          <h1 class="text-[22px] font-semibold" style="color: #1A1A1A;"><%= @alert.alert_rule.name %></h1>
+        </div>
+        <p class="text-[14px] mt-2" style="color: #6B6760;"><%= @alert.message %></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-4 mt-6 pt-6" style="border-top: 1px solid #F0EFED;">
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Triggered</p>
+        <p class="text-[14px] font-medium mt-1" style="color: #1A1A1A;"><%= @alert.triggered_at.strftime('%b %d, %H:%M:%S') %></p>
+      </div>
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Duration</p>
+        <p class="text-[14px] font-medium mt-1" style="color: #1A1A1A;"><%= @alert.duration_text %></p>
+      </div>
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Metric</p>
+        <p class="text-[14px] font-medium mt-1" style="color: #1A1A1A;"><%= @alert.metric_type.titleize %></p>
+      </div>
+      <div>
+        <p class="text-[12px] uppercase tracking-wide" style="color: #8B8780;">Value / Threshold</p>
+        <p class="text-[14px] font-medium mt-1" style="color: #1A1A1A;"><%= @alert.value.round(2) %> / <%= @alert.threshold %></p>
+      </div>
+    </div>
+
+    <% if @alert.endpoint.present? || @alert.environment.present? %>
+      <div class="flex gap-4 mt-4">
+        <% if @alert.endpoint.present? %>
+          <span class="px-2 py-1 rounded text-[12px]" style="background: #F0EFED; color: #6B6760;">
+            Endpoint: <%= @alert.endpoint %>
+          </span>
+        <% end %>
+        <% if @alert.environment.present? %>
+          <span class="px-2 py-1 rounded text-[12px]" style="background: #F0EFED; color: #6B6760;">
+            Env: <%= @alert.environment %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Notifications -->
+  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="p-4" style="border-bottom: 1px solid #F0EFED;">
+      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Notifications</h3>
+    </div>
+
+    <% if @alert.alert_notifications.any? %>
+      <div>
+        <% @alert.alert_notifications.each do |notification| %>
+          <div class="flex items-center gap-4 p-4" style="border-bottom: 1px solid #F0EFED;">
+            <span class="px-2 py-0.5 text-[11px] font-medium rounded
+              <%= notification.sent? ? 'bg-green-100 text-green-800' : notification.failed? ? 'bg-red-100 text-red-800' : 'bg-stone-100 text-stone-600' %>">
+              <%= notification.status.upcase %>
+            </span>
+            <div class="flex-1">
+              <p class="text-[14px] font-medium" style="color: #1A1A1A;"><%= notification.notification_channel.name %></p>
+              <p class="text-[13px]" style="color: #6B6760;"><%= notification.notification_channel.kind.titleize %></p>
+            </div>
+            <% if notification.sent_at %>
+              <span class="text-[13px]" style="color: #8B8780;">Sent <%= time_ago_in_words(notification.sent_at) %> ago</span>
+            <% end %>
+            <% if notification.error_message %>
+              <span class="text-[13px]" style="color: #DC2626;"><%= notification.error_message.truncate(50) %></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="p-8 text-center text-[14px]" style="color: #8B8780;">
+        No notifications configured
+      </div>
+    <% end %>
+  </div>
+</div>

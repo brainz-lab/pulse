@@ -4,6 +4,9 @@ class Project < ApplicationRecord
   has_many :metrics, dependent: :destroy
   has_many :metric_points, dependent: :destroy
   has_many :aggregated_metrics, dependent: :destroy
+  has_many :notification_channels, dependent: :destroy
+  has_many :alert_rules, dependent: :destroy
+  has_many :alerts, dependent: :destroy
 
   validates :platform_project_id, presence: true, uniqueness: true
 

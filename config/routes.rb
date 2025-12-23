@@ -2,6 +2,10 @@ Rails.application.routes.draw do
   # API
   namespace :api do
     namespace :v1 do
+      # Projects (auto-provisioning)
+      post 'projects/provision', to: 'projects#provision'
+      get 'projects/lookup', to: 'projects#lookup'
+
       # Traces
       post 'traces', to: 'traces#create'
       post 'traces/batch', to: 'traces#batch'
@@ -55,6 +59,11 @@ Rails.application.routes.draw do
     resources :queries, only: [:index, :show]
     resources :metrics, only: [:index, :show]
     resources :endpoints, only: [:index, :show]
+
+    # Alerting
+    resources :alerts, only: [:index, :show]
+    resources :alert_rules, except: [:edit]
+    resources :notification_channels, except: [:edit]
   end
 
   # Health check

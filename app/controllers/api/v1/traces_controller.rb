@@ -22,9 +22,21 @@ module Api
         results = []
 
         traces_data.each do |trace_payload|
+          # Permit all necessary trace parameters
+          permitted = trace_payload.permit(
+            :trace_id, :name, :kind,
+            :started_at, :ended_at, :duration_ms,
+            :request_id, :request_method, :request_path, :controller, :action, :status,
+            :view_ms, :db_ms, :external_ms, :cache_ms,
+            :job_class, :job_id, :queue,
+            :environment, :commit, :host, :user_id,
+            :error, :error_class, :error_message,
+            spans: [:span_id, :parent_span_id, :name, :kind, :started_at, :ended_at, :duration_ms, :error, :error_class, :error_message, data: {}]
+          )
+
           trace = TraceProcessor.new(
             project: current_project,
-            payload: trace_payload.to_h
+            payload: permitted.to_h
           ).process!
 
           results << { id: trace.id, trace_id: trace.trace_id }
@@ -71,6 +83,7 @@ module Api
           :trace_id, :name, :kind,
           :started_at, :ended_at, :duration_ms,
           :request_id, :request_method, :request_path, :controller, :action, :status,
+          :view_ms, :db_ms, :external_ms, :cache_ms,
           :job_class, :job_id, :queue,
           :environment, :commit, :host, :user_id,
           :error, :error_class, :error_message,

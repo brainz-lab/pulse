@@ -1,0 +1,107 @@
+<div class="space-y-6">
+  <% if @channel.errors.any? %>
+    <div class="rounded-xl p-4" style="background: #FEF2F2; border: 1px solid #FECACA;">
+      <p class="text-[14px] font-medium" style="color: #991B1B;"><%= pluralize(@channel.errors.count, "error") %> prevented this channel from being saved:</p>
+      <ul class="mt-2 text-[13px] list-disc list-inside" style="color: #991B1B;">
+        <% @channel.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Basic Info -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Basic Info</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Name</label>
+          <%= f.text_field :name, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "Production Slack" %>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Type</label>
+          <%= f.select :kind, NotificationChannel::KINDS.map { |k| [k.titleize, k] }, {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", data: { action: "change->notification-channel#updateConfig" } %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= f.check_box :enabled, class: "rounded", style: "accent-color: #22C55E;" %>
+          <label class="text-[13px]" style="color: #6B6760;">Enabled</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Configuration</h3>
+
+      <!-- Webhook config -->
+      <div id="config-webhook" class="space-y-4" style="display: <%= @channel.kind == 'webhook' || @channel.new_record? ? 'block' : 'none' %>;">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Webhook URL</label>
+          <%= text_field_tag "notification_channel[config][url]", @channel.config['url'], class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "https://api.example.com/webhook" %>
+        </div>
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Headers (one per line: Key: Value)</label>
+          <% headers_str = @channel.config['headers']&.map { |k, v| "#{k}: #{v}" }&.join("\n") %>
+          <%= text_area_tag "notification_channel[config][headers]", headers_str, rows: 3, class: "w-full px-3 py-2 rounded-lg text-[14px] font-mono", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "Authorization: Bearer token" %>
+        </div>
+      </div>
+
+      <!-- Email config -->
+      <div id="config-email" class="space-y-4" style="display: <%= @channel.kind == 'email' ? 'block' : 'none' %>;">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Email Addresses (comma-separated)</label>
+          <%= text_field_tag "notification_channel[config][addresses]", @channel.config['addresses']&.join(', '), class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "ops@example.com, alerts@example.com" %>
+        </div>
+      </div>
+
+      <!-- Slack config -->
+      <div id="config-slack" class="space-y-4" style="display: <%= @channel.kind == 'slack' ? 'block' : 'none' %>;">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Slack Webhook URL</label>
+          <%= text_field_tag "notification_channel[config][webhook_url]", @channel.config['webhook_url'], class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "https://hooks.slack.com/services/..." %>
+        </div>
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Channel (optional)</label>
+          <%= text_field_tag "notification_channel[config][channel]", @channel.config['channel'], class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "#alerts" %>
+        </div>
+      </div>
+
+      <!-- PagerDuty config -->
+      <div id="config-pagerduty" class="space-y-4" style="display: <%= @channel.kind == 'pagerduty' ? 'block' : 'none' %>;">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Integration Key</label>
+          <%= text_field_tag "notification_channel[config][integration_key]", @channel.config['integration_key'], class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;", placeholder: "32 character integration key" %>
+        </div>
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: #6B6760;">Severity</label>
+          <%= select_tag "notification_channel[config][severity]", options_for_select([['Critical', 'critical'], ['Error', 'error'], ['Warning', 'warning'], ['Info', 'info']], @channel.config['severity'] || 'error'), class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <%= link_to "Cancel", dashboard_notification_channels_path, class: "px-4 py-2 text-[14px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+    <%= f.submit "Save Channel", class: "px-4 py-2 text-[14px] font-medium rounded-lg cursor-pointer", style: "background: #1A1A1A; color: #FFFFFE;" %>
+  </div>
+</div>
+
+<script>
+  // Toggle config sections based on kind selection
+  document.addEventListener('DOMContentLoaded', () => {
+    const kindSelect = document.querySelector('select[name="notification_channel[kind]"]')
+    if (!kindSelect) return
+
+    kindSelect.addEventListener('change', (e) => {
+      const kinds = ['webhook', 'email', 'slack', 'pagerduty']
+      kinds.forEach(k => {
+        const el = document.getElementById(`config-${k}`)
+        if (el) el.style.display = k === e.target.value ? 'block' : 'none'
+      })
+    })
+  })
+</script>

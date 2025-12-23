@@ -6,6 +6,15 @@ class MetricsAggregator
   def aggregate_minute!(timestamp)
     bucket = timestamp.beginning_of_minute
 
+    aggregate_requests!(bucket)
+    aggregate_external_http!(bucket)
+    aggregate_cache!(bucket)
+    aggregate_jobs!(bucket)
+  end
+
+  private
+
+  def aggregate_requests!(bucket)
     traces = @project.traces
       .where(started_at: bucket...bucket + 1.minute)
       .where(kind: 'request')
@@ -38,7 +47,167 @@ class MetricsAggregator
     )
   end
 
-  private
+  def aggregate_external_http!(bucket)
+    # Get all HTTP spans from traces in this minute
+    spans = @project.spans
+      .joins(:trace)
+      .where(traces: { started_at: bucket...bucket + 1.minute })
+      .where(kind: 'http')
+
+    return if spans.empty?
+
+    # Group by host (extracted from span data)
+    spans_by_host = spans.group_by { |s| s.data&.dig('host') || 'unknown' }
+
+    spans_by_host.each do |host, host_spans|
+      next if host == 'unknown'
+
+      durations = host_spans.map(&:duration_ms).compact.sort
+      next if durations.empty?
+
+      error_count = host_spans.count { |s| s.error }
+
+      create_or_update_aggregate(
+        name: 'external_http_duration',
+        bucket: bucket,
+        granularity: 'minute',
+        values: durations,
+        dimensions: { host: host }
+      )
+
+      create_or_update_aggregate(
+        name: 'external_http_count',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [host_spans.count],
+        dimensions: { host: host }
+      )
+
+      create_or_update_aggregate(
+        name: 'external_http_error_rate',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [(error_count.to_f / host_spans.count * 100).round(2)],
+        dimensions: { host: host }
+      )
+    end
+  end
+
+  def aggregate_cache!(bucket)
+    # Get all cache spans from traces in this minute
+    spans = @project.spans
+      .joins(:trace)
+      .where(traces: { started_at: bucket...bucket + 1.minute })
+      .where(kind: 'cache')
+
+    return if spans.empty?
+
+    # Calculate hit rate
+    reads = spans.select { |s| s.data&.dig('operation') == 'read' }
+    hits = reads.select { |s| s.data&.dig('hit') == true }
+    misses = reads.select { |s| s.data&.dig('hit') == false }
+
+    if reads.any?
+      hit_rate = (hits.count.to_f / reads.count * 100).round(2)
+      create_or_update_aggregate(
+        name: 'cache_hit_rate',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [hit_rate]
+      )
+
+      create_or_update_aggregate(
+        name: 'cache_hits',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [hits.count]
+      )
+
+      create_or_update_aggregate(
+        name: 'cache_misses',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [misses.count]
+      )
+    end
+
+    # Cache operation durations
+    durations = spans.map(&:duration_ms).compact.sort
+    if durations.any?
+      create_or_update_aggregate(
+        name: 'cache_duration',
+        bucket: bucket,
+        granularity: 'minute',
+        values: durations
+      )
+    end
+  end
+
+  def aggregate_jobs!(bucket)
+    traces = @project.traces
+      .where(started_at: bucket...bucket + 1.minute)
+      .where(kind: 'job')
+      .where.not(duration_ms: nil)
+
+    return if traces.empty?
+
+    durations = traces.pluck(:duration_ms).sort
+
+    create_or_update_aggregate(
+      name: 'job_duration',
+      bucket: bucket,
+      granularity: 'minute',
+      values: durations
+    )
+
+    create_or_update_aggregate(
+      name: 'job_count',
+      bucket: bucket,
+      granularity: 'minute',
+      values: [traces.count]
+    )
+
+    error_count = traces.where(error: true).count
+    create_or_update_aggregate(
+      name: 'job_error_rate',
+      bucket: bucket,
+      granularity: 'minute',
+      values: [(error_count.to_f / traces.count * 100).round(2)]
+    )
+
+    # Queue wait time aggregation
+    wait_times = traces.where.not(queue_wait_ms: nil).pluck(:queue_wait_ms).sort
+    if wait_times.any?
+      create_or_update_aggregate(
+        name: 'job_queue_wait',
+        bucket: bucket,
+        granularity: 'minute',
+        values: wait_times
+      )
+    end
+
+    # Aggregate by queue
+    traces.pluck(:queue).uniq.compact.each do |queue|
+      queue_traces = traces.where(queue: queue)
+      queue_durations = queue_traces.pluck(:duration_ms).sort
+
+      create_or_update_aggregate(
+        name: 'job_duration',
+        bucket: bucket,
+        granularity: 'minute',
+        values: queue_durations,
+        dimensions: { queue: queue }
+      )
+
+      create_or_update_aggregate(
+        name: 'job_count',
+        bucket: bucket,
+        granularity: 'minute',
+        values: [queue_traces.count],
+        dimensions: { queue: queue }
+      )
+    end
+  end
 
   def create_or_update_aggregate(name:, bucket:, granularity:, values:, dimensions: {})
     sorted = values.sort

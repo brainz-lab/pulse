@@ -1,0 +1,13 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to dashboard_notification_channels_path, class: "text-[14px] hover:opacity-70", style: "color: #6B6760;" do %>
+      &larr; Notification Channels
+    <% end %>
+  </div>
+
+  <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">New Notification Channel</h1>
+
+  <%= form_with model: [:dashboard, @channel], local: true do |f| %>
+    <%= render 'form', f: f %>
+  <% end %>
+</div>

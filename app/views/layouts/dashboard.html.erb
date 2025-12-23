@@ -11,6 +11,12 @@
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
+  <script type="module">
+    // Ensure Stimulus controllers are initialized
+    import("controllers/application").then(m => {
+      console.log("[Layout] Stimulus initialized with", m.application.controllers.length, "controllers");
+    }).catch(e => console.error("[Layout] Failed to initialize:", e));
+  </script>
 </head>
 <body class="h-full antialiased" style="font-family: 'Inter', system-ui, sans-serif; background: #FAF9F7;">
   <div class="min-h-full">
@@ -37,6 +43,7 @@
                 <%= link_to "Endpoints", dashboard_endpoints_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'endpoints' ? '#1A1A1A' : '#8B8780'};" %>
                 <%= link_to "Queries", dashboard_queries_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'queries' ? '#1A1A1A' : '#8B8780'};" %>
                 <%= link_to "Metrics", dashboard_metrics_path, class: "font-medium transition-colors", style: "color: #{controller_name == 'metrics' ? '#1A1A1A' : '#8B8780'};" %>
+                <%= link_to "Alerts", dashboard_alerts_path, class: "font-medium transition-colors", style: "color: #{%w[alerts alert_rules notification_channels].include?(controller_name) ? '#1A1A1A' : '#8B8780'};" %>
               </nav>
               <%= link_to dashboard_projects_path, class: "text-[13px] font-medium px-3 py-1.5 rounded-lg transition-colors hover:opacity-80", style: "background: #F0EFED; color: #6B6760;" do %>
                 Projects
