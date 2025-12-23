@@ -1,6 +1,8 @@
 class Trace < ApplicationRecord
   include Timescaledb::Rails::Model
 
+  self.primary_key = "id"
+
   belongs_to :project
   has_many :spans, dependent: :destroy
 

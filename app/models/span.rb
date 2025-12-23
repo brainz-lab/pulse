@@ -1,6 +1,8 @@
 class Span < ApplicationRecord
   include Timescaledb::Rails::Model
 
+  self.primary_key = "id"
+
   belongs_to :trace
   belongs_to :project
 
