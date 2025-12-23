@@ -353,6 +353,8 @@ GEM
     thruster (0.1.17-arm64-darwin)
     thruster (0.1.17-x86_64-linux)
     timeout (0.6.0)
+    timescaledb-rails (0.1.6)
+      rails (>= 6.0)
     tsort (0.2.0)
     turbo-rails (2.0.20)
       actionpack (>= 7.1.0)
@@ -404,6 +406,7 @@ DEPENDENCIES
   stimulus-rails
   tailwindcss-rails
   thruster
+  timescaledb-rails
   turbo-rails
   tzinfo-data
   web-console

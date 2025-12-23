@@ -1,4 +1,6 @@
 class MetricPoint < ApplicationRecord
+  include Timescaledb::Rails::Model
+
   belongs_to :project
   belongs_to :metric
 

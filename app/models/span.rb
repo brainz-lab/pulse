@@ -1,4 +1,6 @@
 class Span < ApplicationRecord
+  include Timescaledb::Rails::Model
+
   belongs_to :trace
   belongs_to :project
 
