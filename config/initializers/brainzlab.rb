@@ -172,9 +172,9 @@ Rails.application.config.after_initialize do
     event = ActiveSupport::Notifications::Event.new(*args)
     job = event.payload[:job]
 
-    started_at = event.time
     duration_ms = event.duration.round(2)
-    ended_at = started_at + (duration_ms / 1000.0)
+    started_at = event.end - (duration_ms / 1000.0)
+    ended_at = event.end
 
     begin
       Trace.create!(
@@ -210,9 +210,9 @@ Rails.application.config.after_initialize do
 
     next unless error
 
-    started_at = event.time
     duration_ms = event.duration.round(2)
-    ended_at = started_at + (duration_ms / 1000.0)
+    started_at = event.end - (duration_ms / 1000.0)
+    ended_at = event.end
 
     begin
       Trace.create!(

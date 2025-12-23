@@ -6,6 +6,17 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# MinIO - S3-compatible storage for development
+# Access MinIO Console at http://localhost:9001 (minioadmin/minioadmin)
+minio:
+  service: S3
+  endpoint: <%= ENV.fetch("MINIO_ENDPOINT", "http://localhost:9000") %>
+  access_key_id: <%= ENV.fetch("MINIO_ACCESS_KEY", "minioadmin") %>
+  secret_access_key: <%= ENV.fetch("MINIO_SECRET_KEY", "minioadmin") %>
+  bucket: <%= ENV.fetch("MINIO_BUCKET", "brainzlab-dev") %>
+  region: us-east-1
+  force_path_style: true
+
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3
