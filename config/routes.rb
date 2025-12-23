@@ -64,6 +64,12 @@ Rails.application.routes.draw do
     resources :alerts, only: [:index, :show]
     resources :alert_rules, except: [:edit]
     resources :notification_channels, except: [:edit]
+
+    # Dev Tools (development only)
+    resource :dev_tools, only: [:show], controller: 'dev_tools' do
+      post 'clean_traces'
+      post 'clean_all'
+    end
   end
 
   # Health check
