@@ -6,22 +6,29 @@
 #
 # Set BRAINZLAB_SDK_ENABLED=false to disable SDK initialization
 # Useful for running migrations before SDK is ready
+#
+# Set BRAINZLAB_LOCAL_DEV=true to enable cross-service integrations
+# (Recall logging, Reflex error tracking). Off by default to avoid double monitoring.
 
 # Skip during asset precompilation or when explicitly disabled
 return if ENV["BRAINZLAB_SDK_ENABLED"] == "false"
 return if ENV["SECRET_KEY_BASE_DUMMY"].present?
 
+# Cross-service integrations only enabled when BRAINZLAB_LOCAL_DEV=true
+local_dev_mode = ENV["BRAINZLAB_LOCAL_DEV"] == "true"
+
 BrainzLab.configure do |config|
   # App name for auto-provisioning projects
   config.app_name = "pulse"
 
-  # Recall logging configuration
+  # Recall logging configuration (only in local dev mode)
+  config.recall_enabled = local_dev_mode
   config.recall_url = ENV.fetch("RECALL_URL", "http://recall.localhost")
   config.recall_master_key = ENV["RECALL_MASTER_KEY"]
   config.recall_min_level = Rails.env.production? ? :info : :debug
 
-  # Reflex error tracking configuration
-  config.reflex_enabled = true
+  # Reflex error tracking configuration (only in local dev mode)
+  config.reflex_enabled = local_dev_mode
   config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex.localhost")
   config.reflex_master_key = ENV["REFLEX_MASTER_KEY"]
 
@@ -67,9 +74,11 @@ end
 Rails.application.config.middleware.insert_after ActionDispatch::RequestId, PulseSelfTrackMiddleware
 
 Rails.application.config.after_initialize do
-  # Provision Recall and Reflex projects early so we have credentials
-  BrainzLab::Recall.ensure_provisioned!
-  BrainzLab::Reflex.ensure_provisioned!
+  # Provision Recall and Reflex projects only in local dev mode
+  if local_dev_mode
+    BrainzLab::Recall.ensure_provisioned!
+    BrainzLab::Reflex.ensure_provisioned!
+  end
 
   # Find or create the pulse project for self-tracking
   project = Project.find_or_create_by!(name: "pulse") do |p|
@@ -86,7 +95,8 @@ Rails.application.config.after_initialize do
   end
 
   Rails.logger.info "[Pulse] Self-tracking enabled for project: #{project.id}"
-  Rails.logger.info "[Pulse] Recall logging: #{BrainzLab.configuration.valid? ? 'enabled' : 'disabled'}"
+  Rails.logger.info "[Pulse] Local dev mode: #{local_dev_mode ? 'enabled' : 'disabled'}"
+  Rails.logger.info "[Pulse] Recall logging: #{BrainzLab.configuration.recall_enabled ? 'enabled' : 'disabled'}"
   Rails.logger.info "[Pulse] Reflex error tracking: #{BrainzLab.configuration.reflex_enabled ? 'enabled' : 'disabled'}"
 
   # Subscribe to request completion events for Recall logging and self-tracking
@@ -100,8 +110,8 @@ Rails.application.config.after_initialize do
     next if payload[:path]&.start_with?("/api/v1/traces")
     next if payload[:path]&.start_with?("/api/v1/metrics")
 
-    # Log to Recall
-    if BrainzLab.configuration.valid?
+    # Log to Recall (only in local dev mode)
+    if local_dev_mode && BrainzLab.configuration.recall_enabled
       BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}",
         controller: payload[:controller],
         action: payload[:action],
@@ -156,8 +166,8 @@ Rails.application.config.after_initialize do
     job = event.payload[:job]
 
     started_at = event.time
-    ended_at = event.end
     duration_ms = event.duration.round(2)
+    ended_at = started_at + (duration_ms / 1000.0)
 
     begin
       Trace.create!(
@@ -194,8 +204,8 @@ Rails.application.config.after_initialize do
     next unless error
 
     started_at = event.time
-    ended_at = event.end
     duration_ms = event.duration.round(2)
+    ended_at = started_at + (duration_ms / 1000.0)
 
     begin
       Trace.create!(

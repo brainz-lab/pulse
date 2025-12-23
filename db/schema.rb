@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_23_020446) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_23_023220) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -29,7 +29,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_23_020446) do
     t.float "p99"
     t.uuid "project_id", null: false
     t.float "sum"
-    t.index ["project_id", "name", "bucket", "granularity"], name: "idx_agg_metrics_lookup"
+    t.index ["project_id", "name", "bucket", "granularity"], name: "idx_agg_metrics_lookup", unique: true
     t.index ["project_id"], name: "index_aggregated_metrics_on_project_id"
   end
 
