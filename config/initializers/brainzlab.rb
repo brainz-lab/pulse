@@ -32,6 +32,9 @@ BrainzLab.configure do |config|
   config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex.localhost")
   config.reflex_master_key = ENV["REFLEX_MASTER_KEY"]
 
+  # Buffer settings for development
+  config.recall_buffer_size = 1 if Rails.env.development?  # Send logs immediately in dev
+
   # Disable Pulse SDK (we use direct DB inserts for self-tracking)
   config.pulse_enabled = false
 

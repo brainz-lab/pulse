@@ -2,7 +2,12 @@ class Span < ApplicationRecord
   belongs_to :trace
   belongs_to :project
 
-  KINDS = %w[db http cache render job cable custom].freeze
+  KINDS = %w[
+    db http cache render job cable custom
+    elasticsearch graphql graphql.field
+    mongodb mailer redis
+    grape grape.render grape.filter grape.format
+  ].freeze
 
   validates :span_id, presence: true
   validates :name, presence: true
