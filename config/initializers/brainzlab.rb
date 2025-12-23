@@ -7,7 +7,9 @@
 # Set BRAINZLAB_SDK_ENABLED=false to disable SDK initialization
 # Useful for running migrations before SDK is ready
 
+# Skip during asset precompilation or when explicitly disabled
 return if ENV["BRAINZLAB_SDK_ENABLED"] == "false"
+return if ENV["SECRET_KEY_BASE_DUMMY"].present?
 
 BrainzLab.configure do |config|
   # App name for auto-provisioning projects
