@@ -101,6 +101,10 @@ Rails.application.config.after_initialize do
     end
   end
 
+  # Store project_id instead of the instance to avoid class reloading issues in development
+  # (Project class gets reloaded but the cached instance becomes stale)
+  pulse_project_id = project.id
+
   Rails.logger.info "[Pulse] Self-tracking enabled for project: #{project.id}"
   Rails.logger.info "[Pulse] Local dev mode: #{local_dev_mode ? 'enabled' : 'disabled'}"
   Rails.logger.info "[Pulse] Recall logging: #{BrainzLab.configuration.recall_enabled ? 'enabled' : 'disabled'}"
@@ -111,11 +115,8 @@ Rails.application.config.after_initialize do
     event = ActiveSupport::Notifications::Event.new(*args)
     payload = event.payload
 
-    # Skip ingest endpoints to reduce noise
-    next if payload[:controller]&.include?("TracesController")
-    next if payload[:controller]&.include?("MetricsController")
-    next if payload[:path]&.start_with?("/api/v1/traces")
-    next if payload[:path]&.start_with?("/api/v1/metrics")
+    # Skip all API ingest endpoints to avoid self-tracking noise
+    next if payload[:path]&.start_with?("/api/v1/")
 
     # Log to Recall (only in local dev mode)
     if local_dev_mode && BrainzLab.configuration.recall_enabled
@@ -140,7 +141,7 @@ Rails.application.config.after_initialize do
 
     begin
       Trace.create!(
-        project: project,
+        project_id: pulse_project_id,
         trace_id: Thread.current[:pulse_request_id] || SecureRandom.uuid,
         name: "#{payload[:method]} #{payload[:path]}",
         kind: "request",
@@ -178,7 +179,7 @@ Rails.application.config.after_initialize do
 
     begin
       Trace.create!(
-        project: project,
+        project_id: pulse_project_id,
         trace_id: job.job_id || SecureRandom.uuid,
         name: "Job #{job.class.name}",
         kind: "job",
@@ -216,7 +217,7 @@ Rails.application.config.after_initialize do
 
     begin
       Trace.create!(
-        project: project,
+        project_id: pulse_project_id,
         trace_id: job.job_id || SecureRandom.uuid,
         name: "Job #{job.class.name}",
         kind: "job",

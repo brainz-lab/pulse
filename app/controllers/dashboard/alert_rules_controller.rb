@@ -26,6 +26,7 @@ module Dashboard
 
       if @alert_rule.save
         update_channels
+        AlertsChannel.broadcast_alert_rule_created(@project, @alert_rule)
         redirect_to dashboard_alert_rules_path, notice: 'Alert rule created.'
       else
         @notification_channels = @project.notification_channels.enabled
@@ -36,6 +37,7 @@ module Dashboard
     def update
       if @alert_rule.update(alert_rule_params)
         update_channels
+        AlertsChannel.broadcast_alert_rule_updated(@project, @alert_rule)
         redirect_to dashboard_alert_rule_path(@alert_rule), notice: 'Alert rule updated.'
       else
         @notification_channels = @project.notification_channels.enabled
@@ -45,7 +47,9 @@ module Dashboard
     end
 
     def destroy
+      alert_rule_id = @alert_rule.id
       @alert_rule.destroy
+      AlertsChannel.broadcast_alert_rule_deleted(@project, alert_rule_id)
       redirect_to dashboard_alert_rules_path, notice: 'Alert rule deleted.'
     end
 

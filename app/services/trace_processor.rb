@@ -7,11 +7,9 @@ class TraceProcessor
   def process!
     trace = find_or_create_trace
 
-    # Process spans if included
+    # Batch insert spans if included
     if @payload[:spans].present?
-      @payload[:spans].each do |span_data|
-        create_span(trace, span_data)
-      end
+      create_spans_batch(trace, @payload[:spans])
     end
 
     # Complete trace if ended_at is provided
@@ -66,21 +64,32 @@ class TraceProcessor
     end
   end
 
-  def create_span(trace, span_data)
-    trace.spans.create!(
-      project: @project,
-      span_id: span_data[:span_id] || SecureRandom.hex(8),
-      parent_span_id: span_data[:parent_span_id],
-      name: span_data[:name],
-      kind: span_data[:kind] || 'custom',
-      started_at: parse_timestamp(span_data[:started_at]) || Time.current,
-      ended_at: parse_timestamp(span_data[:ended_at]),
-      duration_ms: span_data[:duration_ms],
-      data: span_data[:data] || {},
-      error: span_data[:error] || false,
-      error_class: span_data[:error_class],
-      error_message: span_data[:error_message]
-    )
+  def create_spans_batch(trace, spans_data)
+    return if spans_data.empty?
+
+    now = Time.current
+    records = spans_data.map do |span_data|
+      {
+        id: SecureRandom.uuid,
+        trace_id: trace.id,
+        project_id: @project.id,
+        span_id: span_data[:span_id] || SecureRandom.hex(8),
+        parent_span_id: span_data[:parent_span_id],
+        name: span_data[:name],
+        kind: span_data[:kind] || 'custom',
+        started_at: parse_timestamp(span_data[:started_at]) || now,
+        ended_at: parse_timestamp(span_data[:ended_at]),
+        duration_ms: span_data[:duration_ms],
+        data: span_data[:data] || {},
+        error: span_data[:error] || false,
+        error_class: span_data[:error_class],
+        error_message: span_data[:error_message],
+        created_at: now,
+        updated_at: now
+      }
+    end
+
+    Span.insert_all(records)
   end
 
   def build_name

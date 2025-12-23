@@ -20,6 +20,7 @@ module Dashboard
       @channel = @project.notification_channels.build(channel_params)
 
       if @channel.save
+        AlertsChannel.broadcast_notification_channel_created(@project, @channel)
         redirect_to dashboard_notification_channels_path, notice: 'Notification channel created.'
       else
         render :new, status: :unprocessable_entity
@@ -28,6 +29,7 @@ module Dashboard
 
     def update
       if @channel.update(channel_params)
+        AlertsChannel.broadcast_notification_channel_updated(@project, @channel)
         redirect_to dashboard_notification_channel_path(@channel), notice: 'Channel updated.'
       else
         render :show, status: :unprocessable_entity
@@ -35,7 +37,9 @@ module Dashboard
     end
 
     def destroy
+      channel_id = @channel.id
       @channel.destroy
+      AlertsChannel.broadcast_notification_channel_deleted(@project, channel_id)
       redirect_to dashboard_notification_channels_path, notice: 'Channel deleted.'
     end
 
