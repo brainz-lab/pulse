@@ -34,7 +34,7 @@ Rails.application.routes.draw do
   end
 
   # SSO from Platform
-  get 'auth/sso', to: 'sso#callback'
+  get 'sso/callback', to: 'sso#callback'
 
   # Dashboard
   namespace :dashboard do

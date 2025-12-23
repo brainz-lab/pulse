@@ -1,32 +1,34 @@
 class SsoController < ApplicationController
-  # GET /auth/sso - Callback from Platform SSO
+  # GET /sso/callback - Callback from Platform SSO
   def callback
     token = params[:token]
 
     if token.blank?
-      redirect_to ENV['BRAINZLAB_PLATFORM_URL'] || 'http://localhost:2999'
+      redirect_to platform_external_url, allow_other_host: true
       return
     end
 
-    # Validate token with Platform
+    # Validate token with Platform (internal Docker network)
     user_info = validate_sso_token(token)
 
     if user_info[:valid]
       session[:platform_user_id] = user_info[:user_id]
       session[:platform_project_id] = user_info[:project_id]
-      session[:project_name] = user_info[:project_name]
-      session[:user_email] = user_info[:email]
+      session[:platform_organization_id] = user_info[:organization_id]
+      session[:project_slug] = user_info[:project_slug]
+      session[:user_email] = user_info[:user_email]
+      session[:user_name] = user_info[:user_name]
 
       redirect_to params[:return_to] || dashboard_root_path
     else
-      redirect_to "#{platform_url}/login?error=sso_failed"
+      redirect_to "#{platform_external_url}/login?error=sso_failed", allow_other_host: true
     end
   end
 
   private
 
   def validate_sso_token(token)
-    uri = URI("#{platform_url}/api/v1/sso/validate")
+    uri = URI("#{platform_internal_url}/api/v1/sso/validate")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = uri.scheme == 'https'
 
@@ -47,7 +49,13 @@ class SsoController < ApplicationController
     { valid: false }
   end
 
-  def platform_url
-    ENV['BRAINZLAB_PLATFORM_URL'] || 'http://localhost:2999'
+  # Internal URL for service-to-service API calls (Docker network)
+  def platform_internal_url
+    ENV['BRAINZLAB_PLATFORM_URL'] || 'http://platform:3000'
+  end
+
+  # External URL for browser redirects (Traefik)
+  def platform_external_url
+    ENV['BRAINZLAB_PLATFORM_EXTERNAL_URL'] || 'http://platform.localhost'
   end
 end
