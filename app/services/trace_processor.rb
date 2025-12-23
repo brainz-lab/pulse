@@ -83,9 +83,7 @@ class TraceProcessor
         data: span_data[:data] || {},
         error: span_data[:error] || false,
         error_class: span_data[:error_class],
-        error_message: span_data[:error_message],
-        created_at: now,
-        updated_at: now
+        error_message: span_data[:error_message]
       }
     end
 

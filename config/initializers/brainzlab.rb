@@ -174,8 +174,8 @@ Rails.application.config.after_initialize do
     job = event.payload[:job]
 
     duration_ms = event.duration.round(2)
-    started_at = event.end - (duration_ms / 1000.0)
-    ended_at = event.end
+    ended_at = Time.current
+    started_at = ended_at - (duration_ms / 1000.0)
 
     begin
       Trace.create!(
@@ -212,8 +212,8 @@ Rails.application.config.after_initialize do
     next unless error
 
     duration_ms = event.duration.round(2)
-    started_at = event.end - (duration_ms / 1000.0)
-    ended_at = event.end
+    ended_at = Time.current
+    started_at = ended_at - (duration_ms / 1000.0)
 
     begin
       Trace.create!(
