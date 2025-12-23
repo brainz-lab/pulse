@@ -1,0 +1,62 @@
+<div class="space-y-8">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Dev Tools</h1>
+      <p class="text-[14px] mt-1" style="color: #8B8780;">Development utilities for cleaning up test data</p>
+    </div>
+    <span class="px-3 py-1 text-[12px] font-medium rounded-full" style="background: #FEF3C7; color: #92400E;">
+      Development Only
+    </span>
+  </div>
+
+  <% if notice %>
+    <div class="px-4 py-3 rounded-lg text-[14px]" style="background: #D1FAE5; color: #065F46;">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <!-- Current Stats -->
+  <div class="rounded-xl p-6" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h2 class="text-[15px] font-medium mb-4" style="color: #1A1A1A;">Current Data</h2>
+    <div class="grid grid-cols-3 gap-4">
+      <% @stats.each do |name, count| %>
+        <div class="p-4 rounded-lg" style="background: #FAF9F7;">
+          <p class="text-[24px] font-semibold" style="color: #1A1A1A;"><%= number_with_delimiter(count) %></p>
+          <p class="text-[13px]" style="color: #8B8780;"><%= name.to_s.titleize %></p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Clean Actions -->
+  <div class="rounded-xl p-6" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h2 class="text-[15px] font-medium mb-4" style="color: #1A1A1A;">Clean Up Actions</h2>
+    <div class="space-y-4">
+      <!-- Clean Traces -->
+      <div class="flex items-center justify-between p-4 rounded-lg" style="background: #FAF9F7;">
+        <div>
+          <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Clean Traces & Spans</h3>
+          <p class="text-[13px]" style="color: #8B8780;">Removes all traces, spans, and aggregated metrics. Keeps projects and alert rules.</p>
+        </div>
+        <%= button_to "Clean Traces", clean_traces_dashboard_dev_tools_path,
+            method: :post,
+            data: { turbo_confirm: "This will delete all traces and spans. Continue?" },
+            class: "px-4 py-2 text-[13px] font-medium rounded-lg transition-colors",
+            style: "background: #FEF3C7; color: #92400E;" %>
+      </div>
+
+      <!-- Clean All -->
+      <div class="flex items-center justify-between p-4 rounded-lg" style="border: 1px solid #FCA5A5; background: #FEF2F2;">
+        <div>
+          <h3 class="text-[14px] font-medium" style="color: #991B1B;">Clean Everything</h3>
+          <p class="text-[13px]" style="color: #B91C1C;">Removes all data except projects. Use with caution!</p>
+        </div>
+        <%= button_to "Clean All", clean_all_dashboard_dev_tools_path,
+            method: :post,
+            data: { turbo_confirm: "This will delete ALL data (traces, spans, metrics, alerts). Are you sure?" },
+            class: "px-4 py-2 text-[13px] font-medium rounded-lg transition-colors",
+            style: "background: #DC2626; color: white;" %>
+      </div>
+    </div>
+  </div>
+</div>
