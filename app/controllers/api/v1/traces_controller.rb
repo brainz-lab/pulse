@@ -68,7 +68,7 @@ module Api
 
       # GET /api/v1/traces/:id
       def show
-        trace = current_project.traces.find(params[:id])
+        trace = current_project.traces.find_by!(trace_id: params[:id])
 
         render json: {
           trace: trace,

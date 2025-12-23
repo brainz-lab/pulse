@@ -11,7 +11,7 @@ module Dashboard
     end
 
     def show
-      @trace = current_project.traces.find(params[:id])
+      @trace = current_project.traces.find_by!(trace_id: params[:id])
     end
   end
 end

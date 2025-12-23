@@ -80,7 +80,7 @@
           <% @jobs.each do |job| %>
             <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
               <td class="p-4">
-                <%= link_to job.name, dashboard_trace_path(job), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
+                <%= link_to job.name, dashboard_trace_path(job.trace_id), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
               </td>
               <td class="p-4">
                 <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #6B6760;">
