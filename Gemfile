@@ -42,12 +42,13 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
-# BrainzLab SDK for APM
-if ENV["BRAINZLAB_SDK_PATH"] || File.exist?("../brainzlab-sdk")
-  gem "brainzlab", path: ENV.fetch("BRAINZLAB_SDK_PATH", "../brainzlab-sdk")
-else
-  gem "brainzlab"
+# BrainzLab SDK (optional - only include with local path until gem is published)
+if ENV["BRAINZLAB_SDK_PATH"]
+  gem "brainzlab", path: ENV["BRAINZLAB_SDK_PATH"]
+elsif File.exist?("../brainzlab-sdk")
+  gem "brainzlab", path: "../brainzlab-sdk"
 end
+# Once published to RubyGems, uncomment: gem "brainzlab"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
