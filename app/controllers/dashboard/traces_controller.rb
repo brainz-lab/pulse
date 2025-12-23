@@ -1,13 +1,8 @@
 module Dashboard
   class TracesController < BaseController
     def index
-      @traces = current_project.traces.recent
-
-      @traces = @traces.where(kind: params[:kind]) if params[:kind]
-      @traces = @traces.slow(params[:threshold] || 500) if params[:slow]
-      @traces = @traces.errors if params[:errors]
-
-      @traces = @traces.limit(100)
+      # Redirect to requests - traces index is accessed via requests
+      redirect_to dashboard_requests_path(params.permit(:kind, :slow, :errors))
     end
 
     def show
