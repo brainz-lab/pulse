@@ -2,34 +2,28 @@
 
 # Self-tracking for Pulse APM
 # Uses direct database inserts for traces to avoid HTTP infinite loops
-# Uses SDK for Recall logging and Reflex error tracking
+# Sends to Recall and Reflex for cross-service monitoring
 #
 # Set BRAINZLAB_SDK_ENABLED=false to disable SDK initialization
 # Useful for running migrations before SDK is ready
-#
-# Set BRAINZLAB_LOCAL_DEV=true to enable cross-service integrations
-# (Recall logging, Reflex error tracking). Off by default to avoid double monitoring.
 
 # Skip during asset precompilation or when explicitly disabled
 return if ENV["BRAINZLAB_SDK_ENABLED"] == "false"
 return if ENV["SECRET_KEY_BASE_DUMMY"].present?
 
-# Cross-service integrations only enabled when BRAINZLAB_LOCAL_DEV=true
-local_dev_mode = ENV["BRAINZLAB_LOCAL_DEV"] == "true"
-
 BrainzLab.configure do |config|
   # App name for auto-provisioning projects
   config.app_name = "pulse"
 
-  # Recall logging configuration (only in local dev mode)
-  config.recall_enabled = local_dev_mode
-  config.recall_url = ENV.fetch("RECALL_URL", "http://recall.localhost")
+  # Enable Recall logging (send logs to Recall)
+  config.recall_enabled = ENV.fetch("RECALL_ENABLED", "true") == "true"
+  config.recall_url = ENV.fetch("RECALL_URL", "http://recall:3000")
   config.recall_master_key = ENV["RECALL_MASTER_KEY"]
   config.recall_min_level = Rails.env.production? ? :info : :debug
 
-  # Reflex error tracking configuration (only in local dev mode)
-  config.reflex_enabled = local_dev_mode
-  config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex.localhost")
+  # Enable Reflex error tracking (send errors to Reflex)
+  config.reflex_enabled = ENV.fetch("REFLEX_ENABLED", "true") == "true"
+  config.reflex_url = ENV.fetch("REFLEX_URL", "http://reflex:3000")
   config.reflex_master_key = ENV["REFLEX_MASTER_KEY"]
 
   # Buffer settings for development
@@ -84,11 +78,9 @@ Rails.application.config.after_initialize do
   # Skip if running migrations or if tables don't exist yet
   next unless ActiveRecord::Base.connection.table_exists?(:projects) rescue false
 
-  # Provision Recall and Reflex projects only in local dev mode
-  if local_dev_mode
-    BrainzLab::Recall.ensure_provisioned!
-    BrainzLab::Reflex.ensure_provisioned!
-  end
+  # Provision Recall and Reflex projects (auto-creates project in each service)
+  BrainzLab::Recall.ensure_provisioned! if BrainzLab.configuration.recall_enabled
+  BrainzLab::Reflex.ensure_provisioned! if BrainzLab.configuration.reflex_enabled
 
   # Find or create the pulse project for self-tracking
   project = Project.find_or_create_by!(name: "pulse") do |p|
@@ -109,7 +101,6 @@ Rails.application.config.after_initialize do
   pulse_project_id = project.id
 
   Rails.logger.info "[Pulse] Self-tracking enabled for project: #{project.id}"
-  Rails.logger.info "[Pulse] Local dev mode: #{local_dev_mode ? 'enabled' : 'disabled'}"
   Rails.logger.info "[Pulse] Recall logging: #{BrainzLab.configuration.recall_enabled ? 'enabled' : 'disabled'}"
   Rails.logger.info "[Pulse] Reflex error tracking: #{BrainzLab.configuration.reflex_enabled ? 'enabled' : 'disabled'}"
 
@@ -121,8 +112,8 @@ Rails.application.config.after_initialize do
     # Skip all API ingest endpoints to avoid self-tracking noise
     next if payload[:path]&.start_with?("/api/v1/")
 
-    # Log to Recall (only in local dev mode)
-    if local_dev_mode && BrainzLab.configuration.recall_enabled
+    # Log to Recall (if enabled)
+    if BrainzLab.configuration.recall_enabled
       BrainzLab::Recall.info("#{payload[:method]} #{payload[:path]}",
         controller: payload[:controller],
         action: payload[:action],

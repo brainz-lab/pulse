@@ -34,34 +34,35 @@ class TraceProcessor
   private
 
   def find_or_create_trace
-    @project.traces.find_or_create_by!(trace_id: @payload[:trace_id]) do |t|
-      t.name = @payload[:name] || build_name
-      t.kind = @payload[:kind] || 'request'
-      t.started_at = parse_timestamp(@payload[:started_at]) || Time.current
+    # Use find_by + create! to avoid issues with TimescaleDB composite primary keys
+    # (find_or_create_by! fails with "No unique index found for id")
+    trace = @project.traces.find_by(trace_id: @payload[:trace_id])
+    return trace if trace
 
-      t.request_id = @payload[:request_id]
-      t.request_method = @payload[:request_method]
-      t.request_path = @payload[:request_path]
-      t.controller = @payload[:controller]
-      t.action = @payload[:action]
-      t.status = @payload[:status]
-
-      # Timing breakdown
-      t.view_duration_ms = @payload[:view_ms] || 0.0
-      t.db_duration_ms = @payload[:db_ms] || 0.0
-      t.external_duration_ms = @payload[:external_ms] || 0.0
-
-      t.job_class = @payload[:job_class]
-      t.job_id = @payload[:job_id]
-      t.queue = @payload[:queue]
-      t.queue_wait_ms = @payload[:queue_wait_ms]
-      t.executions = @payload[:executions] || 1
-
-      t.environment = @payload[:environment]
-      t.commit = @payload[:commit]
-      t.host = @payload[:host]
-      t.user_id = @payload[:user_id]
-    end
+    @project.traces.create!(
+      trace_id: @payload[:trace_id],
+      name: @payload[:name] || build_name,
+      kind: @payload[:kind] || 'request',
+      started_at: parse_timestamp(@payload[:started_at]) || Time.current,
+      request_id: @payload[:request_id],
+      request_method: @payload[:request_method],
+      request_path: @payload[:request_path],
+      controller: @payload[:controller],
+      action: @payload[:action],
+      status: @payload[:status],
+      view_duration_ms: @payload[:view_ms] || 0.0,
+      db_duration_ms: @payload[:db_ms] || 0.0,
+      external_duration_ms: @payload[:external_ms] || 0.0,
+      job_class: @payload[:job_class],
+      job_id: @payload[:job_id],
+      queue: @payload[:queue],
+      queue_wait_ms: @payload[:queue_wait_ms],
+      executions: @payload[:executions] || 1,
+      environment: @payload[:environment],
+      commit: @payload[:commit],
+      host: @payload[:host],
+      user_id: @payload[:user_id]
+    )
   end
 
   def create_spans_batch(trace, spans_data)
@@ -69,6 +70,11 @@ class TraceProcessor
 
     now = Time.current
     records = spans_data.map do |span_data|
+      # Convert data to JSON for JSONB column
+      data = span_data[:data]
+      data = data.to_unsafe_h if data.respond_to?(:to_unsafe_h)
+      data = (data || {}).to_json
+
       {
         id: SecureRandom.uuid,
         trace_id: trace.id,
@@ -80,14 +86,32 @@ class TraceProcessor
         started_at: parse_timestamp(span_data[:started_at]) || now,
         ended_at: parse_timestamp(span_data[:ended_at]),
         duration_ms: span_data[:duration_ms],
-        data: span_data[:data] || {},
+        data: data,
         error: span_data[:error] || false,
         error_class: span_data[:error_class],
         error_message: span_data[:error_message]
       }
     end
 
-    Span.insert_all(records)
+    # Use raw SQL for bulk inserts to avoid Rails 8.1 unique index validation
+    # which fails for TimescaleDB hypertables with composite primary keys
+    bulk_insert_spans(records)
+  end
+
+  def bulk_insert_spans(records)
+    return if records.empty?
+
+    columns = records.first.keys
+    values = records.map do |record|
+      columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
+    end
+
+    sql = <<~SQL
+      INSERT INTO spans (#{columns.join(', ')})
+      VALUES #{values.map { |v| "(#{v})" }.join(', ')}
+    SQL
+
+    ActiveRecord::Base.connection.execute(sql)
   end
 
   def build_name
