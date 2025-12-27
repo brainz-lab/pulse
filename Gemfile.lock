@@ -1,3 +1,10 @@
+PATH
+  remote: /brainzlab-sdk
+  specs:
+    brainzlab (0.1.1)
+      concurrent-ruby (~> 1.0)
+      logger (~> 1.5)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -101,9 +108,6 @@ GEM
     bindex (0.8.1)
     bootsnap (1.19.0)
       msgpack (~> 1.2)
-    brainzlab (0.1.1)
-      concurrent-ruby (~> 1.0)
-      logger (~> 1.5)
     brakeman (7.1.1)
       racc
     builder (3.3.0)
@@ -382,7 +386,7 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk-s3
   bootsnap
-  brainzlab (~> 0.1.1)
+  brainzlab!
   brakeman
   bundler-audit
   debug

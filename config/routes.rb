@@ -10,6 +10,10 @@ Rails.application.routes.draw do
       post 'traces', to: 'traces#create'
       post 'traces/batch', to: 'traces#batch'
       get 'traces', to: 'traces#index'
+      # Signal integration endpoints
+      get 'traces/query', to: 'traces#query'
+      get 'traces/baseline', to: 'traces#baseline'
+      get 'traces/last', to: 'traces#last'
       get 'traces/:id', to: 'traces#show'
 
       # Spans (for adding to existing trace)
