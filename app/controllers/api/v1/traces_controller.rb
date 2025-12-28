@@ -19,11 +19,10 @@ module Api
       # POST /api/v1/traces/batch
       def batch
         traces_data = params[:traces] || params[:_json] || []
-        results = []
 
-        traces_data.each do |trace_payload|
-          # Permit all necessary trace parameters
-          permitted = trace_payload.permit(
+        # Permit all necessary trace parameters for each payload
+        payloads = traces_data.map do |trace_payload|
+          trace_payload.permit(
             :trace_id, :name, :kind,
             :started_at, :ended_at, :duration_ms,
             :request_id, :request_method, :request_path, :controller, :action, :status,
@@ -32,15 +31,16 @@ module Api
             :environment, :commit, :host, :user_id,
             :error, :error_class, :error_message,
             spans: [:span_id, :parent_span_id, :name, :kind, :started_at, :ended_at, :duration_ms, :error, :error_class, :error_message, data: {}]
-          )
-
-          trace = TraceProcessor.new(
-            project: current_project,
-            payload: permitted.to_h
-          ).process!
-
-          results << { id: trace.id, trace_id: trace.trace_id }
+          ).to_h
         end
+
+        # Use batch processing to avoid N+1 queries
+        traces = TraceProcessor.process_batch!(
+          project: current_project,
+          payloads: payloads
+        )
+
+        results = traces.map { |trace| { id: trace.id, trace_id: trace.trace_id } }
 
         track_usage!(results.size)
 

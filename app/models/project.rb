@@ -27,31 +27,44 @@ class Project < ApplicationRecord
     )
   end
 
-  # Key metrics summary
+  # Key metrics summary - optimized to use a single aggregate query
   def overview(since: 1.hour.ago)
     traces_scope = traces.where('started_at >= ?', since).where(kind: 'request')
 
+    # Single query to get all counts and averages to avoid N+1
+    stats = traces_scope.pick(
+      Arel.sql('COUNT(*)'),
+      Arel.sql('AVG(duration_ms)'),
+      Arel.sql('COUNT(*) FILTER (WHERE error = true)'),
+      Arel.sql("COUNT(*) FILTER (WHERE duration_ms <= #{apdex_t * 1000})"),
+      Arel.sql("COUNT(*) FILTER (WHERE duration_ms > #{apdex_t * 1000} AND duration_ms <= #{apdex_t * 4000})")
+    )
+
+    total, avg_duration, error_count, satisfied, tolerating = stats
+    total ||= 0
+    error_count ||= 0
+    satisfied ||= 0
+    tolerating ||= 0
+
+    # Calculate Apdex from the aggregated counts
+    apdex_score = total > 0 ? ((satisfied + (tolerating / 2.0)) / total).round(2) : 1.0
+
+    # Get percentiles with a single query
+    durations = traces_scope.where.not(duration_ms: nil).order(:duration_ms).pluck(:duration_ms)
+    p95_duration = durations.any? ? durations[(durations.length * 0.95).to_i] : nil
+    p99_duration = durations.any? ? durations[(durations.length * 0.99).to_i] : nil
+
     {
-      apdex: apdex(since: since),
-      throughput: traces_scope.count,
-      rpm: (traces_scope.count / ((Time.current - since) / 60.0)).round(1),
-      avg_duration: traces_scope.average(:duration_ms)&.round(2),
-      p95_duration: percentile(traces_scope, :duration_ms, 0.95),
-      p99_duration: percentile(traces_scope, :duration_ms, 0.99),
-      error_rate: error_rate(traces_scope),
-      error_count: traces_scope.where(error: true).count
+      apdex: apdex_score,
+      throughput: total,
+      rpm: total > 0 ? (total / ((Time.current - since) / 60.0)).round(1) : 0,
+      avg_duration: avg_duration&.round(2),
+      p95_duration: p95_duration,
+      p99_duration: p99_duration,
+      error_rate: total > 0 ? (error_count.to_f / total * 100).round(2) : 0,
+      error_count: error_count
     }
   end
 
   private
-
-  def percentile(scope, column, p)
-    scope.order(column).offset((scope.count * p).to_i).limit(1).pick(column)
-  end
-
-  def error_rate(scope)
-    total = scope.count
-    return 0 if total == 0
-    (scope.where(error: true).count.to_f / total * 100).round(2)
-  end
 end

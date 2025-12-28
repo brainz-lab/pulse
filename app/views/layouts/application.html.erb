@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full">
   <head>
-    <title><%= content_for(:title) || "Pulse" %></title>
+    <title><%= content_for(:title) || "Pulse" %> | Brainz Lab</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Pulse">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#F5F5F0">
+    <meta name="description" content="Pulse - Your app's vital signs. APM and performance monitoring for Rails apps.">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -18,14 +20,100 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%# Google Fonts - Inter for clean typography %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
+  <body class="h-full bg-gradient-subtle antialiased">
+    <%# Navigation Header %>
+    <header class="fixed top-0 inset-x-0 z-50 glass border-b border-cream-200">
+      <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <%# Logo %>
+          <div class="flex items-center gap-8">
+            <a href="/" class="flex items-center gap-2 text-text-primary hover:text-text-primary">
+              <svg class="w-8 h-8 text-anthropic-600" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.1"/>
+                <path d="M16 6C10.477 6 6 10.477 6 16s4.477 10 10 10 10-4.477 10-10S21.523 6 16 6zm0 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm-4 12a1 1 0 01-.707-1.707l3-3a1 1 0 011.414 0l2 2 4-4a1 1 0 111.414 1.414l-4.707 4.707a1 1 0 01-1.414 0L15 18.414l-2.293 2.293A1 1 0 0112 21z" fill="currentColor"/>
+              </svg>
+              <span class="text-lg font-semibold">Pulse</span>
+            </a>
+
+            <%# Main Navigation %>
+            <div class="hidden md:flex items-center gap-1">
+              <%= link_to "Dashboard", "#", class: "nav-link-active" %>
+              <%= link_to "Traces", "#", class: "nav-link" %>
+              <%= link_to "Metrics", "#", class: "nav-link" %>
+              <%= link_to "Alerts", "#", class: "nav-link" %>
+            </div>
+          </div>
+
+          <%# Right side %>
+          <div class="flex items-center gap-4">
+            <%# Status indicator %>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium">
+              <span class="metric-dot-success"></span>
+              <span>All systems operational</span>
+            </div>
+
+            <%# User menu placeholder %>
+            <button type="button" class="btn-ghost p-2">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <%# Main Content %>
+    <main class="pt-24 pb-12">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <%# Flash Messages %>
+        <% if notice %>
+          <div class="alert-success mb-6 animate-fade-in">
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p><%= notice %></p>
+          </div>
+        <% end %>
+
+        <% if alert %>
+          <div class="alert-error mb-6 animate-fade-in">
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p><%= alert %></p>
+          </div>
+        <% end %>
+
+        <%= yield %>
+      </div>
     </main>
+
+    <%# Footer %>
+    <footer class="border-t border-cream-200 bg-white/50">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-sm text-text-muted">
+            <span>Pulse by</span>
+            <a href="https://brainzlab.ai" class="font-medium text-anthropic-600 hover:text-anthropic-700">Brainz Lab</a>
+          </div>
+          <div class="flex items-center gap-6 text-sm text-text-muted">
+            <a href="#" class="hover:text-text-primary transition-colors">Documentation</a>
+            <a href="#" class="hover:text-text-primary transition-colors">API</a>
+            <a href="#" class="hover:text-text-primary transition-colors">Status</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

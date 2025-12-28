@@ -1,7 +1,97 @@
 class TraceProcessor
-  def initialize(project:, payload:)
+  def initialize(project:, payload:, preloaded_traces: nil)
     @project = project
     @payload = payload.deep_symbolize_keys
+    @preloaded_traces = preloaded_traces
+  end
+
+  # Process a batch of traces efficiently to avoid N+1 queries
+  # Returns array of processed traces
+  def self.process_batch!(project:, payloads:)
+    return [] if payloads.empty?
+
+    payloads = payloads.map(&:deep_symbolize_keys)
+    trace_ids = payloads.map { |p| p[:trace_id] }.compact
+
+    # Pre-fetch all existing traces in one query to avoid N+1
+    existing_traces = project.traces.where(trace_id: trace_ids).index_by(&:trace_id)
+
+    results = []
+    completions = []
+    new_trace_records = []
+    spans_to_create = []
+
+    # Wrap all operations in a single transaction to avoid N+1 TRANSACTION
+    ActiveRecord::Base.transaction do
+      # First pass: collect new traces and identify existing ones
+      payloads.each do |payload|
+        existing = existing_traces[payload[:trace_id]]
+        if existing
+          results << existing
+        else
+          processor = new(project: project, payload: payload, preloaded_traces: existing_traces)
+          new_trace_records << processor.send(:build_trace_record)
+          # Collect spans for this trace (will be linked after bulk insert)
+          if payload[:spans].present?
+            spans_to_create << { payload: payload, index: new_trace_records.size - 1 }
+          end
+        end
+      end
+
+      # Bulk insert all new traces at once to avoid N+1 INSERT
+      if new_trace_records.any?
+        Trace.insert_all!(new_trace_records, returning: %w[id trace_id])
+
+        # Fetch the inserted traces to get full objects
+        inserted_trace_ids = new_trace_records.map { |r| r[:trace_id] }
+        inserted_traces = project.traces.where(trace_id: inserted_trace_ids).index_by(&:trace_id)
+
+        # Add inserted traces to results and create spans
+        new_trace_records.each_with_index do |record, idx|
+          trace = inserted_traces[record[:trace_id]]
+          results << trace
+
+          # Find if this trace has spans to create
+          span_info = spans_to_create.find { |s| s[:index] == idx }
+          if span_info
+            processor = new(project: project, payload: span_info[:payload], preloaded_traces: existing_traces)
+            processor.send(:create_spans_batch, trace, span_info[:payload][:spans])
+          end
+        end
+      end
+
+      # Sort results to match original payload order
+      results = payloads.map { |p| results.find { |t| t.trace_id == p[:trace_id] } }.compact
+
+      # Collect completion data for traces with ended_at
+      payloads.each_with_index do |payload, idx|
+        next unless payload[:ended_at]
+        trace = results.find { |t| t.trace_id == payload[:trace_id] }
+        next unless trace
+
+        processor = new(project: project, payload: payload, preloaded_traces: existing_traces)
+        completions << {
+          trace: trace,
+          ended_at: processor.send(:parse_timestamp, payload[:ended_at]),
+          error: payload[:error] || false,
+          error_class: payload[:error_class],
+          error_message: payload[:error_message]
+        }
+      end
+
+      # Batch complete all traces using single bulk UPDATE
+      Trace.complete_batch!(completions) if completions.any?
+    end
+
+    # Batch broadcast after all processing (outside transaction for performance)
+    results.each { |trace| new(project: project, payload: {}).send(:broadcast_trace, trace) }
+
+    # Batch enqueue aggregate jobs (outside transaction to avoid blocking)
+    completions.each do |completion|
+      AggregateMetricsJob.perform_later(completion[:trace].id)
+    end
+
+    results
   end
 
   def process!
@@ -22,11 +112,24 @@ class TraceProcessor
       )
     end
 
-    # Broadcast for real-time dashboard
-    broadcast_trace(trace)
+    # Broadcast for real-time dashboard (skip if called from batch)
+    broadcast_trace(trace) unless @preloaded_traces
 
-    # Update aggregated metrics
-    update_aggregates(trace) if trace.ended_at.present?
+    # Update aggregated metrics (skip if called from batch)
+    update_aggregates(trace) if trace.ended_at.present? && !@preloaded_traces
+
+    trace
+  end
+
+  # Process trace without completing - used for batch processing
+  # Completion is handled separately in batch to avoid N+1 transactions
+  def process_without_completion!
+    trace = find_or_create_trace
+
+    # Batch insert spans if included
+    if @payload[:spans].present?
+      create_spans_batch(trace, @payload[:spans])
+    end
 
     trace
   end
@@ -34,12 +137,59 @@ class TraceProcessor
   private
 
   def find_or_create_trace
-    # Use find_by + create! to avoid issues with TimescaleDB composite primary keys
-    # (find_or_create_by! fails with "No unique index found for id")
-    trace = @project.traces.find_by(trace_id: @payload[:trace_id])
-    return trace if trace
+    # Use preloaded traces if available (batch processing)
+    if @preloaded_traces
+      trace = @preloaded_traces[@payload[:trace_id]]
+      return trace if trace
 
-    @project.traces.create!(
+      # We already checked all existing traces, so skip uniqueness validation
+      # This avoids N+1 "Trace Exists?" queries during batch processing
+      return create_trace!(skip_uniqueness: true)
+    else
+      # Single trace processing - use find_by + create! to avoid issues with TimescaleDB composite primary keys
+      # (find_or_create_by! fails with "No unique index found for id")
+      trace = @project.traces.find_by(trace_id: @payload[:trace_id])
+      return trace if trace
+    end
+
+    create_trace!(skip_uniqueness: false)
+  end
+
+  # Build a hash for bulk insert (used by process_batch!)
+  def build_trace_record
+    now = Time.current
+    {
+      id: SecureRandom.uuid,
+      project_id: @project.id,
+      trace_id: @payload[:trace_id],
+      name: @payload[:name] || build_name,
+      kind: @payload[:kind] || 'request',
+      started_at: parse_timestamp(@payload[:started_at]) || now,
+      request_id: @payload[:request_id],
+      request_method: @payload[:request_method],
+      request_path: @payload[:request_path],
+      controller: @payload[:controller],
+      action: @payload[:action],
+      status: @payload[:status],
+      view_duration_ms: @payload[:view_ms] || 0.0,
+      db_duration_ms: @payload[:db_ms] || 0.0,
+      external_duration_ms: @payload[:external_ms] || 0.0,
+      job_class: @payload[:job_class],
+      job_id: @payload[:job_id],
+      queue: @payload[:queue],
+      queue_wait_ms: @payload[:queue_wait_ms],
+      executions: @payload[:executions] || 1,
+      environment: @payload[:environment],
+      commit: @payload[:commit],
+      host: @payload[:host],
+      user_id: @payload[:user_id],
+      created_at: now,
+      updated_at: now
+    }
+  end
+
+  def create_trace!(skip_uniqueness: false)
+    trace = @project.traces.new(
       trace_id: @payload[:trace_id],
       name: @payload[:name] || build_name,
       kind: @payload[:kind] || 'request',
@@ -63,6 +213,11 @@ class TraceProcessor
       host: @payload[:host],
       user_id: @payload[:user_id]
     )
+
+    # Skip uniqueness validation if we've already verified trace doesn't exist
+    trace.skip_uniqueness_validation = skip_uniqueness
+    trace.save!
+    trace
   end
 
   def create_spans_batch(trace, spans_data)
