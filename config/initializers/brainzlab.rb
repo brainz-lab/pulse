@@ -126,7 +126,7 @@ Rails.application.config.after_initialize do
       )
     end
 
-    # Self-track to Pulse via direct DB insert
+    # Self-track to Pulse via direct DB insert (using raw SQL to skip validations)
     started_at = Thread.current[:pulse_request_started_at]
     next unless started_at
 
@@ -134,29 +134,37 @@ Rails.application.config.after_initialize do
     duration_ms = ((ended_at - started_at) * 1000).round(2)
 
     begin
-      Trace.create!(
-        project_id: pulse_project_id,
-        trace_id: Thread.current[:pulse_request_id] || SecureRandom.uuid,
-        name: "#{payload[:method]} #{payload[:path]}",
-        kind: "request",
-        started_at: started_at,
-        ended_at: ended_at,
-        duration_ms: duration_ms,
-        request_method: payload[:method],
-        request_path: payload[:path],
-        controller: payload[:controller],
-        action: payload[:action],
-        status: payload[:status],
-        environment: Rails.env,
-        host: Socket.gethostname,
-        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
-        error: payload[:status].to_i >= 500,
-        data: {
-          view_ms: payload[:view_runtime]&.round(1),
-          db_ms: payload[:db_runtime]&.round(1),
-          format: payload[:format]
-        }
-      )
+      # Use raw SQL to avoid uniqueness validation and TimescaleDB index issues
+      conn = ActiveRecord::Base.connection
+      conn.execute(<<~SQL)
+        INSERT INTO traces (
+          id, project_id, trace_id, name, kind, started_at, ended_at, duration_ms,
+          request_method, request_path, controller, action, status, environment,
+          host, commit, error, view_duration_ms, db_duration_ms, created_at, updated_at
+        ) VALUES (
+          #{conn.quote(SecureRandom.uuid)},
+          #{conn.quote(pulse_project_id)},
+          #{conn.quote(Thread.current[:pulse_request_id] || SecureRandom.uuid)},
+          #{conn.quote("#{payload[:method]} #{payload[:path]}")},
+          'request',
+          #{conn.quote(started_at)},
+          #{conn.quote(ended_at)},
+          #{duration_ms},
+          #{conn.quote(payload[:method])},
+          #{conn.quote(payload[:path])},
+          #{conn.quote(payload[:controller])},
+          #{conn.quote(payload[:action])},
+          #{payload[:status].to_i},
+          #{conn.quote(Rails.env)},
+          #{conn.quote(Socket.gethostname)},
+          #{conn.quote(ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence)},
+          #{payload[:status].to_i >= 500},
+          #{payload[:view_runtime]&.round(1) || 0},
+          #{payload[:db_runtime]&.round(1) || 0},
+          #{conn.quote(ended_at)},
+          #{conn.quote(ended_at)}
+        )
+      SQL
     rescue StandardError => e
       Rails.logger.error "[Pulse] Self-tracking failed: #{e.message}"
     end
@@ -172,26 +180,34 @@ Rails.application.config.after_initialize do
     started_at = ended_at - (duration_ms / 1000.0)
 
     begin
-      Trace.create!(
-        project_id: pulse_project_id,
-        trace_id: job.job_id || SecureRandom.uuid,
-        name: "Job #{job.class.name}",
-        kind: "job",
-        started_at: started_at,
-        ended_at: ended_at,
-        duration_ms: duration_ms,
-        job_class: job.class.name,
-        job_id: job.job_id,
-        queue: job.queue_name,
-        environment: Rails.env,
-        host: Socket.gethostname,
-        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
-        error: false,
-        data: {
-          executions: job.executions,
-          arguments: job.arguments.map(&:to_s).first(5)
-        }
-      )
+      # Use raw SQL to avoid uniqueness validation and TimescaleDB index issues
+      conn = ActiveRecord::Base.connection
+      conn.execute(<<~SQL)
+        INSERT INTO traces (
+          id, project_id, trace_id, name, kind, started_at, ended_at, duration_ms,
+          job_class, job_id, queue, environment, host, commit, error, executions,
+          created_at, updated_at
+        ) VALUES (
+          #{conn.quote(SecureRandom.uuid)},
+          #{conn.quote(pulse_project_id)},
+          #{conn.quote(job.job_id || SecureRandom.uuid)},
+          #{conn.quote("Job #{job.class.name}")},
+          'job',
+          #{conn.quote(started_at)},
+          #{conn.quote(ended_at)},
+          #{duration_ms},
+          #{conn.quote(job.class.name)},
+          #{conn.quote(job.job_id)},
+          #{conn.quote(job.queue_name)},
+          #{conn.quote(Rails.env)},
+          #{conn.quote(Socket.gethostname)},
+          #{conn.quote(ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence)},
+          false,
+          #{job.executions},
+          #{conn.quote(ended_at)},
+          #{conn.quote(ended_at)}
+        )
+      SQL
     rescue StandardError => e
       Rails.logger.error "[Pulse] Job self-tracking failed: #{e.message}"
     end
@@ -210,28 +226,36 @@ Rails.application.config.after_initialize do
     started_at = ended_at - (duration_ms / 1000.0)
 
     begin
-      Trace.create!(
-        project_id: pulse_project_id,
-        trace_id: job.job_id || SecureRandom.uuid,
-        name: "Job #{job.class.name}",
-        kind: "job",
-        started_at: started_at,
-        ended_at: ended_at,
-        duration_ms: duration_ms,
-        job_class: job.class.name,
-        job_id: job.job_id,
-        queue: job.queue_name,
-        environment: Rails.env,
-        host: Socket.gethostname,
-        commit: ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence,
-        error: true,
-        error_class: error.class.name,
-        error_message: error.message,
-        data: {
-          executions: job.executions,
-          arguments: job.arguments.map(&:to_s).first(5)
-        }
-      )
+      # Use raw SQL to avoid uniqueness validation and TimescaleDB index issues
+      conn = ActiveRecord::Base.connection
+      conn.execute(<<~SQL)
+        INSERT INTO traces (
+          id, project_id, trace_id, name, kind, started_at, ended_at, duration_ms,
+          job_class, job_id, queue, environment, host, commit, error, error_class,
+          error_message, executions, created_at, updated_at
+        ) VALUES (
+          #{conn.quote(SecureRandom.uuid)},
+          #{conn.quote(pulse_project_id)},
+          #{conn.quote(job.job_id || SecureRandom.uuid)},
+          #{conn.quote("Job #{job.class.name}")},
+          'job',
+          #{conn.quote(started_at)},
+          #{conn.quote(ended_at)},
+          #{duration_ms},
+          #{conn.quote(job.class.name)},
+          #{conn.quote(job.job_id)},
+          #{conn.quote(job.queue_name)},
+          #{conn.quote(Rails.env)},
+          #{conn.quote(Socket.gethostname)},
+          #{conn.quote(ENV["GIT_COMMIT"] || `git rev-parse HEAD 2>/dev/null`.strip.presence)},
+          true,
+          #{conn.quote(error.class.name)},
+          #{conn.quote(error.message&.first(1000))},
+          #{job.executions},
+          #{conn.quote(ended_at)},
+          #{conn.quote(ended_at)}
+        )
+      SQL
     rescue StandardError => e
       Rails.logger.error "[Pulse] Job error self-tracking failed: #{e.message}"
     end

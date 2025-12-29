@@ -40,7 +40,8 @@ class TraceProcessor
 
       # Bulk insert all new traces at once to avoid N+1 INSERT
       if new_trace_records.any?
-        Trace.insert_all!(new_trace_records, returning: %w[id trace_id])
+        # Use raw SQL bulk insert to avoid TimescaleDB unique index issues
+        bulk_insert_traces(new_trace_records)
 
         # Fetch the inserted traces to get full objects
         inserted_trace_ids = new_trace_records.map { |r| r[:trace_id] }
@@ -92,6 +93,23 @@ class TraceProcessor
     end
 
     results
+  end
+
+  # Bulk insert traces using raw SQL to avoid TimescaleDB unique index issues
+  def self.bulk_insert_traces(records)
+    return if records.empty?
+
+    columns = records.first.keys
+    values = records.map do |record|
+      columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
+    end
+
+    sql = <<~SQL
+      INSERT INTO traces (#{columns.join(', ')})
+      VALUES #{values.map { |v| "(#{v})" }.join(', ')}
+    SQL
+
+    ActiveRecord::Base.connection.execute(sql)
   end
 
   def process!
