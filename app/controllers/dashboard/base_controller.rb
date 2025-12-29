@@ -1,18 +1,21 @@
 module Dashboard
   class BaseController < ApplicationController
+    include Pagy::Backend
+
     before_action :authenticate_via_sso!
     before_action :set_project
 
     layout 'dashboard'
 
-    helper_method :current_project
+    helper_method :current_project, :pagy_nav
 
     private
 
     def authenticate_via_sso!
       # In development, allow bypass
       if Rails.env.development?
-        session[:platform_project_id] ||= 'dev_project'
+        # Use platform project with data for testing, or dev_project for empty state
+        session[:platform_project_id] ||= 'pls_0147cca1bda98caf'  # platform project with traces
         session[:platform_user_id] ||= 'dev_user'
         return
       end

@@ -1,12 +1,12 @@
 module Dashboard
   class RequestsController < BaseController
     def index
-      @traces = current_project.traces.requests.recent
+      scope = current_project.traces.requests.recent
 
-      @traces = @traces.slow(params[:threshold] || 500) if params[:slow]
-      @traces = @traces.errors if params[:errors]
+      scope = scope.slow(params[:threshold] || 500) if params[:slow]
+      scope = scope.errors if params[:errors]
 
-      @traces = @traces.limit(100)
+      @pagy, @traces = pagy(scope)
     end
 
     def show

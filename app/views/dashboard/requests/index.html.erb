@@ -58,4 +58,36 @@
       </tbody>
     </table>
   </div>
+
+  <%# Pagination %>
+  <% if @pagy.pages > 1 %>
+    <div class="flex justify-between items-center text-[13px]" style="color: #8B8780;">
+      <div>
+        Showing <%= @pagy.from %>-<%= @pagy.to %> of <%= @pagy.count %> requests
+      </div>
+      <div class="flex gap-1">
+        <% if @pagy.prev %>
+          <%= link_to "Previous", url_for(page: @pagy.prev),
+              class: "px-3 py-1.5 rounded-lg",
+              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+        <% end %>
+        <% @pagy.series.each do |item| %>
+          <% if item == :gap %>
+            <span class="px-3 py-1.5">...</span>
+          <% elsif item.is_a?(Integer) %>
+            <%= link_to item, url_for(page: item),
+                class: "px-3 py-1.5 rounded-lg",
+                style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+          <% else %>
+            <span class="px-3 py-1.5 rounded-lg" style="background: #1A1A1A; color: #FFFFFE;"><%= item %></span>
+          <% end %>
+        <% end %>
+        <% if @pagy.next %>
+          <%= link_to "Next", url_for(page: @pagy.next),
+              class: "px-3 py-1.5 rounded-lg",
+              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>

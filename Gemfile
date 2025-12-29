@@ -62,6 +62,9 @@ end
 gem "brainzlab-ui", path: "/brainzlab-ui" if File.exist?("/brainzlab-ui")
 gem "phlex-rails", "~> 2.0"
 
+# Pagination
+gem "pagy", "~> 9.3"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

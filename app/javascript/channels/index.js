@@ -1,2 +1,2 @@
 // ActionCable channels
-import "./consumer"
+import "channels/consumer"

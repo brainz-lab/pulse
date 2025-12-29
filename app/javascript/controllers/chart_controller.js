@@ -1,4 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
+import { Chart, registerables } from "chart.js"
+
+// Register all Chart.js components
+Chart.register(...registerables)
 
 export default class extends Controller {
   static values = {
@@ -100,12 +104,9 @@ export default class extends Controller {
     }
   }
 
-  async initChart() {
+  initChart() {
     const canvas = this.element.querySelector("canvas")
     if (!canvas) return
-
-    const { Chart, registerables } = await import("https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm")
-    Chart.register(...registerables)
 
     const ctx = canvas.getContext("2d")
     const data = this.dataValue || []

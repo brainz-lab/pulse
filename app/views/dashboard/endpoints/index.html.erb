@@ -1,5 +1,6 @@
 <div class="space-y-6">
-  <div class="flex justify-between items-center">
+  <!-- Header with title and controls -->
+  <div class="flex justify-between items-start">
     <div>
       <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Endpoints</h1>
       <p class="text-[14px] mt-1" style="color: #8B8780;">Performance breakdown by endpoint</p>
@@ -7,50 +8,181 @@
     <div class="flex gap-2">
       <% %w[1h 6h 24h 7d].each do |range| %>
         <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
-        <%= link_to range, dashboard_endpoints_path(since: range),
+        <%= link_to range, dashboard_endpoints_path(since: range, search: @search, group_by: @group_by, method: @method_filter),
             class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
             style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
       <% end %>
     </div>
   </div>
 
+  <!-- Filters and Search -->
+  <div class="flex items-center gap-4">
+    <!-- Search -->
+    <%= form_with url: dashboard_endpoints_path, method: :get, local: true, class: "flex-1 max-w-md" do %>
+      <%= hidden_field_tag :since, params[:since] %>
+      <%= hidden_field_tag :group_by, @group_by %>
+      <%= hidden_field_tag :method, @method_filter %>
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color: #8B8780;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <%= text_field_tag :search, @search,
+            placeholder: "Search endpoints...",
+            class: "w-full pl-10 pr-4 py-2 text-[14px] rounded-lg",
+            style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+      </div>
+    <% end %>
+
+    <!-- Group By Toggle -->
+    <div class="flex rounded-lg overflow-hidden" style="border: 1px solid #E8E5E0;">
+      <%= link_to "Endpoints", dashboard_endpoints_path(since: params[:since], search: @search, group_by: 'endpoint', method: @method_filter),
+          class: "px-3 py-2 text-[13px] font-medium",
+          style: @group_by == 'endpoint' ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; color: #6B6760;" %>
+      <%= link_to "Groups", dashboard_endpoints_path(since: params[:since], search: @search, group_by: 'prefix', method: @method_filter),
+          class: "px-3 py-2 text-[13px] font-medium",
+          style: @group_by == 'prefix' ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; color: #6B6760;" %>
+    </div>
+
+    <!-- Method Filter -->
+    <select onchange="window.location.href=this.value" class="px-3 py-2 text-[13px] rounded-lg" style="background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;">
+      <option value="<%= dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by) %>" <%= 'selected' if @method_filter.blank? %>>All Methods</option>
+      <% %w[GET POST PUT PATCH DELETE].each do |method| %>
+        <option value="<%= dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: method) %>" <%= 'selected' if @method_filter == method %>><%= method %></option>
+      <% end %>
+    </select>
+  </div>
+
+  <!-- Path Prefix Quick Filters -->
+  <% if @path_prefixes.any? && @group_by != 'prefix' %>
+    <div class="flex flex-wrap gap-2">
+      <span class="text-[12px] font-medium py-1" style="color: #8B8780;">Quick filters:</span>
+      <% @path_prefixes.each do |prefix, count| %>
+        <%= link_to dashboard_endpoints_path(since: params[:since], search: prefix, group_by: @group_by, method: @method_filter),
+            class: "px-2 py-1 text-[12px] rounded-md hover:opacity-80",
+            style: "background: rgba(34, 197, 94, 0.1); color: #16A34A;" do %>
+          <%= prefix %> <span style="color: #8B8780;">(<%= number_with_delimiter(count) %>)</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Table -->
   <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
     <table class="w-full">
       <thead style="border-bottom: 1px solid #F0EFED;">
         <tr class="text-left text-[13px]" style="color: #8B8780;">
-          <th class="p-4 font-medium">Endpoint</th>
-          <th class="p-4 font-medium">Requests</th>
-          <th class="p-4 font-medium">Avg Duration</th>
-          <th class="p-4 font-medium">Max Duration</th>
-          <th class="p-4 font-medium">Error Rate</th>
+          <th class="p-4 font-medium">
+            <%= link_to dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: @method_filter, sort: 'name', sort_dir: @sort == 'name' && @sort_dir == 'asc' ? 'desc' : 'asc') do %>
+              <%= @group_by == 'prefix' ? 'Group' : 'Endpoint' %>
+              <% if @sort == 'name' %>
+                <span><%= @sort_dir == 'asc' ? '↑' : '↓' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th class="p-4 font-medium">
+            <%= link_to dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: @method_filter, sort: 'count', sort_dir: @sort == 'count' && @sort_dir == 'desc' ? 'asc' : 'desc') do %>
+              Requests
+              <% if @sort == 'count' %>
+                <span><%= @sort_dir == 'asc' ? '↑' : '↓' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th class="p-4 font-medium">
+            <%= link_to dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: @method_filter, sort: 'avg', sort_dir: @sort == 'avg' && @sort_dir == 'desc' ? 'asc' : 'desc') do %>
+              Avg
+              <% if @sort == 'avg' %>
+                <span><%= @sort_dir == 'asc' ? '↑' : '↓' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th class="p-4 font-medium">
+            <%= link_to dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: @method_filter, sort: 'p95', sort_dir: @sort == 'p95' && @sort_dir == 'desc' ? 'asc' : 'desc') do %>
+              P95
+              <% if @sort == 'p95' %>
+                <span><%= @sort_dir == 'asc' ? '↑' : '↓' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <th class="p-4 font-medium">P99</th>
+          <th class="p-4 font-medium">Max</th>
+          <th class="p-4 font-medium">
+            <%= link_to dashboard_endpoints_path(since: params[:since], search: @search, group_by: @group_by, method: @method_filter, sort: 'errors', sort_dir: @sort == 'errors' && @sort_dir == 'desc' ? 'asc' : 'desc') do %>
+              Error Rate
+              <% if @sort == 'errors' %>
+                <span><%= @sort_dir == 'asc' ? '↑' : '↓' %></span>
+              <% end %>
+            <% end %>
+          </th>
+          <% if @group_by == 'prefix' %>
+            <th class="p-4 font-medium">Endpoints</th>
+          <% end %>
         </tr>
       </thead>
       <tbody>
         <% @endpoints.each do |endpoint| %>
-          <tr class="hover:opacity-80 cursor-pointer" style="border-bottom: 1px solid #F0EFED;" onclick="window.location='<%= dashboard_endpoint_path(endpoint.name, since: params[:since]) %>'">
-            <td class="p-4 text-[14px] font-medium hover:underline" style="color: #1A1A1A;">
-              <%= link_to endpoint.name, dashboard_endpoint_path(endpoint.name, since: params[:since]), style: "color: inherit;" %>
+          <% if @group_by == 'prefix' %>
+            <tr class="hover:opacity-80 cursor-pointer" style="border-bottom: 1px solid #F0EFED;" onclick="window.location='<%= dashboard_endpoints_path(since: params[:since], search: endpoint.prefix, group_by: 'endpoint') %>'">
+          <% else %>
+            <tr class="hover:opacity-80 cursor-pointer" style="border-bottom: 1px solid #F0EFED;" onclick="window.location='<%= dashboard_endpoint_path(endpoint.name, since: params[:since]) %>'">
+          <% end %>
+            <td class="p-4 text-[14px] font-medium" style="color: #1A1A1A;">
+              <% if @group_by == 'prefix' %>
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4" style="color: #22C55E;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                  </svg>
+                  <%= endpoint.name %>
+                </div>
+              <% else %>
+                <%= link_to endpoint.name, dashboard_endpoint_path(endpoint.name, since: params[:since]), style: "color: inherit;" %>
+              <% end %>
             </td>
             <td class="p-4 text-[13px]" style="color: #1A1A1A;"><%= number_with_delimiter(endpoint.count) %></td>
-            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;"><%= endpoint.avg_duration.round(0) %>ms</td>
-            <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= endpoint.max_duration.round(0) %>ms</td>
-            <td class="p-4">
-              <% error_rate = (endpoint.error_count.to_f / endpoint.count * 100).round(2) %>
-              <span class="text-[13px]" style="color: <%= error_rate > 1 ? '#DC2626' : '#22C55E' %>;">
-                <%= error_rate %>%
+            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;"><%= endpoint.avg_duration.to_f.round(0) %>ms</td>
+            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;">
+              <% p95 = endpoint.p95_duration.to_f %>
+              <span style="color: <%= p95 > 1000 ? '#DC2626' : p95 > 500 ? '#F59E0B' : '#1A1A1A' %>;">
+                <%= p95.round(0) %>ms
               </span>
             </td>
+            <td class="p-4 font-mono text-[13px]" style="color: #8B8780;">
+              <%= endpoint.p99_duration.to_f.round(0) %>ms
+            </td>
+            <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= endpoint.max_duration.to_f.round(0) %>ms</td>
+            <td class="p-4">
+              <% error_rate = endpoint.respond_to?(:error_rate) ? endpoint.error_rate.to_f : (endpoint.error_count.to_f / endpoint.count * 100) %>
+              <span class="text-[13px]" style="color: <%= error_rate > 1 ? '#DC2626' : '#22C55E' %>;">
+                <%= error_rate.round(2) %>%
+              </span>
+            </td>
+            <% if @group_by == 'prefix' %>
+              <td class="p-4 text-[13px]" style="color: #8B8780;"><%= endpoint.endpoint_count %></td>
+            <% end %>
           </tr>
         <% end %>
 
         <% if @endpoints.empty? %>
           <tr>
-            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
-              No endpoints found
+            <td colspan="<%= @group_by == 'prefix' ? 8 : 7 %>" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              <% if @search.present? %>
+                No endpoints matching "<%= @search %>"
+              <% else %>
+                No endpoints found
+              <% end %>
             </td>
           </tr>
         <% end %>
       </tbody>
     </table>
   </div>
+
+  <!-- Summary Stats -->
+  <% if @endpoints.any? %>
+    <div class="flex items-center justify-between text-[12px]" style="color: #8B8780;">
+      <span>Showing <%= @endpoints.to_a.count %> <%= @group_by == 'prefix' ? 'groups' : 'endpoints' %></span>
+      <span>
+        Total requests: <%= number_with_delimiter(@endpoints.to_a.sum { |e| e.count.to_i }) %>
+      </span>
+    </div>
+  <% end %>
 </div>

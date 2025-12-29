@@ -9,3 +9,7 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 # ActionCable for real-time updates
 pin "@rails/actioncable", to: "actioncable.esm.js"
 pin_all_from "app/javascript/channels", under: "channels"
+
+# Chart.js for graphs (using ESM build)
+pin "chart.js", to: "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/+esm"
+pin "@kurkle/color", to: "https://cdn.jsdelivr.net/npm/@kurkle/color@0.3.2/+esm"
