@@ -3,9 +3,11 @@
 APM and performance monitoring for Rails apps.
 
 [![CI](https://github.com/brainz-lab/pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/brainz-lab/pulse/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/brainz-lab/pulse/actions/workflows/codeql.yml/badge.svg)](https://github.com/brainz-lab/pulse/actions/workflows/codeql.yml)
 [![Docker](https://github.com/brainz-lab/pulse/actions/workflows/docker.yml/badge.svg)](https://github.com/brainz-lab/pulse/actions/workflows/docker.yml)
 [![Docker Hub](https://img.shields.io/docker/v/brainzllc/pulse?label=Docker%20Hub)](https://hub.docker.com/r/brainzllc/pulse)
 [![Docs](https://img.shields.io/badge/docs-brainzlab.ai-orange)](https://docs.brainzlab.ai/products/pulse/overview)
+[![License: OSAaSy](https://img.shields.io/badge/License-OSAaSy-blue.svg)](LICENSE)
 
 ## Overview
 
