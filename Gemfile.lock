@@ -104,6 +104,10 @@ GEM
     brainzlab (0.1.2)
       concurrent-ruby (~> 1.0)
       logger (~> 1.5)
+    brainzlab-ui (0.1.0)
+      phlex (~> 2.0)
+      phlex-rails (~> 2.0)
+      rails (>= 7.0)
     brakeman (7.1.1)
       racc
     builder (3.3.0)
@@ -390,6 +394,7 @@ DEPENDENCIES
   aws-sdk-s3
   bootsnap
   brainzlab (~> 0.1.1)
+  brainzlab-ui (~> 0.1.0)
   brakeman
   bundler-audit
   debug

@@ -58,8 +58,16 @@ else
 end
 
 # BrainzLab UI - Unified design system with Phlex components
-# Only load if path exists (Docker volume mount) - not yet published to RubyGems
-gem "brainzlab-ui", path: "/brainzlab-ui" if File.exist?("/brainzlab-ui")
+# Use local path only in development, RubyGems in production/Docker
+if ENV["BUNDLE_DEPLOYMENT"] == "1"
+  gem "brainzlab-ui", "~> 0.1.0"
+elsif File.exist?("/brainzlab-ui")
+  gem "brainzlab-ui", path: "/brainzlab-ui"
+elsif File.exist?(File.expand_path("../brainzlab-ui", __dir__))
+  gem "brainzlab-ui", path: "../brainzlab-ui"
+else
+  gem "brainzlab-ui", "~> 0.1.0"
+end
 gem "phlex-rails", "~> 2.0"
 
 # Pagination

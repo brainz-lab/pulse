@@ -46,6 +46,9 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Create symlink for brainzlab-ui assets (used by Tailwind CSS imports)
+RUN ln -s "$(bundle show brainzlab-ui)" /brainzlab-ui
+
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
