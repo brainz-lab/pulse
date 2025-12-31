@@ -5,7 +5,7 @@ gem "rails", "~> 8.1.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
-gem "pg", "~> 1.1"
+gem "pg", "~> 1.6"
 # TimescaleDB support for Rails
 gem "timescaledb-rails"
 # Use the Puma web server [https://github.com/puma/puma]
