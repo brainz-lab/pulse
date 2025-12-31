@@ -227,6 +227,18 @@ Full documentation: [docs.brainzlab.ai/products/pulse](https://docs.brainzlab.ai
 - [Reflex](https://github.com/brainz-lab/reflex) - Error tracking
 - [Stack](https://github.com/brainz-lab/stack) - Self-hosted deployment
 
+## Contributors
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+Thanks to all our contributors! See [all-contributors](https://allcontributors.org) for how to add yourself.
+
+
 ## License
 
 MIT
