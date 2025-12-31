@@ -1,13 +1,13 @@
 module Mcp
   class Server
     TOOLS = {
-      'pulse_overview' => Tools::PulseOverview,
-      'pulse_slow_requests' => Tools::PulseSlowRequests,
-      'pulse_throughput' => Tools::PulseThroughput,
-      'pulse_errors' => Tools::PulseErrors,
-      'pulse_trace' => Tools::PulseTrace,
-      'pulse_endpoints' => Tools::PulseEndpoints,
-      'pulse_metrics' => Tools::PulseMetrics,
+      "pulse_overview" => Tools::PulseOverview,
+      "pulse_slow_requests" => Tools::PulseSlowRequests,
+      "pulse_throughput" => Tools::PulseThroughput,
+      "pulse_errors" => Tools::PulseErrors,
+      "pulse_trace" => Tools::PulseTrace,
+      "pulse_endpoints" => Tools::PulseEndpoints,
+      "pulse_metrics" => Tools::PulseMetrics
     }.freeze
 
     def initialize(project)

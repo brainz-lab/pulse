@@ -12,7 +12,7 @@ module Mcp
       }.freeze
 
       def call(args)
-        since = parse_since(args[:since] || '1h')
+        since = parse_since(args[:since] || "1h")
         @project.overview(since: since)
       end
     end

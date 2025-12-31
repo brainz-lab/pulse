@@ -18,31 +18,31 @@ module Mcp
     # POST /mcp/rpc - JSON-RPC protocol
     def rpc
       case params[:method]
-      when 'tools/list'
+      when "tools/list"
         render json: {
-          jsonrpc: '2.0',
+          jsonrpc: "2.0",
           id: params[:id],
           result: { tools: mcp_server.list_tools }
         }
-      when 'tools/call'
+      when "tools/call"
         tool_name = params.dig(:params, :name)
         arguments = params.dig(:params, :arguments) || {}
         result = mcp_server.call_tool(tool_name, arguments)
         render json: {
-          jsonrpc: '2.0',
+          jsonrpc: "2.0",
           id: params[:id],
-          result: { content: [{ type: 'text', text: result.to_json }] }
+          result: { content: [ { type: "text", text: result.to_json } ] }
         }
       else
         render json: {
-          jsonrpc: '2.0',
+          jsonrpc: "2.0",
           id: params[:id],
-          error: { code: -32601, message: 'Method not found' }
+          error: { code: -32601, message: "Method not found" }
         }, status: :not_found
       end
     rescue => e
       render json: {
-        jsonrpc: '2.0',
+        jsonrpc: "2.0",
         id: params[:id],
         error: { code: -32603, message: e.message }
       }, status: :internal_server_error
@@ -55,7 +55,7 @@ module Mcp
       @key_info = PlatformClient.validate_key(raw_key)
 
       unless @key_info[:valid]
-        render json: { error: 'Invalid API key' }, status: :unauthorized
+        render json: { error: "Invalid API key" }, status: :unauthorized
         return
       end
 
@@ -67,9 +67,9 @@ module Mcp
     end
 
     def extract_api_key
-      auth_header = request.headers['Authorization']
-      return auth_header.sub(/^Bearer\s+/, '') if auth_header&.start_with?('Bearer ')
-      request.headers['X-API-Key'] || params[:api_key]
+      auth_header = request.headers["Authorization"]
+      return auth_header.sub(/^Bearer\s+/, "") if auth_header&.start_with?("Bearer ")
+      request.headers["X-API-Key"] || params[:api_key]
     end
 
     def mcp_server

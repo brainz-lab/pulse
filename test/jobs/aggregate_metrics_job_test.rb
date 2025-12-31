@@ -14,7 +14,7 @@ class AggregateMetricsJobTest < ActiveSupport::TestCase
 
     # Mock the MetricsAggregator
     aggregator = Minitest::Mock.new
-    aggregator.expect :aggregate_minute!, nil, [trace.started_at]
+    aggregator.expect :aggregate_minute!, nil, [ trace.started_at ]
 
     MetricsAggregator.stub :new, aggregator do
       AggregateMetricsJob.new.perform(trace.id)
@@ -57,7 +57,7 @@ class AggregateMetricsJobTest < ActiveSupport::TestCase
     MetricsAggregator.stub :new, ->(project:) {
       aggregator_called_with = project
       mock = Minitest::Mock.new
-      mock.expect :aggregate_minute!, nil, [trace.started_at]
+      mock.expect :aggregate_minute!, nil, [ trace.started_at ]
       mock
     } do
       AggregateMetricsJob.new.perform(trace.id)

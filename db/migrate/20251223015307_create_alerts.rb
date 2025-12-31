@@ -24,9 +24,9 @@ class CreateAlerts < ActiveRecord::Migration[8.1]
 
       t.timestamps
 
-      t.index [:project_id, :status]
-      t.index [:project_id, :triggered_at]
-      t.index [:alert_rule_id, :triggered_at]
+      t.index [ :project_id, :status ]
+      t.index [ :project_id, :triggered_at ]
+      t.index [ :alert_rule_id, :triggered_at ]
     end
 
     # Track notification delivery
@@ -40,8 +40,8 @@ class CreateAlerts < ActiveRecord::Migration[8.1]
 
       t.timestamps
 
-      t.index [:alert_id, :notification_channel_id], unique: true, name: 'idx_alert_notifications_unique'
-      t.index [:status]
+      t.index [ :alert_id, :notification_channel_id ], unique: true, name: 'idx_alert_notifications_unique'
+      t.index [ :status ]
     end
   end
 end

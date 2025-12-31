@@ -9,7 +9,7 @@ class CreateMetricPoints < ActiveRecord::Migration[8.0]
 
       t.jsonb :tags, default: {}
 
-      t.index [:project_id, :metric_id, :timestamp]
+      t.index [ :project_id, :metric_id, :timestamp ]
     end
   end
 end

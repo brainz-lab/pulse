@@ -13,9 +13,9 @@ module Dashboard
 
     def parse_since(value)
       case value
-      when '6h' then 6.hours.ago
-      when '24h' then 24.hours.ago
-      when '7d' then 7.days.ago
+      when "6h" then 6.hours.ago
+      when "24h" then 24.hours.ago
+      when "7d" then 7.days.ago
       else 1.hour.ago
       end
     end
@@ -23,7 +23,7 @@ module Dashboard
     def throughput_data
       current_project.traces
         .requests
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
         .group("date_trunc('minute', started_at)")
         .count
         .sort
@@ -33,7 +33,7 @@ module Dashboard
     def response_time_data
       current_project.traces
         .requests
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
         .where.not(duration_ms: nil)
         .group("date_trunc('minute', started_at)")
         .average(:duration_ms)

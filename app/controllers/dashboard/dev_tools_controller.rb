@@ -1,6 +1,6 @@
 module Dashboard
   class DevToolsController < ApplicationController
-    layout 'dashboard'
+    layout "dashboard"
     before_action :ensure_development!
 
     def show

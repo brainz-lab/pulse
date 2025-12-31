@@ -21,7 +21,7 @@ class CreateSpans < ActiveRecord::Migration[8.0]
       t.string :error_class
       t.text :error_message
 
-      t.index [:trace_id, :started_at]
+      t.index [ :trace_id, :started_at ]
       t.index :span_id
     end
   end

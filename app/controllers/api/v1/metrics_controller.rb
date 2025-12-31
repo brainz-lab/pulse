@@ -4,7 +4,7 @@ module Api
       # POST /api/v1/metrics
       def create
         metric = current_project.metrics.find_or_create_by!(name: params[:name]) do |m|
-          m.kind = params[:kind] || 'gauge'
+          m.kind = params[:kind] || "gauge"
           m.unit = params[:unit]
           m.description = params[:description]
         end
@@ -25,7 +25,7 @@ module Api
 
         metrics_data.each do |m|
           metric = current_project.metrics.find_or_create_by!(name: m[:name]) do |new_m|
-            new_m.kind = m[:kind] || 'gauge'
+            new_m.kind = m[:kind] || "gauge"
           end
 
           metric.record!(m[:value].to_f, tags: m[:tags] || {})
@@ -46,7 +46,7 @@ module Api
       def stats
         metric = current_project.metrics.find_by!(name: params[:name])
         since = params[:since] ? Time.parse(params[:since]) : 1.hour.ago
-        granularity = params[:granularity] || 'minute'
+        granularity = params[:granularity] || "minute"
 
         render json: { stats: metric.stats(since: since, granularity: granularity.to_sym) }
       end

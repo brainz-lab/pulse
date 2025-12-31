@@ -45,8 +45,8 @@ class CreateTraces < ActiveRecord::Migration[8.0]
       t.float :view_duration_ms, default: 0
       t.float :external_duration_ms, default: 0
 
-      t.index [:project_id, :started_at]
-      t.index [:project_id, :name, :started_at]
+      t.index [ :project_id, :started_at ]
+      t.index [ :project_id, :name, :started_at ]
       t.index :trace_id, unique: true
       t.index :request_id
     end

@@ -70,7 +70,7 @@ class MetricPointTest < ActiveSupport::TestCase
   end
 
   test "should handle numeric values" do
-    [0, 1, -1, 0.5, -0.5, 100.123, 1_000_000].each do |value|
+    [ 0, 1, -1, 0.5, -0.5, 100.123, 1_000_000 ].each do |value|
       point = @metric.points.create!(
         project: @project,
         timestamp: Time.current,

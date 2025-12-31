@@ -6,29 +6,29 @@ class AlertNotification < ApplicationRecord
 
   validates :status, presence: true, inclusion: { in: STATUSES }
 
-  scope :pending, -> { where(status: 'pending') }
-  scope :sent, -> { where(status: 'sent') }
-  scope :failed, -> { where(status: 'failed') }
+  scope :pending, -> { where(status: "pending") }
+  scope :sent, -> { where(status: "sent") }
+  scope :failed, -> { where(status: "failed") }
 
   def pending?
-    status == 'pending'
+    status == "pending"
   end
 
   def sent?
-    status == 'sent'
+    status == "sent"
   end
 
   def failed?
-    status == 'failed'
+    status == "failed"
   end
 
   def mark_sent!
-    update!(status: 'sent', sent_at: Time.current)
+    update!(status: "sent", sent_at: Time.current)
     notification_channel.record_success!
   end
 
   def mark_failed!(error_message)
-    update!(status: 'failed', error_message: error_message)
+    update!(status: "failed", error_message: error_message)
     notification_channel.record_failure!
   end
 end

@@ -181,7 +181,7 @@ class TraceProcessor
       project_id: @project.id,
       trace_id: @payload[:trace_id],
       name: @payload[:name] || build_name,
-      kind: @payload[:kind] || 'request',
+      kind: @payload[:kind] || "request",
       started_at: parse_timestamp(@payload[:started_at]) || now,
       request_id: @payload[:request_id],
       request_method: @payload[:request_method],
@@ -210,7 +210,7 @@ class TraceProcessor
     trace = @project.traces.new(
       trace_id: @payload[:trace_id],
       name: @payload[:name] || build_name,
-      kind: @payload[:kind] || 'request',
+      kind: @payload[:kind] || "request",
       started_at: parse_timestamp(@payload[:started_at]) || Time.current,
       request_id: @payload[:request_id],
       request_method: @payload[:request_method],
@@ -255,7 +255,7 @@ class TraceProcessor
         span_id: span_data[:span_id] || SecureRandom.hex(8),
         parent_span_id: span_data[:parent_span_id],
         name: span_data[:name],
-        kind: span_data[:kind] || 'custom',
+        kind: span_data[:kind] || "custom",
         started_at: parse_timestamp(span_data[:started_at]) || now,
         ended_at: parse_timestamp(span_data[:ended_at]),
         duration_ms: span_data[:duration_ms],
@@ -293,13 +293,13 @@ class TraceProcessor
     elsif @payload[:job_class]
       @payload[:job_class]
     else
-      'Unknown'
+      "Unknown"
     end
   end
 
   def normalize_path(path)
     # Replace IDs with :id for grouping
-    path.gsub(/\/\d+/, '/:id').gsub(/\/[a-f0-9-]{36}/, '/:uuid')
+    path.gsub(/\/\d+/, "/:id").gsub(/\/[a-f0-9-]{36}/, "/:uuid")
   end
 
   def parse_timestamp(ts)
@@ -318,7 +318,7 @@ class TraceProcessor
     ActionCable.server.broadcast(
       "metrics_#{@project.id}",
       {
-        type: 'trace',
+        type: "trace",
         trace: {
           id: trace.id,
           name: trace.name,

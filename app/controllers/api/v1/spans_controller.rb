@@ -9,7 +9,7 @@ module Api
           span_id: params[:span_id] || SecureRandom.hex(8),
           parent_span_id: params[:parent_span_id],
           name: params[:name],
-          kind: params[:kind] || 'custom',
+          kind: params[:kind] || "custom",
           started_at: params[:started_at] ? Time.parse(params[:started_at]) : Time.current,
           ended_at: params[:ended_at] ? Time.parse(params[:ended_at]) : nil,
           duration_ms: params[:duration_ms],

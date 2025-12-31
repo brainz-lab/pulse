@@ -1,5 +1,5 @@
-require 'net/http'
-require 'json'
+require "net/http"
+require "json"
 
 class NotificationSender
   def initialize(notification:)
@@ -12,13 +12,13 @@ class NotificationSender
     return if @notification.sent?
 
     case @channel.kind
-    when 'webhook'
+    when "webhook"
       send_webhook
-    when 'email'
+    when "email"
       send_email
-    when 'slack'
+    when "slack"
       send_slack
-    when 'pagerduty'
+    when "pagerduty"
       send_pagerduty
     end
 
@@ -68,10 +68,10 @@ class NotificationSender
 
   def slack_payload
     color = case @alert.severity
-            when 'critical' then '#DC2626'
-            when 'warning' then '#F59E0B'
-            else '#6B7280'
-            end
+    when "critical" then "#DC2626"
+    when "warning" then "#F59E0B"
+    else "#6B7280"
+    end
 
     {
       channel: @channel.slack_channel,
@@ -81,10 +81,10 @@ class NotificationSender
           title: "[#{@alert.severity.upcase}] #{@alert.alert_rule.name}",
           text: @alert.message,
           fields: [
-            { title: 'Metric', value: @alert.metric_type, short: true },
-            { title: 'Value', value: @alert.value.to_s, short: true },
-            { title: 'Threshold', value: @alert.threshold.to_s, short: true },
-            { title: 'Environment', value: @alert.environment || 'N/A', short: true }
+            { title: "Metric", value: @alert.metric_type, short: true },
+            { title: "Value", value: @alert.value.to_s, short: true },
+            { title: "Threshold", value: @alert.threshold.to_s, short: true },
+            { title: "Environment", value: @alert.environment || "N/A", short: true }
           ],
           footer: "Pulse APM | #{@alert.project.name}",
           ts: @alert.triggered_at.to_i
@@ -94,20 +94,20 @@ class NotificationSender
   end
 
   def send_pagerduty
-    post_json('https://events.pagerduty.com/v2/enqueue', pagerduty_payload)
+    post_json("https://events.pagerduty.com/v2/enqueue", pagerduty_payload)
   end
 
   def pagerduty_payload
     {
       routing_key: @channel.pagerduty_integration_key,
-      event_action: 'trigger',
+      event_action: "trigger",
       dedup_key: "pulse-alert-#{@alert.alert_rule.id}",
       payload: {
         summary: "[#{@alert.severity.upcase}] #{@alert.alert_rule.name}: #{@alert.message}",
         severity: @channel.pagerduty_severity,
         source: "Pulse APM - #{@alert.project.name}",
-        component: @alert.endpoint || 'application',
-        group: @alert.environment || 'production',
+        component: @alert.endpoint || "application",
+        group: @alert.environment || "production",
         class: @alert.metric_type,
         custom_details: {
           alert_id: @alert.id,
@@ -123,12 +123,12 @@ class NotificationSender
   def post_json(url, payload, extra_headers = {})
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == 'https'
+    http.use_ssl = uri.scheme == "https"
     http.open_timeout = 10
     http.read_timeout = 10
 
     request = Net::HTTP::Post.new(uri.request_uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
     extra_headers.each { |k, v| request[k] = v }
     request.body = payload.to_json
 

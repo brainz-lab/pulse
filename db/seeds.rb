@@ -20,7 +20,7 @@ endpoints = [
   { method: 'GET', path: '/api/products/:id', controller: 'Api::ProductsController', action: 'show', avg_ms: 30 },
   { method: 'GET', path: '/dashboard', controller: 'DashboardController', action: 'index', avg_ms: 250 },
   { method: 'GET', path: '/reports', controller: 'ReportsController', action: 'index', avg_ms: 800 },
-  { method: 'POST', path: '/api/checkout', controller: 'Api::CheckoutController', action: 'create', avg_ms: 450 },
+  { method: 'POST', path: '/api/checkout', controller: 'Api::CheckoutController', action: 'create', avg_ms: 450 }
 ]
 
 # Job types
@@ -28,7 +28,7 @@ jobs = [
   { class: 'OrderProcessingJob', queue: 'default', avg_ms: 2500 },
   { class: 'EmailDeliveryJob', queue: 'mailers', avg_ms: 800 },
   { class: 'ReportGeneratorJob', queue: 'low', avg_ms: 15000 },
-  { class: 'CacheWarmupJob', queue: 'low', avg_ms: 5000 },
+  { class: 'CacheWarmupJob', queue: 'low', avg_ms: 5000 }
 ]
 
 # Generate traces for the last 24 hours
@@ -40,9 +40,9 @@ traces_created = 0
 
   # More traffic during business hours
   requests_this_hour = case hours_ago % 24
-    when 9..17 then rand(80..150)  # Business hours
-    when 18..21 then rand(40..80)  # Evening
-    else rand(10..30)              # Night
+  when 9..17 then rand(80..150)  # Business hours
+  when 18..21 then rand(40..80)  # Evening
+  else rand(10..30)              # Night
   end
 
   requests_this_hour.times do |i|
@@ -60,7 +60,7 @@ traces_created = 0
 
     # Occasionally add errors
     has_error = rand < 0.02
-    status = has_error ? [500, 502, 503].sample : [200, 201, 204].sample
+    status = has_error ? [ 500, 502, 503 ].sample : [ 200, 201, 204 ].sample
 
     trace = project.traces.create!(
       trace_id: SecureRandom.hex(16),
@@ -80,7 +80,7 @@ traces_created = 0
       host: "web-#{rand(1..3)}",
       user_id: rand < 0.7 ? "user_#{rand(1..500)}" : nil,
       error: has_error,
-      error_class: has_error ? ['ActiveRecord::RecordNotFound', 'ActionController::RoutingError', 'Redis::TimeoutError'].sample : nil,
+      error_class: has_error ? [ 'ActiveRecord::RecordNotFound', 'ActionController::RoutingError', 'Redis::TimeoutError' ].sample : nil,
       error_message: has_error ? 'Something went wrong' : nil
     )
 
@@ -91,21 +91,21 @@ traces_created = 0
     # DB spans
     db_queries = rand(1..5)
     db_queries.times do |j|
-      query_ms = [rand(1.0..20.0), remaining_ms * 0.3].min.round(2)
+      query_ms = [ rand(1.0..20.0), remaining_ms * 0.3 ].min.round(2)
       remaining_ms -= query_ms
 
       trace.spans.create!(
         project: project,
         span_id: SecureRandom.hex(8),
-        name: ['SELECT', 'INSERT', 'UPDATE'].sample,
+        name: [ 'SELECT', 'INSERT', 'UPDATE' ].sample,
         kind: 'db',
         started_at: span_started,
         ended_at: span_started + (query_ms / 1000.0).seconds,
         duration_ms: query_ms,
         data: {
-          sql: "SELECT * FROM #{['users', 'orders', 'products', 'sessions'].sample} WHERE id = ?",
-          table: ['users', 'orders', 'products', 'sessions'].sample,
-          operation: ['SELECT', 'INSERT', 'UPDATE'].sample
+          sql: "SELECT * FROM #{[ 'users', 'orders', 'products', 'sessions' ].sample} WHERE id = ?",
+          table: [ 'users', 'orders', 'products', 'sessions' ].sample,
+          operation: [ 'SELECT', 'INSERT', 'UPDATE' ].sample
         }
       )
       span_started += (query_ms / 1000.0).seconds
@@ -123,7 +123,7 @@ traces_created = 0
         ended_at: span_started + (cache_ms / 1000.0).seconds,
         duration_ms: cache_ms,
         data: {
-          key: "cache:#{['user', 'product', 'session'].sample}:#{rand(1..1000)}",
+          key: "cache:#{[ 'user', 'product', 'session' ].sample}:#{rand(1..1000)}",
           hit: rand < 0.8
         }
       )
@@ -143,7 +143,7 @@ traces_created = 0
         duration_ms: http_ms,
         data: {
           method: 'POST',
-          url: ['https://api.stripe.com/v1/charges', 'https://api.sendgrid.com/v3/mail/send', 'https://api.twilio.com/messages'].sample,
+          url: [ 'https://api.stripe.com/v1/charges', 'https://api.sendgrid.com/v3/mail/send', 'https://api.twilio.com/messages' ].sample,
           status: 200
         }
       )

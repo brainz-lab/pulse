@@ -18,10 +18,10 @@ class Trace < ApplicationRecord
   # (e.g., in batch processing where we pre-check existing traces)
   attr_accessor :skip_uniqueness_validation
 
-  scope :requests, -> { where(kind: 'request') }
-  scope :jobs, -> { where(kind: 'job') }
+  scope :requests, -> { where(kind: "request") }
+  scope :jobs, -> { where(kind: "job") }
   scope :recent, -> { order(started_at: :desc) }
-  scope :slow, ->(threshold = 1000) { where('duration_ms > ?', threshold) }
+  scope :slow, ->(threshold = 1000) { where("duration_ms > ?", threshold) }
   scope :errors, -> { where(error: true) }
 
   before_save :calculate_duration, if: -> { ended_at.present? && duration_ms.nil? }
@@ -59,7 +59,7 @@ class Trace < ApplicationRecord
       }
     end
 
-    ids = updates.map { |u| connection.quote(u[:id]) }.join(', ')
+    ids = updates.map { |u| connection.quote(u[:id]) }.join(", ")
 
     # Build CASE expressions for each column
     sql = <<~SQL
@@ -135,9 +135,9 @@ class Trace < ApplicationRecord
 
   def recalculate_span_metrics!
     self.span_count = spans.count
-    self.db_duration_ms = spans.where(kind: 'db').sum(:duration_ms)
-    self.view_duration_ms = spans.where(kind: 'render').sum(:duration_ms)
-    self.external_duration_ms = spans.where(kind: 'http').sum(:duration_ms)
+    self.db_duration_ms = spans.where(kind: "db").sum(:duration_ms)
+    self.view_duration_ms = spans.where(kind: "render").sum(:duration_ms)
+    self.external_duration_ms = spans.where(kind: "http").sum(:duration_ms)
     save!
   end
 end

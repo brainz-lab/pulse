@@ -30,16 +30,16 @@ class SsoController < ApplicationController
   def validate_sso_token(token)
     uri = URI("#{platform_internal_url}/api/v1/sso/validate")
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == 'https'
+    http.use_ssl = uri.scheme == "https"
 
     request = Net::HTTP::Post.new(uri.path)
-    request['Content-Type'] = 'application/json'
-    request['X-Service-Key'] = ENV['SERVICE_KEY']
-    request.body = { token: token, product: 'pulse' }.to_json
+    request["Content-Type"] = "application/json"
+    request["X-Service-Key"] = ENV["SERVICE_KEY"]
+    request.body = { token: token, product: "pulse" }.to_json
 
     response = http.request(request)
 
-    if response.code == '200'
+    if response.code == "200"
       JSON.parse(response.body, symbolize_names: true).merge(valid: true)
     else
       { valid: false }
@@ -51,11 +51,11 @@ class SsoController < ApplicationController
 
   # Internal URL for service-to-service API calls (Docker network)
   def platform_internal_url
-    ENV['BRAINZLAB_PLATFORM_URL'] || 'http://platform:3000'
+    ENV["BRAINZLAB_PLATFORM_URL"] || "http://platform:3000"
   end
 
   # External URL for browser redirects (Traefik)
   def platform_external_url
-    ENV['BRAINZLAB_PLATFORM_EXTERNAL_URL'] || 'http://platform.localhost'
+    ENV["BRAINZLAB_PLATFORM_EXTERNAL_URL"] || "http://platform.localhost"
   end
 end

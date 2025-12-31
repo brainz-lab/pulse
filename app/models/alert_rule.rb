@@ -22,20 +22,20 @@ class AlertRule < ApplicationRecord
   validates :metric_name, presence: true, if: :custom_metric?
 
   scope :enabled, -> { where(enabled: true) }
-  scope :alerting, -> { where(status: 'alerting') }
+  scope :alerting, -> { where(status: "alerting") }
   scope :by_metric_type, ->(type) { where(metric_type: type) }
 
   def custom_metric?
-    metric_type == 'custom'
+    metric_type == "custom"
   end
 
   def condition_met?(value)
     case operator
-    when 'gt'  then value > threshold
-    when 'gte' then value >= threshold
-    when 'lt'  then value < threshold
-    when 'lte' then value <= threshold
-    when 'eq'  then value == threshold
+    when "gt"  then value > threshold
+    when "gte" then value >= threshold
+    when "lt"  then value < threshold
+    when "lte" then value <= threshold
+    when "eq"  then value == threshold
     else false
     end
   end
@@ -50,7 +50,7 @@ class AlertRule < ApplicationRecord
 
     transaction do
       update!(
-        status: 'alerting',
+        status: "alerting",
         last_triggered_at: Time.current
       )
 
@@ -70,25 +70,25 @@ class AlertRule < ApplicationRecord
   end
 
   def resolve!
-    return unless status == 'alerting'
+    return unless status == "alerting"
 
     transaction do
-      update!(status: 'ok')
+      update!(status: "ok")
 
       alerts.firing.each do |alert|
-        alert.update!(status: 'resolved', resolved_at: Time.current)
+        alert.update!(status: "resolved", resolved_at: Time.current)
       end
     end
   end
 
   def human_condition
     op_text = case operator
-              when 'gt' then '>'
-              when 'gte' then '>='
-              when 'lt' then '<'
-              when 'lte' then '<='
-              when 'eq' then '='
-              end
+    when "gt" then ">"
+    when "gte" then ">="
+    when "lt" then "<"
+    when "lte" then "<="
+    when "eq" then "="
+    end
 
     "#{metric_display} #{op_text} #{threshold_display}"
   end
@@ -97,21 +97,21 @@ class AlertRule < ApplicationRecord
 
   def metric_display
     case metric_type
-    when 'apdex' then 'Apdex'
-    when 'error_rate' then 'Error rate'
-    when 'throughput' then 'Throughput'
-    when 'response_time' then 'Response time'
-    when 'p95' then 'P95 latency'
-    when 'p99' then 'P99 latency'
-    when 'custom' then metric_name
+    when "apdex" then "Apdex"
+    when "error_rate" then "Error rate"
+    when "throughput" then "Throughput"
+    when "response_time" then "Response time"
+    when "p95" then "P95 latency"
+    when "p99" then "P99 latency"
+    when "custom" then metric_name
     end
   end
 
   def threshold_display
     case metric_type
-    when 'error_rate' then "#{threshold}%"
-    when 'response_time', 'p95', 'p99' then "#{threshold}ms"
-    when 'throughput' then "#{threshold} rpm"
+    when "error_rate" then "#{threshold}%"
+    when "response_time", "p95", "p99" then "#{threshold}ms"
+    when "throughput" then "#{threshold} rpm"
     else threshold.to_s
     end
   end
@@ -122,10 +122,10 @@ class AlertRule < ApplicationRecord
 
   def format_value(value)
     case metric_type
-    when 'error_rate' then "#{value.round(2)}%"
-    when 'response_time', 'p95', 'p99' then "#{value.round(0)}ms"
-    when 'throughput' then "#{value.round(0)} rpm"
-    when 'apdex' then value.round(2).to_s
+    when "error_rate" then "#{value.round(2)}%"
+    when "response_time", "p95", "p99" then "#{value.round(0)}ms"
+    when "throughput" then "#{value.round(0)} rpm"
+    when "apdex" then value.round(2).to_s
     else value.to_s
     end
   end

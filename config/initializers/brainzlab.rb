@@ -63,7 +63,7 @@ class PulseSelfTrackMiddleware
 
     status, headers, response = @app.call(env)
 
-    [status, headers, response]
+    [ status, headers, response ]
   ensure
     Thread.current[:pulse_request_id] = nil
     Thread.current[:pulse_request_started_at] = nil

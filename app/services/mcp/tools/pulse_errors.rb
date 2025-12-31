@@ -12,11 +12,11 @@ module Mcp
       }.freeze
 
       def call(args)
-        since = parse_since(args[:since] || '1h')
+        since = parse_since(args[:since] || "1h")
         limit = args[:limit] || 20
 
         traces = @project.traces
-          .where('started_at >= ?', since)
+          .where("started_at >= ?", since)
           .where(error: true)
           .order(started_at: :desc)
           .limit(limit)

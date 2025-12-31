@@ -34,9 +34,9 @@ class CreateAlertRules < ActiveRecord::Migration[8.1]
 
       t.timestamps
 
-      t.index [:project_id, :enabled]
-      t.index [:project_id, :status]
-      t.index [:project_id, :metric_type]
+      t.index [ :project_id, :enabled ]
+      t.index [ :project_id, :status ]
+      t.index [ :project_id, :metric_type ]
     end
 
     # Join table for alert_rules -> notification_channels
@@ -46,7 +46,7 @@ class CreateAlertRules < ActiveRecord::Migration[8.1]
 
       t.timestamps
 
-      t.index [:alert_rule_id, :notification_channel_id], unique: true, name: 'idx_alert_rule_channels_unique'
+      t.index [ :alert_rule_id, :notification_channel_id ], unique: true, name: 'idx_alert_rule_channels_unique'
     end
   end
 end

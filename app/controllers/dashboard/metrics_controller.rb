@@ -14,9 +14,9 @@ module Dashboard
 
     def parse_since(value)
       case value
-      when '6h' then 6.hours.ago
-      when '24h' then 24.hours.ago
-      when '7d' then 7.days.ago
+      when "6h" then 6.hours.ago
+      when "24h" then 24.hours.ago
+      when "7d" then 7.days.ago
       else 1.hour.ago
       end
     end

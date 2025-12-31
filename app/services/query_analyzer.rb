@@ -8,20 +8,20 @@ class QueryAnalyzer
   def slow_queries(threshold_ms: 100, limit: 50)
     db_spans = Span.joins(:trace)
       .where(traces: { project_id: @project.id })
-      .where('traces.started_at >= ?', @since)
+      .where("traces.started_at >= ?", @since)
       .db_spans
-      .where('spans.duration_ms >= ?', threshold_ms)
-      .order('spans.duration_ms DESC')
+      .where("spans.duration_ms >= ?", threshold_ms)
+      .order("spans.duration_ms DESC")
       .limit(limit)
 
     db_spans.map do |span|
       {
         span_id: span.span_id,
         trace_id: span.trace.trace_id,
-        sql: span.data['sql'],
-        normalized_sql: SqlNormalizer.normalize(span.data['sql']),
-        table: span.data['table'],
-        operation: span.data['operation'],
+        sql: span.data["sql"],
+        normalized_sql: SqlNormalizer.normalize(span.data["sql"]),
+        table: span.data["table"],
+        operation: span.data["operation"],
         duration_ms: span.duration_ms,
         started_at: span.started_at,
         trace_name: span.trace.name
@@ -33,7 +33,7 @@ class QueryAnalyzer
   def frequent_queries(limit: 20)
     db_spans = Span.joins(:trace)
       .where(traces: { project_id: @project.id })
-      .where('traces.started_at >= ?', @since)
+      .where("traces.started_at >= ?", @since)
       .db_spans
 
     # Group by fingerprint in memory (more flexible than SQL grouping for JSONB)
@@ -49,7 +49,7 @@ class QueryAnalyzer
     end
 
     db_spans.find_each do |span|
-      sql = span.data['sql']
+      sql = span.data["sql"]
       next if sql.blank?
 
       fingerprint = SqlNormalizer.fingerprint(sql)
@@ -60,8 +60,8 @@ class QueryAnalyzer
       stats[:total_duration_ms] += span.duration_ms.to_f
       stats[:normalized_sql] ||= SqlNormalizer.normalize(sql)
       stats[:example_sql] ||= sql
-      stats[:table] ||= span.data['table']
-      stats[:operation] ||= span.data['operation']
+      stats[:table] ||= span.data["table"]
+      stats[:operation] ||= span.data["operation"]
     end
 
     pattern_stats.map do |fingerprint, stats|
@@ -74,21 +74,21 @@ class QueryAnalyzer
 
   # Get summary statistics
   def summary
-    traces = @project.traces.where('started_at >= ?', @since)
+    traces = @project.traces.where("started_at >= ?", @since)
 
     db_spans = Span.joins(:trace)
       .where(traces: { project_id: @project.id })
-      .where('traces.started_at >= ?', @since)
+      .where("traces.started_at >= ?", @since)
       .db_spans
 
     total_queries = db_spans.count
     return empty_summary if total_queries == 0
 
-    durations = db_spans.pluck('spans.duration_ms').compact
+    durations = db_spans.pluck("spans.duration_ms").compact
     avg_duration = durations.any? ? (durations.sum / durations.size).round(2) : 0
 
-    slow_count = db_spans.where('spans.duration_ms >= ?', 100).count
-    very_slow_count = db_spans.where('spans.duration_ms >= ?', 500).count
+    slow_count = db_spans.where("spans.duration_ms >= ?", 100).count
+    very_slow_count = db_spans.where("spans.duration_ms >= ?", 500).count
 
     tables = db_spans.pluck(Arel.sql("spans.data->>'table'")).compact.uniq.reject(&:blank?)
 
@@ -108,7 +108,7 @@ class QueryAnalyzer
   def table_breakdown
     db_spans = Span.joins(:trace)
       .where(traces: { project_id: @project.id })
-      .where('traces.started_at >= ?', @since)
+      .where("traces.started_at >= ?", @since)
       .db_spans
 
     table_stats = Hash.new do |h, k|
@@ -116,7 +116,7 @@ class QueryAnalyzer
     end
 
     db_spans.find_each do |span|
-      table = span.data['table']
+      table = span.data["table"]
       next if table.blank?
 
       table_stats[table][:count] += 1

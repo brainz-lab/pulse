@@ -14,19 +14,19 @@ class NotificationChannel < ApplicationRecord
   scope :by_kind, ->(kind) { where(kind: kind) }
 
   def webhook?
-    kind == 'webhook'
+    kind == "webhook"
   end
 
   def email?
-    kind == 'email'
+    kind == "email"
   end
 
   def slack?
-    kind == 'slack'
+    kind == "slack"
   end
 
   def pagerduty?
-    kind == 'pagerduty'
+    kind == "pagerduty"
   end
 
   def record_success!
@@ -45,33 +45,33 @@ class NotificationChannel < ApplicationRecord
 
   # Webhook config helpers
   def webhook_url
-    config['url']
+    config["url"]
   end
 
   def webhook_headers
-    config['headers'] || {}
+    config["headers"] || {}
   end
 
   # Email config helpers
   def email_addresses
-    config['addresses'] || []
+    config["addresses"] || []
   end
 
   # Slack config helpers
   def slack_webhook_url
-    config['webhook_url']
+    config["webhook_url"]
   end
 
   def slack_channel
-    config['channel']
+    config["channel"]
   end
 
   # PagerDuty config helpers
   def pagerduty_integration_key
-    config['integration_key']
+    config["integration_key"]
   end
 
   def pagerduty_severity
-    config['severity'] || 'error'
+    config["severity"] || "error"
   end
 end

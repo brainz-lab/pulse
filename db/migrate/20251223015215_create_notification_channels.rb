@@ -20,9 +20,9 @@ class CreateNotificationChannels < ActiveRecord::Migration[8.1]
 
       t.timestamps
 
-      t.index [:project_id, :name], unique: true
-      t.index [:project_id, :kind]
-      t.index [:project_id, :enabled]
+      t.index [ :project_id, :name ], unique: true
+      t.index [ :project_id, :kind ]
+      t.index [ :project_id, :enabled ]
     end
   end
 end

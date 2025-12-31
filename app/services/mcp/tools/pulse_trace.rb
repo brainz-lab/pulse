@@ -9,7 +9,7 @@ module Mcp
         properties: {
           trace_id: { type: "string", description: "Trace ID" }
         },
-        required: ["trace_id"]
+        required: [ "trace_id" ]
       }.freeze
 
       def call(args)

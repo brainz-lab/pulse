@@ -94,7 +94,7 @@ class NotificationChannelTest < ActiveSupport::TestCase
     disabled_channel = @project.notification_channels.create!(
       name: "Disabled",
       kind: "email",
-      config: { "addresses" => ["test@example.com"] },
+      config: { "addresses" => [ "test@example.com" ] },
       enabled: false
     )
 
@@ -170,7 +170,7 @@ class NotificationChannelTest < ActiveSupport::TestCase
   end
 
   test "email_addresses should return addresses from config" do
-    addresses = ["test@example.com", "admin@example.com"]
+    addresses = [ "test@example.com", "admin@example.com" ]
     @channel.update!(kind: "email", config: { "addresses" => addresses })
     assert_equal addresses, @channel.email_addresses
   end

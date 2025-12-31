@@ -54,7 +54,7 @@ class Api::V1::TracesControllerTest < ActionDispatch::IntegrationTest
       ]
     }
 
-    assert_difference ["Trace.count", "Span.count"], 1 do
+    assert_difference [ "Trace.count", "Span.count" ], 1 do
       post "/api/v1/traces", params: trace_data, headers: auth_headers, as: :json
     end
 

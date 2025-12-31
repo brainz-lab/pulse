@@ -14,7 +14,7 @@ module Mcp
       def call(args)
         if args[:name]
           metric = @project.metrics.find_by!(name: args[:name])
-          since = parse_since(args[:since] || '1h')
+          since = parse_since(args[:since] || "1h")
 
           {
             metric: {

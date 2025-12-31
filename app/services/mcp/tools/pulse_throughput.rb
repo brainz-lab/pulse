@@ -7,17 +7,17 @@ module Mcp
         type: "object",
         properties: {
           since: { type: "string", default: "1h", description: "Time range" },
-          granularity: { type: "string", enum: ["minute", "hour"], default: "minute" }
+          granularity: { type: "string", enum: [ "minute", "hour" ], default: "minute" }
         }
       }.freeze
 
       def call(args)
-        since = parse_since(args[:since] || '1h')
-        granularity = args[:granularity] || 'minute'
+        since = parse_since(args[:since] || "1h")
+        granularity = args[:granularity] || "minute"
 
         data = @project.traces
           .requests
-          .where('started_at >= ?', since)
+          .where("started_at >= ?", since)
           .group("date_trunc('#{granularity}', started_at)")
           .count
           .sort

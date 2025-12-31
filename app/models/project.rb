@@ -10,7 +10,7 @@ class Project < ApplicationRecord
 
   validates :platform_project_id, presence: true, uniqueness: true
 
-  def self.find_or_create_for_platform!(platform_project_id:, name: nil, environment: 'live')
+  def self.find_or_create_for_platform!(platform_project_id:, name: nil, environment: "live")
     find_or_create_by!(platform_project_id: platform_project_id) do |p|
       p.name = name
       p.environment = environment
@@ -19,7 +19,7 @@ class Project < ApplicationRecord
 
   # Apdex score for a time range
   def apdex(since: 1.hour.ago)
-    traces_in_range = traces.where('started_at >= ?', since).where(kind: 'request')
+    traces_in_range = traces.where("started_at >= ?", since).where(kind: "request")
 
     ApdexCalculator.calculate(
       traces: traces_in_range,
@@ -29,13 +29,13 @@ class Project < ApplicationRecord
 
   # Key metrics summary - optimized to use a single aggregate query
   def overview(since: 1.hour.ago)
-    traces_scope = traces.where('started_at >= ?', since).where(kind: 'request')
+    traces_scope = traces.where("started_at >= ?", since).where(kind: "request")
 
     # Single query to get all counts and averages to avoid N+1
     stats = traces_scope.pick(
-      Arel.sql('COUNT(*)'),
-      Arel.sql('AVG(duration_ms)'),
-      Arel.sql('COUNT(*) FILTER (WHERE error = true)'),
+      Arel.sql("COUNT(*)"),
+      Arel.sql("AVG(duration_ms)"),
+      Arel.sql("COUNT(*) FILTER (WHERE error = true)"),
       Arel.sql("COUNT(*) FILTER (WHERE duration_ms <= #{apdex_t * 1000})"),
       Arel.sql("COUNT(*) FILTER (WHERE duration_ms > #{apdex_t * 1000} AND duration_ms <= #{apdex_t * 4000})")
     )

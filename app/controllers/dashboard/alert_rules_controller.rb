@@ -1,6 +1,6 @@
 module Dashboard
   class AlertRulesController < BaseController
-    before_action :set_alert_rule, only: [:show, :update, :destroy]
+    before_action :set_alert_rule, only: [ :show, :update, :destroy ]
 
     def index
       @alert_rules = @project.alert_rules.includes(:notification_channels).order(:name)
@@ -12,11 +12,11 @@ module Dashboard
 
     def new
       @alert_rule = @project.alert_rules.build(
-        operator: 'gt',
-        aggregation: 'avg',
+        operator: "gt",
+        aggregation: "avg",
         window_minutes: 5,
         cooldown_minutes: 60,
-        severity: 'warning'
+        severity: "warning"
       )
       @notification_channels = @project.notification_channels.enabled
     end
@@ -27,7 +27,7 @@ module Dashboard
       if @alert_rule.save
         update_channels
         AlertsChannel.broadcast_alert_rule_created(@project, @alert_rule)
-        redirect_to dashboard_alert_rules_path, notice: 'Alert rule created.'
+        redirect_to dashboard_alert_rules_path, notice: "Alert rule created."
       else
         @notification_channels = @project.notification_channels.enabled
         render :new, status: :unprocessable_entity
@@ -38,7 +38,7 @@ module Dashboard
       if @alert_rule.update(alert_rule_params)
         update_channels
         AlertsChannel.broadcast_alert_rule_updated(@project, @alert_rule)
-        redirect_to dashboard_alert_rule_path(@alert_rule), notice: 'Alert rule updated.'
+        redirect_to dashboard_alert_rule_path(@alert_rule), notice: "Alert rule updated."
       else
         @notification_channels = @project.notification_channels.enabled
         @recent_alerts = @alert_rule.alerts.recent.limit(10)
@@ -50,7 +50,7 @@ module Dashboard
       alert_rule_id = @alert_rule.id
       @alert_rule.destroy
       AlertsChannel.broadcast_alert_rule_deleted(@project, alert_rule_id)
-      redirect_to dashboard_alert_rules_path, notice: 'Alert rule deleted.'
+      redirect_to dashboard_alert_rules_path, notice: "Alert rule deleted."
     end
 
     private

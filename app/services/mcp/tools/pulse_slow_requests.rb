@@ -13,14 +13,14 @@ module Mcp
       }.freeze
 
       def call(args)
-        since = parse_since(args[:since] || '1h')
+        since = parse_since(args[:since] || "1h")
         threshold = args[:threshold_ms] || 1000
         limit = args[:limit] || 20
 
         traces = @project.traces
           .requests
-          .where('started_at >= ?', since)
-          .where('duration_ms >= ?', threshold)
+          .where("started_at >= ?", since)
+          .where("duration_ms >= ?", threshold)
           .order(duration_ms: :desc)
           .limit(limit)
 

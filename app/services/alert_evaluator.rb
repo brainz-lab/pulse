@@ -29,25 +29,25 @@ class AlertEvaluator
     scope = build_trace_scope(rule, since)
 
     case rule.metric_type
-    when 'apdex'
+    when "apdex"
       ApdexCalculator.calculate(traces: scope, threshold: @project.apdex_t)
-    when 'error_rate'
+    when "error_rate"
       calculate_error_rate(scope)
-    when 'throughput'
+    when "throughput"
       calculate_throughput(scope, since)
-    when 'response_time'
+    when "response_time"
       calculate_response_time(scope, rule.aggregation)
-    when 'p95'
+    when "p95"
       calculate_percentile(scope, 0.95)
-    when 'p99'
+    when "p99"
       calculate_percentile(scope, 0.99)
-    when 'custom'
+    when "custom"
       fetch_custom_metric(rule)
     end
   end
 
   def build_trace_scope(rule, since)
-    scope = @project.traces.where('started_at >= ?', since).where(kind: 'request')
+    scope = @project.traces.where("started_at >= ?", since).where(kind: "request")
     scope = scope.where(request_path: rule.endpoint) if rule.endpoint.present?
     scope = scope.where(environment: rule.environment) if rule.environment.present?
     scope
@@ -66,11 +66,11 @@ class AlertEvaluator
 
   def calculate_response_time(scope, aggregation)
     case aggregation
-    when 'avg' then scope.average(:duration_ms)
-    when 'max' then scope.maximum(:duration_ms)
-    when 'min' then scope.minimum(:duration_ms)
-    when 'p95' then calculate_percentile(scope, 0.95)
-    when 'p99' then calculate_percentile(scope, 0.99)
+    when "avg" then scope.average(:duration_ms)
+    when "max" then scope.maximum(:duration_ms)
+    when "min" then scope.minimum(:duration_ms)
+    when "p95" then calculate_percentile(scope, 0.95)
+    when "p99" then calculate_percentile(scope, 0.99)
     else scope.average(:duration_ms)
     end
   end
@@ -86,14 +86,14 @@ class AlertEvaluator
     points = @project.metric_points
                      .joins(:metric)
                      .where(metrics: { name: rule.metric_name })
-                     .where('timestamp >= ?', since)
+                     .where("timestamp >= ?", since)
 
     case rule.aggregation
-    when 'avg' then points.average(:value)
-    when 'max' then points.maximum(:value)
-    when 'min' then points.minimum(:value)
-    when 'sum' then points.sum(:value)
-    when 'count' then points.count
+    when "avg" then points.average(:value)
+    when "max" then points.maximum(:value)
+    when "min" then points.minimum(:value)
+    when "sum" then points.sum(:value)
+    when "count" then points.count
     else points.average(:value)
     end
   end
@@ -106,7 +106,7 @@ class AlertEvaluator
     rule.notification_channels.enabled.find_each do |channel|
       alert.alert_notifications.create!(
         notification_channel: channel,
-        status: 'pending'
+        status: "pending"
       )
     end
 
@@ -118,13 +118,13 @@ class AlertEvaluator
   end
 
   def handle_alert_resolved(rule)
-    return unless rule.status == 'alerting'
+    return unless rule.status == "alerting"
 
     rule.resolve!
 
     # Broadcast resolution to dashboard
     AlertsChannel.broadcast_to(@project, {
-      type: 'resolved',
+      type: "resolved",
       alert_rule_id: rule.id,
       name: rule.name
     })
@@ -132,7 +132,7 @@ class AlertEvaluator
 
   def broadcast_alert(alert)
     AlertsChannel.broadcast_to(@project, {
-      type: 'firing',
+      type: "firing",
       alert: {
         id: alert.id,
         rule_name: alert.alert_rule.name,

@@ -1,6 +1,6 @@
 class Metric < ApplicationRecord
   belongs_to :project
-  has_many :points, class_name: 'MetricPoint', dependent: :destroy
+  has_many :points, class_name: "MetricPoint", dependent: :destroy
 
   KINDS = %w[gauge counter histogram].freeze
 
@@ -18,16 +18,16 @@ class Metric < ApplicationRecord
 
   def stats(since: 1.hour.ago, granularity: :minute)
     points
-      .where('timestamp >= ?', since)
+      .where("timestamp >= ?", since)
       .group("date_trunc('#{granularity}', timestamp)")
       .select(
         "date_trunc('#{granularity}', timestamp) as bucket",
-        'COUNT(*) as count',
-        'AVG(value) as avg',
-        'MIN(value) as min',
-        'MAX(value) as max',
-        'SUM(value) as sum'
+        "COUNT(*) as count",
+        "AVG(value) as avg",
+        "MIN(value) as min",
+        "MAX(value) as max",
+        "SUM(value) as sum"
       )
-      .order('bucket')
+      .order("bucket")
   end
 end

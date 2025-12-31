@@ -1,6 +1,6 @@
 module Dashboard
   class ProjectsController < ApplicationController
-    layout 'dashboard'
+    layout "dashboard"
 
     def index
       @projects = Project.order(created_at: :desc)
@@ -17,7 +17,7 @@ module Dashboard
       if @project.save
         session[:platform_project_id] = @project.platform_project_id
         session[:project_name] = @project.name
-        redirect_to dashboard_overview_path, notice: 'Project created!'
+        redirect_to dashboard_overview_path, notice: "Project created!"
       else
         render :new, status: :unprocessable_entity
       end

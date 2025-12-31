@@ -1,16 +1,16 @@
-require 'ostruct'
+require "ostruct"
 
 module Dashboard
   class EndpointsController < BaseController
     def index
       @since = parse_since(params[:since])
       @search = params[:search]
-      @group_by = params[:group_by] || 'endpoint' # 'endpoint' or 'prefix'
+      @group_by = params[:group_by] || "endpoint" # 'endpoint' or 'prefix'
       @method_filter = params[:method]
-      @sort = params[:sort] || 'count'
-      @sort_dir = params[:sort_dir] || 'desc'
+      @sort = params[:sort] || "count"
+      @sort_dir = params[:sort_dir] || "desc"
 
-      if @group_by == 'prefix'
+      if @group_by == "prefix"
         @endpoints = fetch_endpoint_groups
       else
         @endpoints = fetch_endpoints.to_a
@@ -19,7 +19,7 @@ module Dashboard
       # Get path prefix groups for sidebar navigation
       @path_prefixes = current_project.traces
         .requests
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
         .where.not(name: nil)
         .pluck(:name)
         .map { |n| extract_path_prefix(n) }
@@ -34,12 +34,12 @@ module Dashboard
     def fetch_endpoints
       scope = current_project.traces
         .requests
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
         .where.not(duration_ms: nil)
 
       # Apply search filter
       if @search.present?
-        scope = scope.where('name ILIKE ?', "%#{@search}%")
+        scope = scope.where("name ILIKE ?", "%#{@search}%")
       end
 
       # Apply method filter
@@ -49,23 +49,23 @@ module Dashboard
 
       # Build query with P95/P99
       sort_column = case @sort
-                    when 'avg' then 'avg_duration'
-                    when 'p95' then 'p95_duration'
-                    when 'errors' then 'error_rate'
-                    else 'count'
-                    end
-      sort_order = @sort_dir == 'asc' ? 'ASC' : 'DESC'
+      when "avg" then "avg_duration"
+      when "p95" then "p95_duration"
+      when "errors" then "error_rate"
+      else "count"
+      end
+      sort_order = @sort_dir == "asc" ? "ASC" : "DESC"
 
       scope.group(:name)
         .select(
-          'name',
-          'COUNT(*) as count',
-          'AVG(duration_ms) as avg_duration',
-          'MAX(duration_ms) as max_duration',
-          'PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) as p95_duration',
-          'PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms) as p99_duration',
-          'SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count',
-          '(SUM(CASE WHEN error THEN 1 ELSE 0 END)::float / COUNT(*) * 100) as error_rate'
+          "name",
+          "COUNT(*) as count",
+          "AVG(duration_ms) as avg_duration",
+          "MAX(duration_ms) as max_duration",
+          "PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) as p95_duration",
+          "PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms) as p99_duration",
+          "SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count",
+          "(SUM(CASE WHEN error THEN 1 ELSE 0 END)::float / COUNT(*) * 100) as error_rate"
         )
         .order("#{sort_column} #{sort_order}")
         .limit(100)
@@ -74,7 +74,7 @@ module Dashboard
     def fetch_endpoint_groups
       traces = current_project.traces
         .requests
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
         .where.not(duration_ms: nil)
         .where.not(name: nil)
 
@@ -108,19 +108,19 @@ module Dashboard
     def extract_path_prefix(endpoint_name)
       return nil if endpoint_name.blank?
 
-      parts = endpoint_name.split(' ', 2)
+      parts = endpoint_name.split(" ", 2)
       path = parts.length > 1 ? parts[1] : endpoint_name
 
-      segments = path.split('/').reject(&:blank?)
+      segments = path.split("/").reject(&:blank?)
       return nil if segments.length < 2
 
-      "/" + segments[0..1].join('/')
+      "/" + segments[0..1].join("/")
     end
 
     def percentile(sorted_values, p)
       return nil if sorted_values.empty?
       index = (sorted_values.length * p).ceil - 1
-      sorted_values[[index, 0].max]
+      sorted_values[[ index, 0 ].max]
     end
 
     public
@@ -132,17 +132,17 @@ module Dashboard
       traces_scope = current_project.traces
         .requests
         .where(name: @endpoint_name)
-        .where('started_at >= ?', @since)
+        .where("started_at >= ?", @since)
 
       @stats = traces_scope
         .where.not(duration_ms: nil)
         .select(
-          'COUNT(*) as count',
-          'AVG(duration_ms) as avg_duration',
-          'MAX(duration_ms) as max_duration',
-          'MIN(duration_ms) as min_duration',
-          'PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) as p95_duration',
-          'SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count'
+          "COUNT(*) as count",
+          "AVG(duration_ms) as avg_duration",
+          "MAX(duration_ms) as max_duration",
+          "MIN(duration_ms) as min_duration",
+          "PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) as p95_duration",
+          "SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count"
         ).reorder(nil).take
 
       @rpm_data = traces_scope
@@ -165,9 +165,9 @@ module Dashboard
 
     def parse_since(value)
       case value
-      when '6h' then 6.hours.ago
-      when '24h' then 24.hours.ago
-      when '7d' then 7.days.ago
+      when "6h" then 6.hours.ago
+      when "24h" then 24.hours.ago
+      when "7d" then 7.days.ago
       else 1.hour.ago
       end
     end

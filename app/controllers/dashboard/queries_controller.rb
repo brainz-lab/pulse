@@ -2,7 +2,7 @@ module Dashboard
   class QueriesController < BaseController
     def index
       @since = parse_since(params[:since])
-      @tab = params[:tab] || 'n_plus_one'
+      @tab = params[:tab] || "n_plus_one"
       @threshold = (params[:threshold] || 100).to_i
 
       analyzer = QueryAnalyzer.new(project: current_project, since: @since)
@@ -11,12 +11,12 @@ module Dashboard
       @summary = analyzer.summary
 
       case @tab
-      when 'n_plus_one'
+      when "n_plus_one"
         @n_plus_one_patterns = detector.aggregate_patterns(limit: 20)
         @affected_traces = detector.find_affected_traces(limit: 10)
-      when 'slow'
+      when "slow"
         @slow_queries = analyzer.slow_queries(threshold_ms: @threshold, limit: 50)
-      when 'frequent'
+      when "frequent"
         @frequent_queries = analyzer.frequent_queries(limit: 30)
         @table_breakdown = analyzer.table_breakdown
       end
@@ -37,9 +37,9 @@ module Dashboard
 
     def parse_since(value)
       case value
-      when '6h' then 6.hours.ago
-      when '24h' then 24.hours.ago
-      when '7d' then 7.days.ago
+      when "6h" then 6.hours.ago
+      when "24h" then 24.hours.ago
+      when "7d" then 7.days.ago
       else 1.hour.ago
       end
     end

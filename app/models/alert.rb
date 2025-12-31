@@ -13,18 +13,18 @@ class Alert < ApplicationRecord
   validates :value, presence: true
   validates :triggered_at, presence: true
 
-  scope :firing, -> { where(status: 'firing') }
-  scope :resolved, -> { where(status: 'resolved') }
+  scope :firing, -> { where(status: "firing") }
+  scope :resolved, -> { where(status: "resolved") }
   scope :recent, -> { order(triggered_at: :desc) }
-  scope :critical, -> { where(severity: 'critical') }
-  scope :warning, -> { where(severity: 'warning') }
+  scope :critical, -> { where(severity: "critical") }
+  scope :warning, -> { where(severity: "warning") }
 
   def firing?
-    status == 'firing'
+    status == "firing"
   end
 
   def resolved?
-    status == 'resolved'
+    status == "resolved"
   end
 
   def duration
@@ -33,7 +33,7 @@ class Alert < ApplicationRecord
   end
 
   def duration_text
-    return 'ongoing' if firing?
+    return "ongoing" if firing?
 
     seconds = duration.to_i
     if seconds < 60
@@ -47,17 +47,17 @@ class Alert < ApplicationRecord
 
   def severity_color
     case severity
-    when 'critical' then '#DC2626'
-    when 'warning' then '#F59E0B'
-    else '#6B7280'
+    when "critical" then "#DC2626"
+    when "warning" then "#F59E0B"
+    else "#6B7280"
     end
   end
 
   def severity_badge_class
     case severity
-    when 'critical' then 'bg-red-100 text-red-800'
-    when 'warning' then 'bg-amber-100 text-amber-800'
-    else 'bg-gray-100 text-gray-800'
+    when "critical" then "bg-red-100 text-red-800"
+    when "warning" then "bg-amber-100 text-amber-800"
+    else "bg-gray-100 text-gray-800"
     end
   end
 end

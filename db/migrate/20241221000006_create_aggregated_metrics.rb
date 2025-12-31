@@ -18,7 +18,7 @@ class CreateAggregatedMetrics < ActiveRecord::Migration[8.0]
 
       t.jsonb :dimensions, default: {}
 
-      t.index [:project_id, :name, :bucket, :granularity], name: 'idx_agg_metrics_lookup'
+      t.index [ :project_id, :name, :bucket, :granularity ], name: 'idx_agg_metrics_lookup'
     end
   end
 end

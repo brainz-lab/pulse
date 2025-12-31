@@ -13,7 +13,7 @@ class NPlusOneDetector
 
     # Group by normalized SQL pattern
     query_groups = db_spans.group_by do |span|
-      SqlNormalizer.normalize(span.data['sql'])
+      SqlNormalizer.normalize(span.data["sql"])
     end.compact
 
     patterns = []
@@ -30,9 +30,9 @@ class NPlusOneDetector
         count: spans.count,
         total_duration_ms: total_duration,
         avg_duration_ms: (total_duration / spans.count).round(2),
-        table: spans.first.data['table'],
-        operation: spans.first.data['operation'],
-        example_sql: spans.first.data['sql'],
+        table: spans.first.data["table"],
+        operation: spans.first.data["operation"],
+        example_sql: spans.first.data["sql"],
         span_ids: spans.map(&:span_id)
       }
     end
@@ -43,8 +43,8 @@ class NPlusOneDetector
   # Find all traces with N+1 patterns in the time range
   def find_affected_traces(limit: 50)
     traces = @project.traces
-      .where('started_at >= ?', @since)
-      .where('span_count >= ?', MINIMUM_REPEAT_COUNT)
+      .where("started_at >= ?", @since)
+      .where("span_count >= ?", MINIMUM_REPEAT_COUNT)
       .includes(:spans)
       .order(started_at: :desc)
       .limit(limit * 2) # Fetch more to filter
@@ -87,11 +87,10 @@ class NPlusOneDetector
     end
 
     @project.traces
-      .where('started_at >= ?', @since)
-      .where('span_count >= ?', MINIMUM_REPEAT_COUNT)
+      .where("started_at >= ?", @since)
+      .where("span_count >= ?", MINIMUM_REPEAT_COUNT)
       .includes(:spans)
       .find_each do |trace|
-
       patterns = analyze_trace(trace)
 
       patterns.each do |pattern|

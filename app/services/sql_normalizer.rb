@@ -9,17 +9,17 @@ class SqlNormalizer
     normalized = sql.dup
 
     # Replace UUID patterns first (before numeric)
-    normalized.gsub!(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i, '?')
+    normalized.gsub!(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i, "?")
 
     # Replace string literals (single and double quoted)
-    normalized.gsub!(/'[^']*'/, '?')
-    normalized.gsub!(/"[^"]*"/, '?')
+    normalized.gsub!(/'[^']*'/, "?")
+    normalized.gsub!(/"[^"]*"/, "?")
 
     # Replace numeric literals (but not table/column names)
-    normalized.gsub!(/\b\d+\.?\d*\b/, '?')
+    normalized.gsub!(/\b\d+\.?\d*\b/, "?")
 
     # Collapse IN clauses with multiple placeholders
-    normalized.gsub!(/IN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)/i, 'IN (?)')
+    normalized.gsub!(/IN\s*\(\s*\?(?:\s*,\s*\?)*\s*\)/i, "IN (?)")
 
     # Normalize whitespace
     normalized.squish
