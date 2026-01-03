@@ -13,14 +13,12 @@ class AggregateMetricsJobTest < ActiveSupport::TestCase
     )
 
     # Mock the MetricsAggregator
-    aggregator = Minitest::Mock.new
-    aggregator.expect :aggregate_minute!, nil, [ trace.started_at ]
+    aggregator = mock("aggregator")
+    aggregator.expects(:aggregate_minute!).with(trace.started_at).once
 
-    MetricsAggregator.stub :new, aggregator do
-      AggregateMetricsJob.new.perform(trace.id)
-    end
+    MetricsAggregator.stubs(:new).with(project: @project).returns(aggregator)
 
-    aggregator.verify
+    AggregateMetricsJob.new.perform(trace.id)
   end
 
   test "perform should handle non-existent trace gracefully" do
@@ -38,11 +36,11 @@ class AggregateMetricsJobTest < ActiveSupport::TestCase
     )
 
     # Simulate an error in aggregation
-    MetricsAggregator.stub :new, ->(_) { raise StandardError, "Test error" } do
-      # Should not raise error (errors are logged)
-      assert_nothing_raised do
-        AggregateMetricsJob.new.perform(trace.id)
-      end
+    MetricsAggregator.stubs(:new).raises(StandardError, "Test error")
+
+    # Should not raise error (errors are logged)
+    assert_nothing_raised do
+      AggregateMetricsJob.new.perform(trace.id)
     end
   end
 
@@ -53,16 +51,11 @@ class AggregateMetricsJobTest < ActiveSupport::TestCase
       ended_at: Time.current + 0.1
     )
 
-    aggregator_called_with = nil
-    MetricsAggregator.stub :new, ->(project:) {
-      aggregator_called_with = project
-      mock = Minitest::Mock.new
-      mock.expect :aggregate_minute!, nil, [ trace.started_at ]
-      mock
-    } do
-      AggregateMetricsJob.new.perform(trace.id)
-    end
+    aggregator = mock("aggregator")
+    aggregator.stubs(:aggregate_minute!)
 
-    assert_equal @project.id, aggregator_called_with.id
+    MetricsAggregator.expects(:new).with(project: @project).returns(aggregator)
+
+    AggregateMetricsJob.new.perform(trace.id)
   end
 end
