@@ -16,8 +16,10 @@ Rails.application.routes.draw do
       get "traces/last", to: "traces#last"
       get "traces/:id", to: "traces#show"
 
-      # Spans (for adding to existing trace)
-      post "traces/:trace_id/spans", to: "spans#create"
+      # Spans
+      post "spans", to: "spans#create"        # Standalone span ingestion (brainzlab-rails)
+      post "spans/batch", to: "spans#batch"   # Batch span ingestion
+      post "traces/:trace_id/spans", to: "spans#create"  # Add to existing trace
 
       # Metrics
       post "metrics", to: "metrics#create"
