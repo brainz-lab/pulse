@@ -13,7 +13,7 @@ module Api
           parent_span_id: params[:parent_span_id],
           name: params[:name],
           kind: params[:category] || params[:kind] || "custom",
-          started_at: params[:started_at] ? Time.parse(params[:started_at]) : Time.current,
+          started_at: parse_timestamp(params[:started_at] || params[:timestamp]),
           ended_at: params[:ended_at] ? Time.parse(params[:ended_at]) : nil,
           duration_ms: params[:duration_ms],
           data: build_span_data,
@@ -39,7 +39,7 @@ module Api
             parent_span_id: span_params[:parent_span_id],
             name: span_params[:name],
             kind: span_params[:category] || span_params[:kind] || "custom",
-            started_at: span_params[:started_at] ? Time.parse(span_params[:started_at]) : Time.current,
+            started_at: parse_timestamp(span_params[:started_at] || span_params[:timestamp]),
             ended_at: span_params[:ended_at] ? Time.parse(span_params[:ended_at]) : nil,
             duration_ms: span_params[:duration_ms],
             data: span_params[:attributes] || span_params[:data] || {},
@@ -83,7 +83,7 @@ module Api
           kind: "instrumentation",
           environment: span_params[:environment] || current_project.default_environment,
           host: span_params[:host],
-          started_at: span_params[:timestamp] ? Time.parse(span_params[:timestamp]) : Time.current,
+          started_at: parse_timestamp(span_params[:started_at] || span_params[:timestamp]),
           ended_at: nil,
           status: 0
         )
@@ -92,6 +92,14 @@ module Api
       def build_span_data
         # Merge attributes into data
         (params[:data] || {}).merge(params[:attributes] || {})
+      end
+
+      def parse_timestamp(value)
+        return Time.current if value.blank?
+
+        Time.parse(value.to_s)
+      rescue ArgumentError
+        Time.current
       end
     end
   end
