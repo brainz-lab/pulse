@@ -62,14 +62,15 @@ class Trace < ApplicationRecord
     ids = updates.map { |u| connection.quote(u[:id]) }.join(", ")
 
     # Build CASE expressions for each column
+    # Note: Use ::timestamp cast for ended_at and updated_at to avoid PG::DatatypeMismatch
     sql = <<~SQL
       UPDATE traces SET
-        ended_at = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{connection.quote(u[:ended_at])}" }.join(' ')} END,
+        ended_at = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{connection.quote(u[:ended_at])}::timestamp" }.join(' ')} END,
         duration_ms = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{u[:duration_ms]}" }.join(' ')} END,
         error = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{u[:error]}" }.join(' ')} END,
         error_class = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{connection.quote(u[:error_class])}" }.join(' ')} END,
         error_message = CASE id #{updates.map { |u| "WHEN #{connection.quote(u[:id])} THEN #{connection.quote(u[:error_message])}" }.join(' ')} END,
-        updated_at = #{connection.quote(Time.current)}
+        updated_at = #{connection.quote(Time.current)}::timestamp
       WHERE id IN (#{ids})
     SQL
 
@@ -135,9 +136,24 @@ class Trace < ApplicationRecord
 
   def recalculate_span_metrics!
     self.span_count = spans.count
-    self.db_duration_ms = spans.where(kind: "db").sum(:duration_ms)
-    self.view_duration_ms = spans.where(kind: "render").sum(:duration_ms)
+    # Include all DB-related span kinds
+    self.db_duration_ms = spans.where("kind LIKE 'db%'").sum(:duration_ms)
+    # Include all view/render span kinds
+    self.view_duration_ms = spans.where("kind LIKE 'render%' OR kind LIKE 'view%'").sum(:duration_ms)
+    # External HTTP calls (exclude http.request which is the controller action)
     self.external_duration_ms = spans.where(kind: "http").sum(:duration_ms)
+    # Note: Browser spans are stored but not included in server-side duration
+    # They represent client-side timing (Web Vitals, network requests)
     save!
+  end
+
+  # Browser spans attached to this trace
+  def browser_spans
+    spans.browser_spans
+  end
+
+  # Check if this trace has browser data
+  def has_browser_data?
+    browser_spans.exists?
   end
 end

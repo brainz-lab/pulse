@@ -2,6 +2,10 @@ Rails.application.routes.draw do
   # API
   namespace :api do
     namespace :v1 do
+      # Browser SDK endpoint (for brainzlab-js)
+      match "browser", to: "browser#preflight", via: :options
+      post "browser", to: "browser#create"
+
       # Projects (auto-provisioning)
       post "projects/provision", to: "projects#provision"
       get "projects/lookup", to: "projects#lookup"

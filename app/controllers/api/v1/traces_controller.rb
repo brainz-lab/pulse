@@ -51,17 +51,18 @@ module Api
       def index
         traces = current_project.traces.recent
 
-        traces = traces.where(kind: params[:kind]) if params[:kind]
-        traces = traces.where(controller: params[:controller]) if params[:controller]
-        traces = traces.slow(params[:slow].to_f) if params[:slow]
+        # Use filter_* prefix to avoid Rails routing param conflicts (controller/action are reserved)
+        traces = traces.where(kind: params[:filter_kind]) if params[:filter_kind].present?
+        traces = traces.where(controller: params[:filter_controller]) if params[:filter_controller].present?
+        traces = traces.slow(params[:slow].to_f) if params[:slow].present?
         traces = traces.errors if params[:errors] == "true"
 
-        if params[:since]
+        if params[:since].present?
           since = Time.parse(params[:since]) rescue nil
           traces = traces.where("started_at >= ?", since) if since
         end
 
-        traces = traces.limit(params[:limit] || 50)
+        traces = traces.limit(params[:limit].presence || 50)
 
         render json: { traces: traces.as_json(except: [ :created_at, :updated_at ]) }
       end

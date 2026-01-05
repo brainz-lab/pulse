@@ -64,24 +64,33 @@ module Api
         request_id = span_params[:request_id]
         trace_id = span_params[:trace_id]
 
-        # Try to find existing trace by trace_id or request_id
+        # Try to find existing trace by trace_id first
         if trace_id.present?
           trace = current_project.traces.find_by(trace_id: trace_id)
           return trace if trace
         end
 
+        # Try to find by request_id, preferring "request" type traces
         if request_id.present?
+          # First try to find a request/job trace (primary traces)
+          trace = current_project.traces.where(request_id: request_id)
+                                        .where(kind: %w[request job])
+                                        .first
+          return trace if trace
+
+          # Fall back to any trace with this request_id
           trace = current_project.traces.find_by(request_id: request_id)
           return trace if trace
         end
 
         # Create new trace for this span
+        # Use "custom" kind for standalone instrumentation spans
         current_project.traces.create!(
           trace_id: trace_id || SecureRandom.uuid,
           request_id: request_id,
           name: span_params[:name] || "rails.instrumentation",
-          kind: "instrumentation",
-          environment: span_params[:environment] || current_project.default_environment,
+          kind: "custom",
+          environment: span_params[:environment] || current_project.environment || "development",
           host: span_params[:host],
           started_at: parse_timestamp(span_params[:started_at] || span_params[:timestamp]),
           ended_at: nil,
@@ -90,8 +99,10 @@ module Api
       end
 
       def build_span_data
-        # Merge attributes into data
-        (params[:data] || {}).merge(params[:attributes] || {})
+        # Merge attributes into data, handling ActionController::Parameters
+        data = params[:data].respond_to?(:to_unsafe_h) ? params[:data].to_unsafe_h : (params[:data] || {})
+        attributes = params[:attributes].respond_to?(:to_unsafe_h) ? params[:attributes].to_unsafe_h : (params[:attributes] || {})
+        data.merge(attributes)
       end
 
       def parse_timestamp(value)

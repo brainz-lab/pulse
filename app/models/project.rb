@@ -10,6 +10,14 @@ class Project < ApplicationRecord
 
   validates :platform_project_id, presence: true, uniqueness: true
 
+  # Apdex T threshold in seconds (default: 0.5s)
+  # Satisfied: response <= T
+  # Tolerating: T < response <= 4T
+  # Frustrated: response > 4T
+  def apdex_t
+    settings&.dig("apdex_t") || 0.5
+  end
+
   def self.find_or_create_for_platform!(platform_project_id:, name: nil, environment: "live")
     find_or_create_by!(platform_project_id: platform_project_id) do |p|
       p.name = name

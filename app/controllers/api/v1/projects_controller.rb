@@ -22,19 +22,22 @@ module Api
           environment: params[:environment] || "development"
         )
 
-        # Generate API key for this project (stored in settings)
-        api_key = if project.respond_to?(:settings) && project.settings.is_a?(Hash)
-          project.settings["api_key"] ||= "pls_#{SecureRandom.hex(24)}"
+        # Generate keys for this project (stored in settings)
+        if project.respond_to?(:settings) && project.settings.is_a?(Hash)
+          project.settings["api_key"] ||= "pls_api_#{SecureRandom.hex(24)}"
+          project.settings["ingest_key"] ||= "pls_ingest_#{SecureRandom.hex(24)}"
+          project.settings["allowed_origins"] ||= []
           project.save! if project.settings_changed?
-          project.settings["api_key"]
-        else
-          "pls_#{project.id}"
         end
+
+        api_key = project.settings&.dig("api_key") || "pls_api_#{project.id}"
+        ingest_key = project.settings&.dig("ingest_key") || "pls_ingest_#{project.id}"
 
         render json: {
           id: project.id,
           name: project.name,
           api_key: api_key,
+          ingest_key: ingest_key,
           platform_project_id: project.platform_project_id
         }
       end
@@ -45,16 +48,11 @@ module Api
         project = Project.find_by(name: params[:name])
 
         if project
-          api_key = if project.respond_to?(:settings) && project.settings.is_a?(Hash)
-            project.settings["api_key"]
-          else
-            nil
-          end
-
           render json: {
             id: project.id,
             name: project.name,
-            api_key: api_key,
+            api_key: project.settings&.dig("api_key"),
+            ingest_key: project.settings&.dig("ingest_key"),
             platform_project_id: project.platform_project_id
           }
         else
