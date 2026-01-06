@@ -143,8 +143,16 @@ module Api
         trace_ctx = extract_trace_context
         return unless trace_ctx && trace_ctx[:trace_id]
 
-        # Find the existing trace by trace_id
-        trace = Trace.find_by(project: @project, trace_id: trace_ctx[:trace_id])
+        # Convert 32-char hex trace_id to UUID format if needed
+        trace_id = trace_ctx[:trace_id]
+        if trace_id.length == 32 && !trace_id.include?("-")
+          # Convert to UUID format: 8-4-4-4-12
+          trace_id = "#{trace_id[0, 8]}-#{trace_id[8, 4]}-#{trace_id[12, 4]}-#{trace_id[16, 4]}-#{trace_id[20, 12]}"
+        end
+
+        # Find the existing trace by trace_id (try both formats)
+        trace = Trace.find_by(project: @project, trace_id: trace_id) ||
+                Trace.find_by(project: @project, trace_id: trace_ctx[:trace_id])
         return unless trace
 
         # Create a span linked to the trace
