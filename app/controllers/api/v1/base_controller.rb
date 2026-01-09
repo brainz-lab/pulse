@@ -2,54 +2,43 @@ module Api
   module V1
     class BaseController < ActionController::API
       before_action :authenticate!
-      before_action :check_feature_access!
 
-      attr_reader :current_project, :key_info
+      attr_reader :current_project
 
       private
 
       def authenticate!
         raw_key = extract_api_key
+        return render_unauthorized unless raw_key.present?
 
         # Check if it's a standalone pls_ API key (from auto-provisioning)
-        if raw_key&.start_with?("pls_")
+        if raw_key.start_with?("pls_")
           @current_project = Project.find_by("settings->>'api_key' = ?", raw_key)
-          unless @current_project
-            render json: { error: "Invalid API key" }, status: :unauthorized
-            return
-          end
-          @key_info = {
-            valid: true,
-            project_id: @current_project.platform_project_id,
-            project_name: @current_project.name,
-            environment: @current_project.environment,
-            features: { pulse: true }
-          }
-          return
+          return if @current_project
         end
 
-        # Otherwise validate with Platform
-        @key_info = PlatformClient.validate_key(raw_key)
-
-        unless @key_info[:valid]
-          render json: { error: "Invalid API key" }, status: :unauthorized
-          return
+        # Try Platform key (sk_live_... or sk_test_...)
+        if raw_key.start_with?("sk_live_", "sk_test_")
+          @current_project = validate_with_platform(raw_key)
+          return if @current_project
         end
 
-        @current_project = Project.find_or_create_for_platform!(
-          platform_project_id: @key_info[:project_id],
-          name: @key_info[:project_name],
-          environment: @key_info[:environment]
-        )
+        render_unauthorized
       end
 
-      def check_feature_access!
-        unless @key_info.dig(:features, :pulse)
-          render json: {
-            error: "Pulse is not included in your plan",
-            upgrade_url: "https://brainzlab.ai/pricing"
-          }, status: :forbidden
-        end
+      def validate_with_platform(key)
+        result = PlatformClient.validate_key(key)
+        return nil unless result.valid?
+
+        # Create/sync local project from Platform
+        PlatformClient.find_or_create_project(result, key)
+      rescue StandardError => e
+        Rails.logger.error "[BaseController] Platform validation error: #{e.message}"
+        nil
+      end
+
+      def render_unauthorized
+        render json: { error: "Unauthorized" }, status: :unauthorized
       end
 
       def extract_api_key
@@ -59,8 +48,10 @@ module Api
       end
 
       def track_usage!(count = 1)
+        return unless @current_project
+
         PlatformClient.track_usage(
-          project_id: @key_info[:project_id],
+          project_id: @current_project.platform_project_id,
           product: "pulse",
           metric: "traces",
           count: count

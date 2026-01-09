@@ -1,78 +1,114 @@
+# frozen_string_literal: true
+
 require "net/http"
 require "json"
 
+# Client for validating API keys against Platform
+# Enables unified authentication across all BrainzLab products
 class PlatformClient
+  PLATFORM_URL = ENV.fetch("PLATFORM_URL", "https://platform.brainzlab.ai")
+  TIMEOUT = 5
+
+  class ValidationResult
+    attr_reader :valid, :project_id, :project_slug, :organization_id,
+                :organization_slug, :environment, :plan, :scopes, :error, :features
+
+    def initialize(data)
+      @valid = data[:valid]
+      @project_id = data[:project_id]
+      @project_slug = data[:project_slug]
+      @organization_id = data[:organization_id]
+      @organization_slug = data[:organization_slug]
+      @environment = data[:environment]
+      @plan = data[:plan]
+      @scopes = data[:scopes] || []
+      @features = data[:features] || {}
+      @error = data[:error]
+    end
+
+    def valid?
+      @valid == true
+    end
+  end
+
   class << self
-    def validate_key(raw_key)
-      return { valid: false } if raw_key.blank?
+    # Validate an API key against Platform
+    # @param key [String] The API key to validate (sk_live_xxx or sk_test_xxx)
+    # @return [ValidationResult] Result with project info if valid
+    def validate_key(key)
+      return ValidationResult.new(valid: false, error: "Key required") if key.blank?
 
-      uri = URI("#{platform_url}/api/v1/keys/validate")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = uri.scheme == "https"
-      http.open_timeout = 5
-      http.read_timeout = 5
-
-      request = Net::HTTP::Post.new(uri.path)
+      uri = URI.parse("#{PLATFORM_URL}/api/v1/keys/validate")
+      request = Net::HTTP::Post.new(uri)
       request["Content-Type"] = "application/json"
-      request.body = { key: raw_key }.to_json
+      request["User-Agent"] = "pulse/#{Rails.application.config.version rescue '1.0'}"
+      request.body = { key: key }.to_json
 
-      response = http.request(request)
+      response = execute_request(uri, request)
 
-      if response.code == "200"
+      if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body, symbolize_names: true)
-
-        # In development, allow any key if Platform says invalid
-        if !data[:valid] && Rails.env.development? && raw_key.present?
-          return dev_fallback(raw_key)
-        end
-
-        {
-          valid: data[:valid],
-          project_id: data[:project_id],
-          organization_id: data[:organization_id],
-          project_name: data[:project_name],
-          product: data[:product],
-          key_type: data[:key_type],
-          plan: data[:plan],
-          limits: data[:limits] || {},
-          environment: data[:environment] || "live",
-          features: data[:features] || { pulse: true },
-          quota_remaining: data[:quota_remaining] || {}
-        }
+        ValidationResult.new(data)
       else
-        Rails.env.development? && raw_key.present? ? dev_fallback(raw_key) : { valid: false }
+        error = begin
+          JSON.parse(response.body)["error"]
+        rescue
+          "Platform validation failed"
+        end
+        ValidationResult.new(valid: false, error: error)
       end
+    rescue Net::OpenTimeout, Net::ReadTimeout => e
+      Rails.logger.warn "[PlatformClient] Timeout validating key: #{e.message}"
+      ValidationResult.new(valid: false, error: "Platform timeout")
     rescue StandardError => e
-      Rails.logger.error("[PlatformClient] Key validation failed: #{e.message}")
-      # In development, allow bypass if platform is not running
-      Rails.env.development? && raw_key.present? ? dev_fallback(raw_key) : { valid: false }
+      Rails.logger.error "[PlatformClient] Error validating key: #{e.message}"
+      ValidationResult.new(valid: false, error: "Platform error")
     end
 
-    def dev_fallback(raw_key)
-      {
-        valid: true,
-        project_id: "dev_#{Digest::SHA256.hexdigest(raw_key)[0..7]}",
-        project_name: "Development Project",
-        environment: "development",
-        features: { pulse: true },
-        limits: {},
-        quota_remaining: { traces: Float::INFINITY }
-      }
+    # Find or create a local project from Platform validation
+    # Handles key regeneration by updating the api_key if it changed
+    # @param result [ValidationResult] Successful validation result
+    # @param api_key [String] The API key used for validation
+    # @return [Project] Local project record
+    def find_or_create_project(result, api_key)
+      return nil unless result.valid?
+
+      project = Project.find_by(platform_project_id: result.project_id)
+
+      if project
+        # Sync: Update key if regenerated in Platform
+        if project.settings.nil? || project.settings["api_key"] != api_key
+          project.update!(settings: (project.settings || {}).merge("api_key" => api_key))
+          Rails.logger.info "[PlatformClient] Synced regenerated key for project #{project.name}"
+        end
+        return project
+      end
+
+      # Create new project
+      Project.create!(
+        platform_project_id: result.project_id,
+        name: result.project_slug || "Project #{result.project_id}",
+        environment: result.environment || "production",
+        settings: { "api_key" => api_key }
+      )
+    rescue ActiveRecord::RecordNotUnique
+      # Race condition - another request created it, retry lookup
+      Project.find_by(platform_project_id: result.project_id)
     end
 
+    # Track usage metrics (for billing)
     def track_usage(project_id:, product:, metric:, count:)
       return if count <= 0
 
       Thread.new do
-        uri = URI("#{platform_url}/api/v1/usage/track")
+        uri = URI("#{PLATFORM_URL}/api/v1/usage/track")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
-        http.open_timeout = 5
-        http.read_timeout = 5
+        http.open_timeout = TIMEOUT
+        http.read_timeout = TIMEOUT
 
         request = Net::HTTP::Post.new(uri.path)
         request["Content-Type"] = "application/json"
-        request["X-Service-Key"] = service_key
         request.body = {
           project_id: project_id,
           product: product,
@@ -88,12 +124,12 @@ class PlatformClient
 
     private
 
-    def platform_url
-      ENV["BRAINZLAB_PLATFORM_URL"] || "http://localhost:2999"
-    end
-
-    def service_key
-      ENV["SERVICE_KEY"] || Rails.application.credentials.dig(:service_key)
+    def execute_request(uri, request)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == "https"
+      http.open_timeout = TIMEOUT
+      http.read_timeout = TIMEOUT
+      http.request(request)
     end
   end
 end
