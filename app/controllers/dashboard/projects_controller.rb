@@ -1,6 +1,5 @@
 module Dashboard
-  class ProjectsController < ApplicationController
-    layout "dashboard"
+  class ProjectsController < BaseController
 
     def index
       @projects = Project.order(created_at: :desc)
