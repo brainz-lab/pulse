@@ -20,9 +20,9 @@ module Dashboard
         return
       end
 
-      unless session[:platform_project_id]
-        redirect_to "#{platform_external_url}/auth/sso?product=pulse&return_to=#{CGI.escape(request.url)}", allow_other_host: true
-      end
+      return if session[:platform_project_id]
+
+      redirect_to "#{platform_external_url}/auth/sso?product=pulse&return_to=#{CGI.escape(request.url)}", allow_other_host: true
     end
 
     def set_project
