@@ -21,7 +21,7 @@ module Dashboard
       end
 
       unless session[:platform_project_id]
-        redirect_to "#{platform_url}/auth/sso?product=pulse&return_to=#{request.url}"
+        redirect_to "#{platform_external_url}/auth/sso?product=pulse&return_to=#{CGI.escape(request.url)}", allow_other_host: true
       end
     end
 
@@ -38,6 +38,10 @@ module Dashboard
 
     def platform_url
       ENV["BRAINZLAB_PLATFORM_URL"] || "http://localhost:2999"
+    end
+
+    def platform_external_url
+      ENV["BRAINZLAB_PLATFORM_EXTERNAL_URL"] || ENV["BRAINZLAB_PLATFORM_URL"] || "http://localhost:2999"
     end
   end
 end
