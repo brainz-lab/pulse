@@ -5,7 +5,6 @@ module Api
     # Receives browser performance/network events from brainzlab-js SDK
     class BrowserController < BaseController
       skip_before_action :authenticate!, only: [:preflight, :create]
-      skip_before_action :check_feature_access!, only: [:preflight, :create]
       before_action :set_cors_headers
       before_action :find_project_from_token, only: [:create]
       before_action :validate_origin!, only: [:create]
