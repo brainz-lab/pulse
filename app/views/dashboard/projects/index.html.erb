@@ -1,11 +1,13 @@
 <div class="space-y-8">
   <div class="flex items-center justify-between">
     <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Projects</h1>
-    <%= link_to new_dashboard_project_path, class: "inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg transition-colors", style: "background: #1A1A1A; color: #FFFFFE;" do %>
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M7 1v12M1 7h12"/>
-      </svg>
-      New Project
+    <% unless Rails.env.production? %>
+      <%= link_to new_dashboard_project_path, class: "inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg transition-colors", style: "background: #1A1A1A; color: #FFFFFE;" do %>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M7 1v12M1 7h12"/>
+        </svg>
+        New Project
+      <% end %>
     <% end %>
   </div>
 
@@ -34,7 +36,11 @@
     <div class="text-center py-16 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
       <div class="space-y-3">
         <p class="text-[15px]" style="color: #6B6760;">No projects yet</p>
-        <%= link_to 'Create your first project', new_dashboard_project_path, class: "text-[14px] font-medium hover:underline", style: "color: #22C55E;" %>
+        <% if Rails.env.production? %>
+          <%= link_to 'Go to Platform', ENV.fetch('BRAINZLAB_PLATFORM_EXTERNAL_URL', 'https://platform.brainzlab.ai'), target: "_blank", class: "text-[14px] font-medium hover:underline", style: "color: #22C55E;" %>
+        <% else %>
+          <%= link_to 'Create your first project', new_dashboard_project_path, class: "text-[14px] font-medium hover:underline", style: "color: #22C55E;" %>
+        <% end %>
       </div>
     </div>
   <% end %>

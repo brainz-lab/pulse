@@ -10,6 +10,9 @@ class Project < ApplicationRecord
 
   validates :platform_project_id, presence: true, uniqueness: true
 
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+
   # Apdex T threshold in seconds (default: 0.5s)
   # Satisfied: response <= T
   # Tolerating: T < response <= 4T
