@@ -502,6 +502,376 @@ html.no-transitions * {
 }
 
 /* ============================================
+   TAILWIND UTILITY OVERRIDES FOR DARK MODE
+   ============================================
+   These overrides fix hardcoded Tailwind classes that don't
+   have explicit dark: variants in the templates.
+*/
+
+/* Background overrides */
+.dark .bg-white,
+html.dark .bg-white {
+  background-color: var(--dm-surface);
+}
+
+.dark .bg-white\/50,
+html.dark .bg-white\/50 {
+  background-color: rgba(30, 30, 30, 0.5);
+}
+
+.dark .bg-stone-50,
+html.dark .bg-stone-50 {
+  background-color: var(--dm-surface-alt);
+}
+
+.dark .bg-stone-100,
+html.dark .bg-stone-100 {
+  background-color: var(--dm-surface-alt);
+}
+
+.dark .hover\:bg-stone-50:hover,
+html.dark .hover\:bg-stone-50:hover {
+  background-color: var(--dm-surface-hover);
+}
+
+/* Stone text overrides */
+.dark .text-stone-600,
+html.dark .text-stone-600 {
+  color: var(--dm-text-secondary);
+}
+
+.dark .text-stone-800,
+html.dark .text-stone-800 {
+  color: var(--dm-text);
+}
+
+/* Gray text and background overrides */
+.dark .text-gray-500,
+html.dark .text-gray-500 {
+  color: var(--dm-text-muted);
+}
+
+.dark .text-gray-600,
+html.dark .text-gray-600 {
+  color: var(--dm-text-secondary);
+}
+
+.dark .text-gray-700,
+html.dark .text-gray-700 {
+  color: var(--dm-text-secondary);
+}
+
+.dark .text-gray-800,
+html.dark .text-gray-800 {
+  color: var(--dm-text);
+}
+
+.dark .text-gray-900,
+html.dark .text-gray-900 {
+  color: var(--dm-text);
+}
+
+.dark .bg-gray-50,
+html.dark .bg-gray-50 {
+  background-color: var(--dm-surface-alt);
+}
+
+.dark .bg-gray-100,
+html.dark .bg-gray-100 {
+  background-color: var(--dm-surface-alt);
+}
+
+/* Border overrides */
+.dark .border-gray-200,
+html.dark .border-gray-200 {
+  border-color: var(--dm-border);
+}
+
+.dark .border-gray-300,
+html.dark .border-gray-300 {
+  border-color: var(--dm-border);
+}
+
+.dark .border-cream-200,
+html.dark .border-cream-200 {
+  border-color: var(--dm-border);
+}
+
+.dark .border-stone-200,
+html.dark .border-stone-200 {
+  border-color: var(--dm-border);
+}
+
+/* Success badge overrides (green) */
+.dark .bg-green-50,
+html.dark .bg-green-50 {
+  background-color: var(--dm-success-bg);
+}
+
+.dark .bg-green-100,
+html.dark .bg-green-100 {
+  background-color: var(--dm-success-bg);
+}
+
+.dark .text-green-700,
+html.dark .text-green-700 {
+  color: var(--dm-success-text);
+}
+
+.dark .text-green-800,
+html.dark .text-green-800 {
+  color: var(--dm-success-text);
+}
+
+/* Error badge overrides (red) */
+.dark .bg-red-50,
+html.dark .bg-red-50 {
+  background-color: var(--dm-error-bg);
+}
+
+.dark .bg-red-100,
+html.dark .bg-red-100 {
+  background-color: var(--dm-error-bg);
+}
+
+.dark .text-red-700,
+html.dark .text-red-700 {
+  color: var(--dm-error-text);
+}
+
+.dark .text-red-800,
+html.dark .text-red-800 {
+  color: var(--dm-error-text);
+}
+
+/* Warning badge overrides (amber/yellow) */
+.dark .bg-amber-50,
+html.dark .bg-amber-50 {
+  background-color: var(--dm-warning-bg);
+}
+
+.dark .bg-amber-100,
+html.dark .bg-amber-100 {
+  background-color: var(--dm-warning-bg);
+}
+
+.dark .text-amber-700,
+html.dark .text-amber-700 {
+  color: var(--dm-warning-text);
+}
+
+.dark .text-amber-800,
+html.dark .text-amber-800 {
+  color: var(--dm-warning-text);
+}
+
+.dark .bg-yellow-50,
+html.dark .bg-yellow-50 {
+  background-color: var(--dm-warning-bg);
+}
+
+.dark .bg-yellow-100,
+html.dark .bg-yellow-100 {
+  background-color: var(--dm-warning-bg);
+}
+
+.dark .text-yellow-700,
+html.dark .text-yellow-700 {
+  color: var(--dm-warning-text);
+}
+
+.dark .text-yellow-800,
+html.dark .text-yellow-800 {
+  color: var(--dm-warning-text);
+}
+
+/* Info badge overrides (blue) */
+.dark .bg-blue-50,
+html.dark .bg-blue-50 {
+  background-color: var(--dm-info-bg);
+}
+
+.dark .bg-blue-100,
+html.dark .bg-blue-100 {
+  background-color: var(--dm-info-bg);
+}
+
+.dark .text-blue-700,
+html.dark .text-blue-700 {
+  color: var(--dm-info-text);
+}
+
+.dark .text-blue-800,
+html.dark .text-blue-800 {
+  color: var(--dm-info-text);
+}
+
+/* Divide color overrides */
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--dm-border);
+}
+
+/* ============================================
+   INLINE STYLE OVERRIDES
+   ============================================
+   These override hardcoded inline styles in templates.
+   Using !important is necessary to override inline styles.
+*/
+
+/* Override hardcoded light backgrounds in inline styles */
+.dark [style*="background: #FFFFFE"],
+.dark [style*="background:#FFFFFE"],
+.dark [style*="background-color: #FFFFFE"],
+.dark [style*="background-color:#FFFFFE"],
+html.dark [style*="background: #FFFFFE"],
+html.dark [style*="background:#FFFFFE"],
+html.dark [style*="background-color: #FFFFFE"],
+html.dark [style*="background-color:#FFFFFE"] {
+  background-color: var(--dm-surface) !important;
+}
+
+.dark [style*="background: #FFFFFF"],
+.dark [style*="background:#FFFFFF"],
+.dark [style*="background-color: #FFFFFF"],
+.dark [style*="background-color:#FFFFFF"],
+html.dark [style*="background: #FFFFFF"],
+html.dark [style*="background:#FFFFFF"],
+html.dark [style*="background-color: #FFFFFF"],
+html.dark [style*="background-color:#FFFFFF"] {
+  background-color: var(--dm-surface) !important;
+}
+
+.dark [style*="background: #F0EFED"],
+.dark [style*="background:#F0EFED"],
+.dark [style*="background-color: #F0EFED"],
+.dark [style*="background-color:#F0EFED"],
+html.dark [style*="background: #F0EFED"],
+html.dark [style*="background:#F0EFED"],
+html.dark [style*="background-color: #F0EFED"],
+html.dark [style*="background-color:#F0EFED"] {
+  background-color: var(--dm-surface-alt) !important;
+}
+
+.dark [style*="background: #FEF2F2"],
+.dark [style*="background:#FEF2F2"],
+html.dark [style*="background: #FEF2F2"],
+html.dark [style*="background:#FEF2F2"] {
+  background-color: var(--dm-error-bg) !important;
+}
+
+/* Override hardcoded light text colors in inline styles */
+.dark [style*="color: #1A1A1A"],
+.dark [style*="color:#1A1A1A"],
+html.dark [style*="color: #1A1A1A"],
+html.dark [style*="color:#1A1A1A"] {
+  color: var(--dm-text) !important;
+}
+
+.dark [style*="color: #6B6760"],
+.dark [style*="color:#6B6760"],
+html.dark [style*="color: #6B6760"],
+html.dark [style*="color:#6B6760"] {
+  color: var(--dm-text-secondary) !important;
+}
+
+.dark [style*="color: #8B8780"],
+.dark [style*="color:#8B8780"],
+html.dark [style*="color: #8B8780"],
+html.dark [style*="color:#8B8780"] {
+  color: var(--dm-text-muted) !important;
+}
+
+.dark [style*="color: #991B1B"],
+.dark [style*="color:#991B1B"],
+html.dark [style*="color: #991B1B"],
+html.dark [style*="color:#991B1B"] {
+  color: var(--dm-error-text) !important;
+}
+
+/* Override hardcoded light border colors in inline styles */
+.dark [style*="border: 1px solid #E8E5E0"],
+.dark [style*="border:1px solid #E8E5E0"],
+html.dark [style*="border: 1px solid #E8E5E0"],
+html.dark [style*="border:1px solid #E8E5E0"] {
+  border-color: var(--dm-border) !important;
+}
+
+.dark [style*="border-bottom: 1px solid #F0EFED"],
+.dark [style*="border-bottom:1px solid #F0EFED"],
+html.dark [style*="border-bottom: 1px solid #F0EFED"],
+html.dark [style*="border-bottom:1px solid #F0EFED"] {
+  border-bottom-color: var(--dm-border-light) !important;
+}
+
+.dark [style*="border: 1px solid #FECACA"],
+.dark [style*="border:1px solid #FECACA"],
+html.dark [style*="border: 1px solid #FECACA"],
+html.dark [style*="border:1px solid #FECACA"] {
+  border-color: var(--dm-error-border) !important;
+}
+
+/* ============================================
+   @media (prefers-color-scheme: dark) variants
+   ============================================
+   Same overrides for system dark mode preference
+*/
+@media (prefers-color-scheme: dark) {
+  html:not(.light) .bg-white {
+    background-color: var(--dm-surface);
+  }
+
+  html:not(.light) .bg-white\/50 {
+    background-color: rgba(30, 30, 30, 0.5);
+  }
+
+  html:not(.light) .bg-stone-50,
+  html:not(.light) .bg-stone-100 {
+    background-color: var(--dm-surface-alt);
+  }
+
+  html:not(.light) .hover\:bg-stone-50:hover {
+    background-color: var(--dm-surface-hover);
+  }
+
+  html:not(.light) .text-stone-600 {
+    color: var(--dm-text-secondary);
+  }
+
+  html:not(.light) .text-stone-800 {
+    color: var(--dm-text);
+  }
+
+  html:not(.light) .bg-green-100 {
+    background-color: var(--dm-success-bg);
+  }
+
+  html:not(.light) .text-green-800 {
+    color: var(--dm-success-text);
+  }
+
+  html:not(.light) .bg-red-100 {
+    background-color: var(--dm-error-bg);
+  }
+
+  html:not(.light) .text-red-800 {
+    color: var(--dm-error-text);
+  }
+
+  html:not(.light) .bg-amber-100 {
+    background-color: var(--dm-warning-bg);
+  }
+
+  html:not(.light) .text-amber-800 {
+    color: var(--dm-warning-text);
+  }
+
+  html:not(.light) .border-cream-200 {
+    border-color: var(--dm-border);
+  }
+}
+
+/* ============================================
    Print Styles - Force Light Mode
    ============================================ */
 @media print {
