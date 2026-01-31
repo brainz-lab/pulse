@@ -1,0 +1,363 @@
+/* ============================================
+   PULSE - DARK MODE
+   ============================================
+   Extends BrainzLab UI dark mode for Pulse dashboard
+
+   Dark mode tokens from brainzlab-ui:
+   - Dark bg: #121212
+   - Dark surface: #1e1e1e
+   - Dark surface light: #2a2a2a
+   - Dark text: #e8e1d7
+   - Dark text muted: #a0a0a0
+   - Dark border: #333333
+*/
+
+/* ----------------------------------------
+   CSS VARIABLES FOR THEMING
+   ----------------------------------------
+   Light mode is default, dark mode overrides via .dark class
+*/
+:root {
+  /* Pulse Light Mode Colors */
+  --pulse-bg: #FAF9F7;
+  --pulse-surface: #FFFFFE;
+  --pulse-surface-alt: #F0EFED;
+  --pulse-text: #1A1A1A;
+  --pulse-text-muted: #8B8780;
+  --pulse-text-secondary: #6B6760;
+  --pulse-border: #E8E5E0;
+  --pulse-border-light: #F0EFED;
+
+  /* Status Colors */
+  --pulse-success: #22C55E;
+  --pulse-success-bg: #DCFCE7;
+  --pulse-success-text: #166534;
+  --pulse-error: #DC2626;
+  --pulse-error-bg: #FEF2F2;
+  --pulse-error-border: #FECACA;
+  --pulse-error-text: #991B1B;
+  --pulse-warning: #F59E0B;
+  --pulse-warning-bg: #FEF3C7;
+  --pulse-warning-text: #92400E;
+
+  /* Chart/Data Colors */
+  --pulse-chart-primary: #6366F1;
+  --pulse-chart-db: #8B5CF6;
+  --pulse-chart-external: #3B82F6;
+  --pulse-chart-view: #22C55E;
+
+  /* Interactive */
+  --pulse-btn-active-bg: #1A1A1A;
+  --pulse-btn-active-text: #FFFFFE;
+  --pulse-btn-inactive-bg: #FFFFFE;
+  --pulse-btn-inactive-text: #6B6760;
+}
+
+/* Dark Mode Variable Overrides */
+.dark,
+html.dark {
+  --pulse-bg: #121212;
+  --pulse-surface: #1e1e1e;
+  --pulse-surface-alt: #2a2a2a;
+  --pulse-text: #e8e1d7;
+  --pulse-text-muted: #a0a0a0;
+  --pulse-text-secondary: #b0b0b0;
+  --pulse-border: #333333;
+  --pulse-border-light: #2a2a2a;
+
+  /* Status Colors - Dark Mode */
+  --pulse-success: #4ADE80;
+  --pulse-success-bg: rgba(34, 197, 94, 0.15);
+  --pulse-success-text: #86EFAC;
+  --pulse-error: #F87171;
+  --pulse-error-bg: rgba(220, 38, 38, 0.15);
+  --pulse-error-border: rgba(220, 38, 38, 0.3);
+  --pulse-error-text: #FCA5A5;
+  --pulse-warning: #FBBF24;
+  --pulse-warning-bg: rgba(245, 158, 11, 0.15);
+  --pulse-warning-text: #FCD34D;
+
+  /* Interactive - Dark Mode */
+  --pulse-btn-active-bg: #e8e1d7;
+  --pulse-btn-active-text: #121212;
+  --pulse-btn-inactive-bg: #1e1e1e;
+  --pulse-btn-inactive-text: #a0a0a0;
+}
+
+/* System dark mode preference support */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --pulse-bg: #121212;
+    --pulse-surface: #1e1e1e;
+    --pulse-surface-alt: #2a2a2a;
+    --pulse-text: #e8e1d7;
+    --pulse-text-muted: #a0a0a0;
+    --pulse-text-secondary: #b0b0b0;
+    --pulse-border: #333333;
+    --pulse-border-light: #2a2a2a;
+    --pulse-success: #4ADE80;
+    --pulse-success-bg: rgba(34, 197, 94, 0.15);
+    --pulse-success-text: #86EFAC;
+    --pulse-error: #F87171;
+    --pulse-error-bg: rgba(220, 38, 38, 0.15);
+    --pulse-error-border: rgba(220, 38, 38, 0.3);
+    --pulse-error-text: #FCA5A5;
+    --pulse-warning: #FBBF24;
+    --pulse-warning-bg: rgba(245, 158, 11, 0.15);
+    --pulse-warning-text: #FCD34D;
+    --pulse-btn-active-bg: #e8e1d7;
+    --pulse-btn-active-text: #121212;
+    --pulse-btn-inactive-bg: #1e1e1e;
+    --pulse-btn-inactive-text: #a0a0a0;
+  }
+}
+
+/* ----------------------------------------
+   UTILITY CLASSES
+   ----------------------------------------
+   These can be used in place of inline styles
+*/
+
+/* Backgrounds */
+.pulse-bg {
+  background-color: var(--pulse-bg);
+}
+
+.pulse-surface {
+  background-color: var(--pulse-surface);
+}
+
+.pulse-surface-alt {
+  background-color: var(--pulse-surface-alt);
+}
+
+/* Text */
+.pulse-text {
+  color: var(--pulse-text);
+}
+
+.pulse-text-muted {
+  color: var(--pulse-text-muted);
+}
+
+.pulse-text-secondary {
+  color: var(--pulse-text-secondary);
+}
+
+/* Borders */
+.pulse-border {
+  border-color: var(--pulse-border);
+}
+
+.pulse-border-light {
+  border-color: var(--pulse-border-light);
+}
+
+/* Cards */
+.pulse-card {
+  background-color: var(--pulse-surface);
+  border: 1px solid var(--pulse-border);
+}
+
+.pulse-card-inner-border {
+  border-color: var(--pulse-border-light);
+}
+
+/* Status */
+.pulse-success {
+  color: var(--pulse-success);
+}
+
+.pulse-success-badge {
+  background-color: var(--pulse-success-bg);
+  color: var(--pulse-success-text);
+}
+
+.pulse-error {
+  color: var(--pulse-error);
+}
+
+.pulse-error-badge {
+  background-color: var(--pulse-error-bg);
+  color: var(--pulse-error-text);
+}
+
+.pulse-error-card {
+  background-color: var(--pulse-error-bg);
+  border: 1px solid var(--pulse-error-border);
+}
+
+.pulse-error-badge {
+  background-color: var(--pulse-error-bg);
+  color: var(--pulse-error);
+}
+
+.pulse-warning {
+  color: var(--pulse-warning);
+}
+
+.pulse-warning-badge {
+  background-color: var(--pulse-warning-bg);
+  color: var(--pulse-warning-text);
+}
+
+/* Additional text color class for pulse-error-text */
+.pulse-error-text {
+  color: var(--pulse-error-text);
+}
+
+/* Buttons */
+.pulse-btn-active {
+  background-color: var(--pulse-btn-active-bg);
+  color: var(--pulse-btn-active-text);
+}
+
+.pulse-btn-inactive {
+  background-color: var(--pulse-btn-inactive-bg);
+  border: 1px solid var(--pulse-border);
+  color: var(--pulse-btn-inactive-text);
+}
+
+/* Table */
+.pulse-table-header {
+  color: var(--pulse-text-muted);
+  border-bottom: 1px solid var(--pulse-border-light);
+}
+
+.pulse-table-row {
+  border-bottom: 1px solid var(--pulse-border-light);
+}
+
+/* Input */
+.pulse-input {
+  background-color: var(--pulse-surface);
+  border: 1px solid var(--pulse-border);
+  color: var(--pulse-text);
+}
+
+.pulse-input::placeholder {
+  color: var(--pulse-text-muted);
+}
+
+/* ----------------------------------------
+   SIDEBAR DARK MODE
+   ---------------------------------------- */
+.dark .pulse-sidebar,
+html.dark .pulse-sidebar {
+  background-color: var(--pulse-surface);
+  border-color: var(--pulse-border);
+}
+
+/* ----------------------------------------
+   CHART DARK MODE ADJUSTMENTS
+   ---------------------------------------- */
+.dark .pulse-chart-container,
+html.dark .pulse-chart-container {
+  --chart-grid-color: #2a2a2a;
+  --chart-text-color: #a0a0a0;
+}
+
+/* ----------------------------------------
+   NAVIGATION ITEMS
+   ---------------------------------------- */
+.pulse-nav-item {
+  color: var(--pulse-text-muted);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.pulse-nav-item:hover {
+  color: var(--pulse-text);
+  background-color: var(--pulse-surface-alt);
+}
+
+.pulse-nav-item-active {
+  color: var(--pulse-text);
+  background-color: var(--pulse-surface-alt);
+}
+
+/* ----------------------------------------
+   TRANSITIONS
+   ---------------------------------------- */
+.dark-mode-transition,
+.dark-mode-transition * {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+/* Disable transitions on page load to prevent flash */
+.no-transitions,
+.no-transitions * {
+  transition: none !important;
+}
+
+/* ----------------------------------------
+   LIVE INDICATOR
+   ---------------------------------------- */
+.pulse-live-badge {
+  background-color: var(--pulse-success-bg);
+  color: var(--pulse-success-text);
+}
+
+.pulse-live-dot {
+  background-color: var(--pulse-success);
+}
+
+/* ----------------------------------------
+   STACKED BAR / BREAKDOWN
+   ---------------------------------------- */
+.pulse-breakdown-bg {
+  background-color: var(--pulse-surface-alt);
+}
+
+/* ----------------------------------------
+   CODE/MONO TEXT
+   ---------------------------------------- */
+.pulse-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--pulse-text);
+}
+
+/* ----------------------------------------
+   SCROLL CUSTOMIZATION (DARK MODE)
+   ---------------------------------------- */
+.dark ::-webkit-scrollbar,
+html.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track,
+html.dark ::-webkit-scrollbar-track {
+  background: var(--pulse-bg);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+html.dark ::-webkit-scrollbar-thumb {
+  background: var(--pulse-border);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--pulse-text-muted);
+}
+
+/* ----------------------------------------
+   PRINT STYLES
+   ----------------------------------------
+   Force light mode when printing
+*/
+@media print {
+  :root,
+  .dark,
+  html.dark {
+    --pulse-bg: #FFFFFF;
+    --pulse-surface: #FFFFFF;
+    --pulse-surface-alt: #F5F5F5;
+    --pulse-text: #000000;
+    --pulse-text-muted: #666666;
+    --pulse-border: #E5E5E5;
+  }
+}
