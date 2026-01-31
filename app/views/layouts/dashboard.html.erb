@@ -27,11 +27,10 @@
   <%# Prevent flash of wrong theme on page load %>
   <script>
     (function() {
-      const stored = localStorage.getItem('pulse-dark-mode');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (stored === 'dark' || (!stored && prefersDark)) {
+      const savedTheme = localStorage.getItem('brainzlab-theme');
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
         document.documentElement.classList.add('dark');
-        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#121212');
       } else {
         document.documentElement.classList.add('light');
       }
