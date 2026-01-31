@@ -1,34 +1,34 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Alerts</h1>
-      <p class="text-[14px] mt-1" style="color: #8B8780;">Active and recent alerts</p>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Alerts</h1>
+      <p class="text-[14px] mt-1 pulse-text-muted">Active and recent alerts</p>
     </div>
     <div class="flex gap-2">
-      <%= link_to "Alert Rules", dashboard_alert_rules_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
-      <%= link_to "Channels", dashboard_notification_channels_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+      <%= link_to "Alert Rules", dashboard_alert_rules_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg pulse-btn-inactive" %>
+      <%= link_to "Channels", dashboard_notification_channels_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg pulse-btn-inactive" %>
     </div>
   </div>
 
   <% if @firing.any? %>
-    <div class="rounded-xl" style="background: #FEF2F2; border: 1px solid #FECACA;">
-      <div class="p-4" style="border-bottom: 1px solid #FECACA;">
-        <h3 class="text-[14px] font-medium flex items-center gap-2" style="color: #991B1B;">
-          <span class="w-2 h-2 rounded-full animate-pulse" style="background: #DC2626;"></span>
+    <div class="rounded-xl pulse-error-card">
+      <div class="p-4" style="border-bottom: 1px solid var(--pulse-error-border);">
+        <h3 class="text-[14px] font-medium flex items-center gap-2 pulse-error-text">
+          <span class="w-2 h-2 rounded-full animate-pulse" style="background: var(--pulse-error);"></span>
           Active Alerts (<%= @firing.count %>)
         </h3>
       </div>
       <div>
         <% @firing.each do |alert| %>
-          <%= link_to dashboard_alert_path(alert), class: "flex items-center gap-4 p-4 hover:bg-red-50", style: "border-bottom: 1px solid #FECACA;" do %>
+          <%= link_to dashboard_alert_path(alert), class: "flex items-center gap-4 p-4 hover:opacity-80", style: "border-bottom: 1px solid var(--pulse-error-border);" do %>
             <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= alert.severity_badge_class %>">
               <%= alert.severity.upcase %>
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= alert.alert_rule.name %></p>
-              <p class="text-[13px] truncate" style="color: #6B6760;"><%= alert.message %></p>
+              <p class="text-[14px] font-medium truncate pulse-text"><%= alert.alert_rule.name %></p>
+              <p class="text-[13px] truncate pulse-text-secondary"><%= alert.message %></p>
             </div>
-            <div class="text-right text-[13px]" style="color: #8B8780;">
+            <div class="text-right text-[13px] pulse-text-muted">
               <p><%= time_ago_in_words(alert.triggered_at) %> ago</p>
             </div>
           <% end %>
@@ -37,23 +37,23 @@
     </div>
   <% end %>
 
-  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <div class="p-4" style="border-bottom: 1px solid #F0EFED;">
-      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Recent Alerts</h3>
+  <div class="rounded-xl pulse-card">
+    <div class="p-4 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+      <h3 class="text-[14px] font-medium pulse-text">Recent Alerts</h3>
     </div>
 
     <% if @resolved.any? %>
       <div>
         <% @resolved.each do |alert| %>
-          <%= link_to dashboard_alert_path(alert), class: "flex items-center gap-4 p-4 hover:bg-stone-50", style: "border-bottom: 1px solid #F0EFED;" do %>
-            <span class="px-2 py-0.5 text-[11px] font-medium rounded bg-green-100 text-green-800">
+          <%= link_to dashboard_alert_path(alert), class: "flex items-center gap-4 p-4 hover:opacity-80 pulse-table-row" do %>
+            <span class="px-2 py-0.5 text-[11px] font-medium rounded pulse-success-badge">
               RESOLVED
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= alert.alert_rule.name %></p>
-              <p class="text-[13px] truncate" style="color: #6B6760;"><%= alert.message %></p>
+              <p class="text-[14px] font-medium truncate pulse-text"><%= alert.alert_rule.name %></p>
+              <p class="text-[13px] truncate pulse-text-secondary"><%= alert.message %></p>
             </div>
-            <div class="text-right text-[13px]" style="color: #8B8780;">
+            <div class="text-right text-[13px] pulse-text-muted">
               <p>Duration: <%= alert.duration_text %></p>
               <p><%= time_ago_in_words(alert.resolved_at) %> ago</p>
             </div>
@@ -61,7 +61,7 @@
         <% end %>
       </div>
     <% else %>
-      <div class="p-8 text-center text-[14px]" style="color: #8B8780;">
+      <div class="p-8 text-center text-[14px] pulse-text-muted">
         No alerts yet
       </div>
     <% end %>

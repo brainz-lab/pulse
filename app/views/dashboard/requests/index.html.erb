@@ -1,23 +1,22 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Requests</h1>
-      <p class="text-[14px] mt-1" style="color: #8B8780;">Recent HTTP requests and background jobs</p>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Requests</h1>
+      <p class="text-[14px] mt-1 pulse-text-muted">Recent HTTP requests and background jobs</p>
     </div>
     <div class="flex gap-2">
       <% [['All', nil], ['Slow', :slow], ['Errors', :errors]].each do |label, filter| %>
         <% active = (filter == :slow && params[:slow]) || (filter == :errors && params[:errors]) || (filter.nil? && !params[:slow] && !params[:errors]) %>
         <%= link_to label, filter ? dashboard_requests_path(filter => true) : dashboard_requests_path,
-            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
-            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
       <% end %>
     </div>
   </div>
 
-  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+  <div class="rounded-xl overflow-hidden pulse-card">
     <table class="w-full">
-      <thead style="border-bottom: 1px solid #F0EFED;">
-        <tr class="text-left text-[13px]" style="color: #8B8780;">
+      <thead class="pulse-table-header">
+        <tr class="text-left text-[13px]">
           <th class="p-4 font-medium">Name</th>
           <th class="p-4 font-medium">Status</th>
           <th class="p-4 font-medium">Duration</th>
@@ -27,22 +26,22 @@
       </thead>
       <tbody>
         <% @traces.each do |trace| %>
-          <tr class="hover:opacity-80" style="border-bottom: 1px solid #F0EFED;">
+          <tr class="hover:opacity-80 pulse-table-row">
             <td class="p-4">
-              <%= link_to trace.name, dashboard_trace_path(trace.trace_id), class: "text-[14px] font-medium hover:opacity-70", style: "color: #1A1A1A;" %>
+              <%= link_to trace.name, dashboard_trace_path(trace.trace_id), class: "text-[14px] font-medium hover:opacity-70 pulse-text" %>
             </td>
             <td class="p-4">
-              <span class="text-[13px]" style="color: <%= trace.error ? '#DC2626' : '#22C55E' %>;">
+              <span class="text-[13px] <%= trace.error ? 'pulse-error' : 'pulse-success' %>">
                 <%= trace.status || (trace.error ? 'Error' : 'OK') %>
               </span>
             </td>
-            <td class="p-4 font-mono text-[13px]" style="color: #1A1A1A;">
+            <td class="p-4 font-mono text-[13px] pulse-text">
               <%= trace.duration_ms&.round(0) || '-' %>ms
             </td>
-            <td class="p-4 text-[13px]" style="color: #8B8780;">
+            <td class="p-4 text-[13px] pulse-text-muted">
               <%= trace.db_duration_ms&.round(0) || 0 %>ms
             </td>
-            <td class="p-4 text-[13px]" style="color: #8B8780;">
+            <td class="p-4 text-[13px] pulse-text-muted">
               <%= time_ago_in_words(trace.started_at) %> ago
             </td>
           </tr>
@@ -50,7 +49,7 @@
 
         <% if @traces.empty? %>
           <tr>
-            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+            <td colspan="5" class="p-8 text-center text-[14px] pulse-text-muted">
               No requests found
             </td>
           </tr>
@@ -61,31 +60,28 @@
 
   <%# Pagination %>
   <% if @pagy.pages > 1 %>
-    <div class="flex justify-between items-center text-[13px]" style="color: #8B8780;">
+    <div class="flex justify-between items-center text-[13px] pulse-text-muted">
       <div>
         Showing <%= @pagy.from %>-<%= @pagy.to %> of <%= @pagy.count %> requests
       </div>
       <div class="flex gap-1">
         <% if @pagy.prev %>
           <%= link_to "Previous", url_for(page: @pagy.prev),
-              class: "px-3 py-1.5 rounded-lg",
-              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+              class: "px-3 py-1.5 rounded-lg pulse-btn-inactive" %>
         <% end %>
         <% @pagy.series.each do |item| %>
           <% if item == :gap %>
             <span class="px-3 py-1.5">...</span>
           <% elsif item.is_a?(Integer) %>
             <%= link_to item, url_for(page: item),
-                class: "px-3 py-1.5 rounded-lg",
-                style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+                class: "px-3 py-1.5 rounded-lg pulse-btn-inactive" %>
           <% else %>
-            <span class="px-3 py-1.5 rounded-lg" style="background: #1A1A1A; color: #FFFFFE;"><%= item %></span>
+            <span class="px-3 py-1.5 rounded-lg pulse-btn-active"><%= item %></span>
           <% end %>
         <% end %>
         <% if @pagy.next %>
           <%= link_to "Next", url_for(page: @pagy.next),
-              class: "px-3 py-1.5 rounded-lg",
-              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" %>
+              class: "px-3 py-1.5 rounded-lg pulse-btn-inactive" %>
         <% end %>
       </div>
     </div>

@@ -10,19 +10,21 @@ APM and performance monitoring for Rails apps.
 [![Docs](https://img.shields.io/badge/docs-brainzlab.ai-orange)](https://docs.brainzlab.ai/products/pulse/overview)
 [![License: OSAaSy](https://img.shields.io/badge/License-OSAaSy-blue.svg)](LICENSE)
 
-## Overview
-
-Pulse monitors your application's vital signs - response times, throughput, database queries, and more.
-
-- **Request Tracing** - Full request lifecycle with span waterfall
-- **Apdex Score** - Application performance index (0-1)
-- **Slow Query Detection** - Find N+1s and slow database calls
-- **Real-time Metrics** - Live dashboard with WebSocket updates
-- **Custom Metrics** - Track business metrics (gauges, counters, histograms)
-- **Alerting** - Get notified when performance degrades
-- **MCP Integration** - AI-powered performance analysis
-
 ## Quick Start
+
+```bash
+# Install SDK
+gem 'brainzlab'
+
+# Configure
+BrainzLab.configure { |c| c.pulse_key = ENV['PULSE_API_KEY'] }
+
+# Automatic instrumentation starts immediately
+# Track custom metrics
+BrainzLab::Pulse.gauge("queue.size", Sidekiq::Queue.new.size)
+```
+
+## Installation
 
 ### With Docker
 
@@ -53,6 +55,36 @@ BrainzLab.configure do |config|
 end
 ```
 
+### Local Development
+
+```bash
+git clone https://github.com/brainz-lab/pulse.git
+cd pulse
+bundle install
+bin/rails db:create db:migrate db:seed
+bin/rails server
+```
+
+## Configuration
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection | Yes |
+| `REDIS_URL` | Redis connection | Yes |
+| `RAILS_MASTER_KEY` | Rails credentials | Yes |
+| `BRAINZLAB_PLATFORM_URL` | Platform URL for auth | Yes |
+| `SERVICE_KEY` | Internal service key | Yes |
+
+### Tech Stack
+
+- **Ruby** 3.4.7 / **Rails** 8.1
+- **PostgreSQL** 16 with TimescaleDB (time-series)
+- **Redis** 7
+- **Hotwire** (Turbo + Stimulus) / **Tailwind CSS**
+- **Solid Queue** / **Solid Cache** / **Solid Cable**
+
+## Usage
+
 ### Automatic Instrumentation
 
 The SDK automatically instruments:
@@ -81,17 +113,7 @@ BrainzLab::Pulse.time("external.api") do
 end
 ```
 
-## Tech Stack
-
-- **Ruby** 3.4.7
-- **Rails** 8.1
-- **PostgreSQL** 16 with TimescaleDB (time-series)
-- **Redis** 7
-- **Hotwire** (Turbo + Stimulus)
-- **Tailwind CSS**
-- **Solid Queue** / **Solid Cache** / **Solid Cable**
-
-## Apdex Score
+### Apdex Score
 
 Application Performance Index measures user satisfaction:
 
@@ -109,49 +131,7 @@ Application Performance Index measures user satisfaction:
 - **0.70+** = Fair
 - **< 0.70** = Poor
 
-## API Endpoints
-
-### Ingest
-- `POST /api/v1/traces` - Report single trace with spans
-- `POST /api/v1/traces/batch` - Batch report
-- `POST /api/v1/metrics` - Record custom metric
-- `POST /api/v1/metrics/batch` - Batch metrics
-
-### Query
-- `GET /api/v1/overview` - Health overview (Apdex, throughput, P95)
-- `GET /api/v1/traces` - List traces
-- `GET /api/v1/traces/:id` - Get trace with span waterfall
-- `GET /api/v1/metrics` - List custom metrics
-- `GET /api/v1/metrics/:name/stats` - Metric statistics
-
-### MCP
-- `GET /mcp/tools` - List MCP tools
-- `POST /mcp/tools/:name` - Call MCP tool
-- `POST /mcp/rpc` - JSON-RPC endpoint
-
-## MCP Tools
-
-| Tool | Description |
-|------|-------------|
-| `pulse_overview` | Health metrics: Apdex, throughput, P95, error rate |
-| `pulse_slow_requests` | Find slowest requests |
-| `pulse_throughput` | Requests per minute over time |
-| `pulse_errors` | Requests that errored |
-| `pulse_trace` | Detailed trace with span waterfall |
-| `pulse_endpoints` | Performance by endpoint |
-| `pulse_metrics` | Custom metrics |
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection | Yes |
-| `REDIS_URL` | Redis connection | Yes |
-| `RAILS_MASTER_KEY` | Rails credentials | Yes |
-| `BRAINZLAB_PLATFORM_URL` | Platform URL for auth | Yes |
-| `SERVICE_KEY` | Internal service key | Yes |
-
-## Trace Payload Format
+### Trace Payload Format
 
 ```json
 {
@@ -174,41 +154,74 @@ Application Performance Index measures user satisfaction:
       "span_id": "span_1",
       "name": "SELECT users",
       "kind": "db",
-      "started_at": "...",
-      "ended_at": "...",
       "duration_ms": 12.5,
-      "data": {
-        "sql": "SELECT * FROM users LIMIT 20",
-        "table": "users"
-      }
-    },
-    {
-      "span_id": "span_2",
-      "name": "render users/index",
-      "kind": "render",
-      "duration_ms": 45.2
+      "data": { "sql": "SELECT * FROM users LIMIT 20" }
     }
   ]
 }
 ```
 
-## Alerting
+### Alerting
 
 Create alert rules based on:
-
 - **Apdex** drops below threshold
 - **Error rate** exceeds percentage
 - **P95 latency** exceeds duration
 - **Throughput** drops below RPM
 - **Custom metrics** cross thresholds
 
-Notify via:
-- Slack
-- Email
-- Webhooks
-- PagerDuty
+Notify via: Slack, Email, Webhooks, PagerDuty
 
-## Testing
+## API Reference
+
+### Ingest
+- `POST /api/v1/traces` - Report single trace with spans
+- `POST /api/v1/traces/batch` - Batch report
+- `POST /api/v1/metrics` - Record custom metric
+- `POST /api/v1/metrics/batch` - Batch metrics
+
+### Query
+- `GET /api/v1/overview` - Health overview (Apdex, throughput, P95)
+- `GET /api/v1/traces` - List traces
+- `GET /api/v1/traces/:id` - Get trace with span waterfall
+- `GET /api/v1/metrics` - List custom metrics
+- `GET /api/v1/metrics/:name/stats` - Metric statistics
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `pulse_overview` | Health metrics: Apdex, throughput, P95, error rate |
+| `pulse_slow_requests` | Find slowest requests |
+| `pulse_throughput` | Requests per minute over time |
+| `pulse_errors` | Requests that errored |
+| `pulse_trace` | Detailed trace with span waterfall |
+| `pulse_endpoints` | Performance by endpoint |
+| `pulse_metrics` | Custom metrics |
+
+Full documentation: [docs.brainzlab.ai/products/pulse](https://docs.brainzlab.ai/products/pulse/overview)
+
+## Self-Hosting
+
+### Docker Compose
+
+```yaml
+services:
+  pulse:
+    image: brainzllc/pulse:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/pulse
+      REDIS_URL: redis://redis:6379/3
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      BRAINZLAB_PLATFORM_URL: http://platform:3000
+    depends_on:
+      - db
+      - redis
+```
+
+### Testing
 
 ```bash
 bin/rails test              # Unit tests
@@ -216,9 +229,9 @@ bin/rails test:system       # System tests
 bin/rubocop                 # Linting
 ```
 
-## Documentation
+## Contributing
 
-Full documentation: [docs.brainzlab.ai/products/pulse](https://docs.brainzlab.ai/products/pulse/overview)
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for development setup and contribution guidelines.
 
 ## Related
 
@@ -226,18 +239,6 @@ Full documentation: [docs.brainzlab.ai/products/pulse](https://docs.brainzlab.ai
 - [Recall](https://github.com/brainz-lab/recall) - Structured logging
 - [Reflex](https://github.com/brainz-lab/reflex) - Error tracking
 - [Stack](https://github.com/brainz-lab/stack) - Self-hosted deployment
-
-## Contributors
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-
-Thanks to all our contributors! See [all-contributors](https://allcontributors.org) for how to add yourself.
-
 
 ## License
 

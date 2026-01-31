@@ -2,18 +2,17 @@
   <!-- Header with back link and time range -->
   <div class="flex justify-between items-center">
     <div class="flex items-center gap-4">
-      <%= link_to "← Back", dashboard_endpoints_path(since: params[:since]), class: "text-[13px] hover:opacity-70", style: "color: #8B8780;" %>
+      <%= link_to "← Back", dashboard_endpoints_path(since: params[:since]), class: "text-[13px] hover:opacity-70 pulse-text-muted" %>
       <div>
-        <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @endpoint_name %></h1>
-        <p class="text-[14px] mt-1" style="color: #8B8780;">Endpoint performance</p>
+        <h1 class="text-[22px] font-semibold tracking-tight pulse-text"><%= @endpoint_name %></h1>
+        <p class="text-[14px] mt-1 pulse-text-muted">Endpoint performance</p>
       </div>
     </div>
     <div class="flex gap-2">
       <% %w[1h 6h 24h 7d].each do |range| %>
         <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
         <%= link_to range, dashboard_endpoint_path(@endpoint_name, since: range),
-            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
-            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
       <% end %>
     </div>
   </div>
@@ -21,34 +20,34 @@
   <!-- Stats cards -->
   <div class="grid grid-cols-5 gap-4">
     <!-- Requests -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Requests</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= number_with_delimiter(@stats.count) %></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Requests</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= number_with_delimiter(@stats.count) %></p>
     </div>
 
     <!-- Avg Duration -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Avg Duration</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats.avg_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Avg Duration</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats.avg_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
     </div>
 
     <!-- P95 Duration -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">P95</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats.p95_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">P95</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats.p95_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
     </div>
 
     <!-- Max Duration -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Max</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #8B8780;"><%= @stats.max_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Max</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text-muted"><%= @stats.max_duration&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
     </div>
 
     <!-- Error Rate -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Error Rate</span>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Error Rate</span>
       <% error_rate = @stats.count > 0 ? (@stats.error_count.to_f / @stats.count * 100).round(2) : 0 %>
-      <p class="text-[28px] font-semibold mt-2" style="color: <%= error_rate > 1 ? '#DC2626' : '#1A1A1A' %>;">
+      <p class="text-[28px] font-semibold mt-2 <%= error_rate > 1 ? 'pulse-error' : 'pulse-text' %>">
         <%= error_rate %>%
       </p>
     </div>
@@ -57,30 +56,30 @@
   <!-- Charts -->
   <div class="grid grid-cols-2 gap-6">
     <!-- Requests per Minute chart -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Requests per Minute</h3>
-      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @rpm_data.to_json %>">
+    <div class="rounded-xl p-5 pulse-card">
+      <h3 class="text-[14px] font-medium mb-4 pulse-text">Requests per Minute</h3>
+      <div class="h-48 pulse-chart-container" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @rpm_data.to_json %>">
         <canvas></canvas>
       </div>
     </div>
 
     <!-- Response Time chart -->
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Response Time</h3>
-      <div class="h-48" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @response_time_data.to_json %>">
+    <div class="rounded-xl p-5 pulse-card">
+      <h3 class="text-[14px] font-medium mb-4 pulse-text">Response Time</h3>
+      <div class="h-48 pulse-chart-container" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @response_time_data.to_json %>">
         <canvas></canvas>
       </div>
     </div>
   </div>
 
   <!-- Recent Requests -->
-  <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <div class="p-5" style="border-bottom: 1px solid #F0EFED;">
-      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Recent Requests</h3>
+  <div class="rounded-xl overflow-hidden pulse-card">
+    <div class="p-5 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+      <h3 class="text-[14px] font-medium pulse-text">Recent Requests</h3>
     </div>
     <table class="w-full">
-      <thead style="border-bottom: 1px solid #F0EFED;">
-        <tr class="text-left text-[13px]" style="color: #8B8780;">
+      <thead class="pulse-table-header">
+        <tr class="text-left text-[13px]">
           <th class="p-4 font-medium">Duration</th>
           <th class="p-4 font-medium">Status</th>
           <th class="p-4 font-medium">Time</th>
@@ -91,25 +90,25 @@
       <tbody>
         <% @recent_requests.each do |trace| %>
           <%= link_to dashboard_trace_path(trace.trace_id), class: "contents" do %>
-            <tr class="hover:opacity-80 cursor-pointer" style="border-bottom: 1px solid #F0EFED;">
-              <td class="p-4 font-mono text-[14px] font-medium" style="color: #1A1A1A;"><%= trace.duration_ms&.round(0) || '-' %>ms</td>
+            <tr class="hover:opacity-80 cursor-pointer pulse-table-row">
+              <td class="p-4 font-mono text-[14px] font-medium pulse-text"><%= trace.duration_ms&.round(0) || '-' %>ms</td>
               <td class="p-4">
                 <% if trace.error %>
-                  <span class="px-2 py-1 text-[12px] font-medium rounded" style="background: #FEE2E2; color: #DC2626;">Error</span>
+                  <span class="px-2 py-1 text-[12px] font-medium rounded pulse-error-badge">Error</span>
                 <% else %>
-                  <span class="px-2 py-1 text-[12px] font-medium rounded" style="background: #DCFCE7; color: #22C55E;">OK</span>
+                  <span class="px-2 py-1 text-[12px] font-medium rounded pulse-success-badge">OK</span>
                 <% end %>
               </td>
-              <td class="p-4 text-[13px]" style="color: #8B8780;"><%= time_ago_in_words(trace.started_at) %> ago</td>
-              <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= trace.db_duration_ms&.round(0) || 0 %>ms</td>
-              <td class="p-4 font-mono text-[13px]" style="color: #8B8780;"><%= trace.view_duration_ms&.round(0) || 0 %>ms</td>
+              <td class="p-4 text-[13px] pulse-text-muted"><%= time_ago_in_words(trace.started_at) %> ago</td>
+              <td class="p-4 font-mono text-[13px] pulse-text-muted"><%= trace.db_duration_ms&.round(0) || 0 %>ms</td>
+              <td class="p-4 font-mono text-[13px] pulse-text-muted"><%= trace.view_duration_ms&.round(0) || 0 %>ms</td>
             </tr>
           <% end %>
         <% end %>
 
         <% if @recent_requests.empty? %>
           <tr>
-            <td colspan="5" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+            <td colspan="5" class="p-8 text-center text-[14px] pulse-text-muted">
               No requests found
             </td>
           </tr>

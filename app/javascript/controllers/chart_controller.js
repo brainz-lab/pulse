@@ -20,6 +20,10 @@ export default class extends Controller {
       this.boundHandleTrace = this.handleTrace.bind(this)
       document.addEventListener("realtime-metrics:trace", this.boundHandleTrace)
     }
+
+    // Listen for dark mode changes
+    this.boundHandleDarkModeChange = this.handleDarkModeChange.bind(this)
+    document.addEventListener("dark-mode:changed", this.boundHandleDarkModeChange)
   }
 
   disconnect() {
@@ -28,6 +32,35 @@ export default class extends Controller {
     }
     if (this.boundHandleTrace) {
       document.removeEventListener("realtime-metrics:trace", this.boundHandleTrace)
+    }
+    if (this.boundHandleDarkModeChange) {
+      document.removeEventListener("dark-mode:changed", this.boundHandleDarkModeChange)
+    }
+  }
+
+  handleDarkModeChange() {
+    // Reinitialize chart with new colors
+    if (this.chart) {
+      this.chart.destroy()
+      this.initChart()
+    }
+  }
+
+  isDarkMode() {
+    return document.documentElement.classList.contains("dark")
+  }
+
+  getColors() {
+    const isDark = this.isDarkMode()
+    return {
+      primary: "#6366F1",
+      primaryBg: isDark ? "rgba(99, 102, 241, 0.2)" : "rgba(99, 102, 241, 0.1)",
+      text: isDark ? "#a0a0a0" : "#8B8780",
+      grid: isDark ? "#2a2a2a" : "#F0EFED",
+      tooltip: {
+        bg: isDark ? "#2a2a2a" : "#1A1A1A",
+        text: isDark ? "#e8e1d7" : "#E8E5E0"
+      }
     }
   }
 
@@ -110,6 +143,7 @@ export default class extends Controller {
 
     const ctx = canvas.getContext("2d")
     const data = this.dataValue || []
+    const colors = this.getColors()
 
     this.chart = new Chart(ctx, {
       type: this.typeValue,
@@ -117,8 +151,8 @@ export default class extends Controller {
         labels: data.map(d => this.formatLabel(d.x)),
         datasets: [{
           data: data.map(d => d.y),
-          borderColor: "#6366F1",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          borderColor: colors.primary,
+          backgroundColor: colors.primaryBg,
           borderWidth: 2,
           fill: true,
           tension: 0.3,
@@ -141,9 +175,9 @@ export default class extends Controller {
             display: false
           },
           tooltip: {
-            backgroundColor: "#1A1A1A",
-            titleColor: "#E8E5E0",
-            bodyColor: "#E8E5E0",
+            backgroundColor: colors.tooltip.bg,
+            titleColor: colors.tooltip.text,
+            bodyColor: colors.tooltip.text,
             padding: 12,
             cornerRadius: 8,
             displayColors: false
@@ -156,7 +190,7 @@ export default class extends Controller {
               display: false
             },
             ticks: {
-              color: "#8B8780",
+              color: colors.text,
               font: { size: 11 },
               maxTicksLimit: 6
             }
@@ -165,10 +199,10 @@ export default class extends Controller {
             display: true,
             beginAtZero: true,
             grid: {
-              color: "#F0EFED"
+              color: colors.grid
             },
             ticks: {
-              color: "#8B8780",
+              color: colors.text,
               font: { size: 11 },
               maxTicksLimit: 5
             }

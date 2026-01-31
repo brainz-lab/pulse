@@ -1,8 +1,8 @@
 <div class="space-y-8">
   <div class="flex items-center justify-between">
-    <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Projects</h1>
+    <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Projects</h1>
     <% unless Rails.env.production? %>
-      <%= link_to new_dashboard_project_path, class: "inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg transition-colors", style: "background: #1A1A1A; color: #FFFFFE;" do %>
+      <%= link_to new_dashboard_project_path, class: "inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg transition-colors pulse-btn-active" do %>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M7 1v12M1 7h12"/>
         </svg>
@@ -15,15 +15,15 @@
     <div class="space-y-3">
       <% @projects.each do |project| %>
         <%= link_to overview_dashboard_project_path(project), class: "block group" do %>
-          <div class="px-5 py-4 rounded-xl transition-all" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+          <div class="px-5 py-4 rounded-xl transition-all pulse-card">
             <div class="flex items-center justify-between">
               <div class="space-y-1">
-                <h3 class="text-[15px] font-medium group-hover:underline" style="color: #1A1A1A;"><%= project.name || 'Unnamed Project' %></h3>
-                <p class="text-[13px]" style="color: #8B8780;"><%= pluralize(project.traces.count, 'trace') %></p>
+                <h3 class="text-[15px] font-medium group-hover:underline pulse-text"><%= project.name || 'Unnamed Project' %></h3>
+                <p class="text-[13px] pulse-text-muted"><%= pluralize(project.traces.count, 'trace') %></p>
               </div>
               <div class="flex items-center gap-4">
-                <span class="text-[12px] font-mono" style="color: #B0ACA5;"><%= project.environment || 'production' %></span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color: #C4C0B8;">
+                <span class="text-[12px] font-mono pulse-text-muted"><%= project.environment || 'production' %></span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="pulse-text-muted">
                   <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
               </div>
@@ -33,13 +33,13 @@
       <% end %>
     </div>
   <% else %>
-    <div class="text-center py-16 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <div class="text-center py-16 rounded-xl pulse-card">
       <div class="space-y-3">
-        <p class="text-[15px]" style="color: #6B6760;">No projects yet</p>
+        <p class="text-[15px] pulse-text-secondary">No projects yet</p>
         <% if Rails.env.production? %>
-          <%= link_to 'Go to Platform', ENV.fetch('BRAINZLAB_PLATFORM_EXTERNAL_URL', 'https://platform.brainzlab.ai'), target: "_blank", class: "text-[14px] font-medium hover:underline", style: "color: #22C55E;" %>
+          <%= link_to 'Go to Platform', ENV.fetch('BRAINZLAB_PLATFORM_EXTERNAL_URL', 'https://platform.brainzlab.ai'), target: "_blank", class: "text-[14px] font-medium hover:underline pulse-success" %>
         <% else %>
-          <%= link_to 'Create your first project', new_dashboard_project_path, class: "text-[14px] font-medium hover:underline", style: "color: #22C55E;" %>
+          <%= link_to 'Create your first project', new_dashboard_project_path, class: "text-[14px] font-medium hover:underline pulse-success" %>
         <% end %>
       </div>
     </div>

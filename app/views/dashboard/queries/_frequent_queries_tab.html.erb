@@ -1,11 +1,11 @@
 <div class="grid grid-cols-3 gap-6">
   <!-- Frequent Queries -->
   <div class="col-span-2 space-y-4">
-    <h2 class="text-[16px] font-semibold" style="color: #1A1A1A;">Query Patterns by Frequency</h2>
-    <div class="rounded-xl overflow-hidden" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h2 class="text-[16px] font-semibold pulse-text">Query Patterns by Frequency</h2>
+    <div class="rounded-xl overflow-hidden pulse-card">
       <table class="w-full">
-        <thead style="border-bottom: 1px solid #F0EFED;">
-          <tr class="text-left text-[13px]" style="color: #8B8780;">
+        <thead class="pulse-table-header">
+          <tr class="text-left text-[13px]">
             <th class="p-4 font-medium">Query Pattern</th>
             <th class="p-4 font-medium text-right">Count</th>
             <th class="p-4 font-medium text-right">Avg Time</th>
@@ -14,18 +14,17 @@
         </thead>
         <tbody>
           <% @frequent_queries.each_with_index do |query, index| %>
-            <tr style="border-bottom: 1px solid #F0EFED;">
+            <tr class="pulse-table-row">
               <td class="p-4">
                 <div class="flex items-center gap-3">
-                  <span class="w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-medium"
-                        style="background: <%= index < 3 ? '#FEF3C7' : '#F0EFED' %>; color: <%= index < 3 ? '#B45309' : '#6B6760' %>;">
+                  <span class="w-6 h-6 flex items-center justify-center rounded-full text-[11px] font-medium <%= index < 3 ? 'pulse-warning-badge' : 'pulse-surface-alt pulse-text-secondary' %>">
                     <%= index + 1 %>
                   </span>
                   <div class="flex-1">
-                    <div class="font-mono text-[12px] leading-relaxed max-w-md truncate" style="color: #1A1A1A;" title="<%= query[:normalized_sql] %>">
+                    <div class="font-mono text-[12px] leading-relaxed max-w-md truncate pulse-text" title="<%= query[:normalized_sql] %>">
                       <%= query[:normalized_sql] %>
                     </div>
-                    <div class="text-[11px] mt-0.5" style="color: #8B8780;">
+                    <div class="text-[11px] mt-0.5 pulse-text-muted">
                       <span class="uppercase"><%= query[:operation] || 'QUERY' %></span>
                       <% if query[:table] %>
                         · <%= query[:table] %>
@@ -34,15 +33,15 @@
                   </div>
                 </div>
               </td>
-              <td class="p-4 text-[13px] text-right font-medium" style="color: #1A1A1A;"><%= number_with_delimiter(query[:count]) %></td>
-              <td class="p-4 text-[13px] text-right font-mono" style="color: #8B8780;"><%= query[:avg_duration_ms] %>ms</td>
-              <td class="p-4 text-[13px] text-right font-mono" style="color: #8B8780;"><%= query[:total_duration_ms].round(0) %>ms</td>
+              <td class="p-4 text-[13px] text-right font-medium pulse-text"><%= number_with_delimiter(query[:count]) %></td>
+              <td class="p-4 text-[13px] text-right font-mono pulse-text-muted"><%= query[:avg_duration_ms] %>ms</td>
+              <td class="p-4 text-[13px] text-right font-mono pulse-text-muted"><%= query[:total_duration_ms].round(0) %>ms</td>
             </tr>
           <% end %>
 
           <% if @frequent_queries.empty? %>
             <tr>
-              <td colspan="4" class="p-8 text-center text-[14px]" style="color: #8B8780;">
+              <td colspan="4" class="p-8 text-center text-[14px] pulse-text-muted">
                 No query patterns found
               </td>
             </tr>
@@ -54,27 +53,27 @@
 
   <!-- Table Breakdown -->
   <div class="space-y-4">
-    <h2 class="text-[16px] font-semibold" style="color: #1A1A1A;">By Table</h2>
-    <div class="rounded-xl p-4 space-y-3" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
+    <h2 class="text-[16px] font-semibold pulse-text">By Table</h2>
+    <div class="rounded-xl p-4 space-y-3 pulse-card">
       <% @table_breakdown.first(10).each do |table| %>
         <div>
           <div class="flex justify-between items-center mb-1">
-            <span class="text-[13px] font-medium" style="color: #1A1A1A;"><%= table[:table] %></span>
-            <span class="text-[12px] font-mono" style="color: #8B8780;"><%= number_with_delimiter(table[:count]) %></span>
+            <span class="text-[13px] font-medium pulse-text"><%= table[:table] %></span>
+            <span class="text-[12px] font-mono pulse-text-muted"><%= number_with_delimiter(table[:count]) %></span>
           </div>
           <% max_count = @table_breakdown.first[:count] rescue 1 %>
           <% percentage = (table[:count].to_f / max_count * 100).round %>
-          <div class="h-1.5 rounded-full" style="background: #F0EFED;">
-            <div class="h-full rounded-full" style="background: #6366F1; width: <%= percentage %>%;"></div>
+          <div class="h-1.5 rounded-full pulse-breakdown-bg">
+            <div class="h-full rounded-full" style="background: var(--pulse-chart-primary); width: <%= percentage %>%;"></div>
           </div>
-          <div class="text-[11px] mt-0.5" style="color: #8B8780;">
+          <div class="text-[11px] mt-0.5 pulse-text-muted">
             Avg: <%= table[:avg_duration_ms] %>ms · Total: <%= (table[:total_duration_ms] / 1000).round(1) %>s
           </div>
         </div>
       <% end %>
 
       <% if @table_breakdown.empty? %>
-        <div class="text-center text-[14px] py-4" style="color: #8B8780;">
+        <div class="text-center text-[14px] py-4 pulse-text-muted">
           No table data available
         </div>
       <% end %>

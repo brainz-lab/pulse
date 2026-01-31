@@ -1,69 +1,68 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div class="flex items-center gap-4">
-      <%= link_to "← Back", dashboard_metrics_path, class: "text-[13px] hover:opacity-70", style: "color: #8B8780;" %>
+      <%= link_to "← Back", dashboard_metrics_path, class: "text-[13px] hover:opacity-70 pulse-text-muted" %>
       <div>
-        <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @metric.name %></h1>
-        <p class="text-[14px] mt-1" style="color: #8B8780;"><%= @metric.description || 'Custom metric' %></p>
+        <h1 class="text-[22px] font-semibold tracking-tight pulse-text"><%= @metric.name %></h1>
+        <p class="text-[14px] mt-1 pulse-text-muted"><%= @metric.description || 'Custom metric' %></p>
       </div>
     </div>
     <div class="flex gap-2">
       <% %w[1h 6h 24h 7d].each do |range| %>
         <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
         <%= link_to range, dashboard_metric_path(@metric, since: range),
-            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
-            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
       <% end %>
     </div>
   </div>
 
   <!-- Stats cards -->
   <div class="grid grid-cols-4 gap-4">
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Current</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats[:current]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Current</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats[:current]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
     </div>
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Average</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats[:avg]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Average</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats[:avg]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
     </div>
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Minimum</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats[:min]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Minimum</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats[:min]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
     </div>
-    <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Maximum</span>
-      <p class="text-[28px] font-semibold mt-2" style="color: #1A1A1A;"><%= @stats[:max]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
+    <div class="rounded-xl p-5 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Maximum</span>
+      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @stats[:max]&.round(1) || '-' %><span class="text-[14px] font-normal ml-1"><%= @metric.unit %></span></p>
     </div>
   </div>
 
   <!-- Chart -->
-  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Trend</h3>
-    <div class="h-64" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @stats[:chart_data].to_json %>">
+  <div class="rounded-xl p-5 pulse-card">
+    <h3 class="text-[14px] font-medium mb-4 pulse-text">Trend</h3>
+    <div class="h-64 pulse-chart-container" data-controller="chart" data-chart-type-value="line" data-chart-data-value="<%= @stats[:chart_data].to_json %>">
       <canvas></canvas>
     </div>
   </div>
 
   <!-- Metadata -->
-  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Details</h3>
+  <div class="rounded-xl p-5 pulse-card">
+    <h3 class="text-[14px] font-medium mb-4 pulse-text">Details</h3>
     <div class="grid grid-cols-2 gap-4 text-[13px]">
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Type</span>
-        <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #6B6760;"><%= @metric.kind %></span>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Type</span>
+        <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded pulse-surface-alt pulse-text-secondary"><%= @metric.kind %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Unit</span>
-        <span style="color: #1A1A1A;"><%= @metric.unit || '-' %></span>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Unit</span>
+        <span class="pulse-text"><%= @metric.unit || '-' %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Data Points</span>
-        <span style="color: #1A1A1A;"><%= number_with_delimiter(@stats[:count] || 0) %></span>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Data Points</span>
+        <span class="pulse-text"><%= number_with_delimiter(@stats[:count] || 0) %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Created</span>
-        <span style="color: #1A1A1A;"><%= @metric.created_at.strftime('%b %d, %Y') %></span>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Created</span>
+        <span class="pulse-text"><%= @metric.created_at.strftime('%b %d, %Y') %></span>
       </div>
     </div>
   </div>

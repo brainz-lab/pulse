@@ -1,48 +1,47 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;">Query Analysis</h1>
-      <p class="text-[14px] mt-1" style="color: #8B8780;">N+1 detection, slow queries, and query patterns</p>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Query Analysis</h1>
+      <p class="text-[14px] mt-1 pulse-text-muted">N+1 detection, slow queries, and query patterns</p>
     </div>
     <div class="flex gap-2">
       <% %w[1h 6h 24h 7d].each do |range| %>
         <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
         <%= link_to range, dashboard_queries_path(since: range, tab: @tab),
-            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg",
-            style: active ? "background: #1A1A1A; color: #FFFFFE;" : "background: #FFFFFE; border: 1px solid #E8E5E0; color: #6B6760;" %>
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
       <% end %>
     </div>
   </div>
 
   <!-- Summary Cards -->
   <div class="grid grid-cols-4 gap-4">
-    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <div class="text-[13px] mb-1" style="color: #8B8780;">Total Queries</div>
-      <div class="text-[24px] font-semibold" style="color: #1A1A1A;"><%= number_with_delimiter(@summary[:total_queries]) %></div>
+    <div class="p-4 rounded-xl pulse-card">
+      <div class="text-[13px] mb-1 pulse-text-muted">Total Queries</div>
+      <div class="text-[24px] font-semibold pulse-text"><%= number_with_delimiter(@summary[:total_queries]) %></div>
     </div>
-    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <div class="text-[13px] mb-1" style="color: #8B8780;">Avg Duration</div>
-      <div class="text-[24px] font-semibold font-mono" style="color: #1A1A1A;"><%= @summary[:avg_duration_ms] %>ms</div>
+    <div class="p-4 rounded-xl pulse-card">
+      <div class="text-[13px] mb-1 pulse-text-muted">Avg Duration</div>
+      <div class="text-[24px] font-semibold font-mono pulse-text"><%= @summary[:avg_duration_ms] %>ms</div>
     </div>
-    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <div class="text-[13px] mb-1" style="color: #8B8780;">Slow Queries</div>
-      <div class="text-[24px] font-semibold" style="color: <%= @summary[:slow_count] > 0 ? '#F59E0B' : '#1A1A1A' %>;"><%= number_with_delimiter(@summary[:slow_count]) %></div>
-      <div class="text-[12px]" style="color: #8B8780;">>100ms</div>
+    <div class="p-4 rounded-xl pulse-card">
+      <div class="text-[13px] mb-1 pulse-text-muted">Slow Queries</div>
+      <div class="text-[24px] font-semibold <%= @summary[:slow_count] > 0 ? 'pulse-warning' : 'pulse-text' %>"><%= number_with_delimiter(@summary[:slow_count]) %></div>
+      <div class="text-[12px] pulse-text-muted">>100ms</div>
     </div>
-    <div class="p-4 rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <div class="text-[13px] mb-1" style="color: #8B8780;">Tables</div>
-      <div class="text-[24px] font-semibold" style="color: #1A1A1A;"><%= @summary[:table_count] %></div>
-      <div class="text-[12px]" style="color: #8B8780;"><%= @summary[:queries_per_trace] %> queries/trace</div>
+    <div class="p-4 rounded-xl pulse-card">
+      <div class="text-[13px] mb-1 pulse-text-muted">Tables</div>
+      <div class="text-[24px] font-semibold pulse-text"><%= @summary[:table_count] %></div>
+      <div class="text-[12px] pulse-text-muted"><%= @summary[:queries_per_trace] %> queries/trace</div>
     </div>
   </div>
 
   <!-- Tab Navigation -->
-  <div class="flex gap-1 p-1 rounded-lg" style="background: #F0EFED;">
+  <div class="flex gap-1 p-1 rounded-lg pulse-surface-alt">
     <% [['n_plus_one', 'N+1 Patterns'], ['slow', 'Slow Queries'], ['frequent', 'Frequent Queries']].each do |tab_id, tab_name| %>
       <% active = @tab == tab_id %>
       <%= link_to tab_name, dashboard_queries_path(since: params[:since], tab: tab_id),
-          class: "flex-1 text-center px-4 py-2 text-[13px] font-medium rounded-md transition-colors",
-          style: active ? "background: #FFFFFE; color: #1A1A1A; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" : "color: #8B8780;" %>
+          class: "flex-1 text-center px-4 py-2 text-[13px] font-medium rounded-md transition-colors #{active ? 'pulse-surface pulse-text' : 'pulse-text-muted'}",
+          style: active ? "box-shadow: 0 1px 2px rgba(0,0,0,0.05);" : "" %>
     <% end %>
   </div>
 
