@@ -51,7 +51,7 @@ gem "image_processing", "~> 1.2"
 gem "aws-sdk-s3", require: false
 
 # BrainzLab SDK
-gem "brainzlab", "~> 0.1.11"
+gem "brainzlab", "~> 0.1.12"
 
 # BrainzLab UI - Unified design system with Phlex components
 gem "brainzlab-ui", "~> 0.1.0"
