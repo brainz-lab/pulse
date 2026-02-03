@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> **Secrets Reference**: See `../.secrets.md` (gitignored) for master keys, server access, and MCP tokens.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project: Pulse by Brainz Lab
@@ -170,3 +172,49 @@ Application Performance Index (0.0 - 1.0):
 - TimescaleDB hypertables for efficient time-series queries
 - API-first design (dashboard sits on top of API)
 - Pre-aggregate metrics for fast dashboard queries
+
+## Kamal Production Access
+
+**IMPORTANT**: When using `kamal app exec --reuse`, docker exec doesn't inherit container environment variables. You must pass `SECRET_KEY_BASE` explicitly.
+
+```bash
+# Navigate to this service directory
+cd /Users/afmp/brainz/brainzlab/pulse
+
+# Get the master key (used as SECRET_KEY_BASE)
+cat config/master.key
+
+# Run Rails console commands
+kamal app exec -p --reuse -e SECRET_KEY_BASE:<master_key> 'bin/rails runner "<ruby_code>"'
+
+# Example: Count records
+kamal app exec -p --reuse -e SECRET_KEY_BASE:<master_key> 'bin/rails runner "puts Trace.count"'
+```
+
+### Running Complex Scripts
+
+For multi-line Ruby scripts:
+
+```bash
+# 1. Create script locally
+cat > /tmp/my_script.rb << 'RUBY'
+Trace.order(duration_ms: :desc).limit(10).each { |t| puts "#{t.name}: #{t.duration_ms}ms" }
+RUBY
+
+# 2. Copy to server
+scp /tmp/my_script.rb <user>@<primary-server>:/tmp/my_script.rb
+
+# 3. Get container name and run
+ssh <user>@<primary-server> 'CONTAINER=$(docker ps --filter "name=pulse-web" --format "{{.Names}}" | head -1) && \
+  docker cp /tmp/my_script.rb $CONTAINER:/tmp/my_script.rb && \
+  docker exec -e SECRET_KEY_BASE=<master_key> $CONTAINER bin/rails runner /tmp/my_script.rb'
+```
+
+### Other Kamal Commands
+
+```bash
+kamal deploy              # Deploy
+kamal app logs -f         # View logs
+kamal lock release        # Release stuck lock
+kamal secrets print       # Print evaluated secrets
+```
