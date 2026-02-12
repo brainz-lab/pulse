@@ -84,4 +84,5 @@ Rails.application.configure do
   config.hosts << "pulse"
   config.hosts << "pulse:3000"
   config.hosts << /.*\.brainzlab\.ai/
+  config.hosts << ".brainzlab.local"
 end
