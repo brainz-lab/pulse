@@ -21,15 +21,41 @@ default: &default
 
 
 development:
-  <<: *default
-  url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:postgres@localhost:5432") %>/pulse_development
+  primary:
+    <<: *default
+    url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:postgres@localhost:5432") %>/pulse_development
+  queue:
+    <<: *default
+    url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:postgres@localhost:5432") %>/pulse_development
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:postgres@localhost:5432") %>/pulse_development
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:postgres@localhost:5432") %>/pulse_development
+    migrations_paths: db/cable_migrate
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
-  <<: *default
-  database: pulse_test
+  primary:
+    <<: *default
+    database: pulse_test
+  queue:
+    <<: *default
+    database: pulse_test
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    database: pulse_test
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    database: pulse_test
+    migrations_paths: db/cable_migrate
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
