@@ -54,7 +54,15 @@ gem "aws-sdk-s3", require: false
 gem "brainzlab", "~> 0.1.12"
 
 # BrainzLab UI - Unified design system with Phlex components
-gem "brainzlab-ui", "~> 0.1.0"
+if ENV["BUNDLE_DEPLOYMENT"] == "1"
+  gem "brainzlab-ui", "~> 0.1.0"
+elsif File.exist?("/brainzlab-ui")
+  gem "brainzlab-ui", path: "/brainzlab-ui"
+elsif File.exist?(File.expand_path("../brainzlab-ui", __dir__))
+  gem "brainzlab-ui", path: "../brainzlab-ui"
+else
+  gem "brainzlab-ui", "~> 0.1.0"
+end
 gem "phlex-rails", "~> 2.4"
 
 # Pagination
