@@ -218,3 +218,44 @@ kamal app logs -f         # View logs
 kamal lock release        # Release stuck lock
 kamal secrets print       # Print evaluated secrets
 ```
+
+## TimescaleDB Migration Gotcha
+
+Pulse uses TimescaleDB hypertables for time-series data. When hypertables have **columnstore compression** enabled, PostgreSQL does NOT support non-constant default expressions.
+
+**This will FAIL:**
+```ruby
+add_column :metric_points, :recorded_at, :timestamptz, default: -> { 'CURRENT_TIMESTAMP' }
+```
+
+**Use constant defaults instead:**
+```ruby
+add_column :metric_points, :recorded_at, :timestamptz, null: false
+# Handle timestamps at the application level
+```
+
+## SSO Environment Variables
+
+Pulse requires Platform SSO for dashboard authentication:
+
+```bash
+# Required in .env
+BRAINZLAB_PLATFORM_URL=http://localhost:3000           # Server-to-server SSO token validation
+BRAINZLAB_PLATFORM_EXTERNAL_URL=http://localhost:3000   # Browser redirect for login
+```
+
+Without these, users cannot log in to the Pulse dashboard.
+
+## SDK API Note
+
+The correct method for counters is `.counter()`, **NOT** `.increment()`. Pulse does not have an `.increment()` method.
+
+```ruby
+# Correct Pulse SDK methods:
+BrainzLab::Pulse.counter("orders.created")          # Counter (increment by 1)
+BrainzLab::Pulse.counter("orders.created", 5)       # Counter (increment by N)
+BrainzLab::Pulse.gauge("queue.size", 42)             # Gauge (current value)
+BrainzLab::Pulse.histogram("response.time", 245.3)  # Histogram (distribution)
+
+# Flux has .increment() — Pulse does NOT
+```
