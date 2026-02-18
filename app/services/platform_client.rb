@@ -6,7 +6,7 @@ require "json"
 # Client for validating API keys against Platform
 # Enables unified authentication across all BrainzLab products
 class PlatformClient
-  PLATFORM_URL = ENV.fetch("PLATFORM_URL", "https://platform.brainzlab.ai")
+  PLATFORM_URL = ENV.fetch("BRAINZLAB_PLATFORM_URL", "https://platform.brainzlab.ai")
   TIMEOUT = 5
 
   # Cache durations
@@ -96,20 +96,20 @@ class PlatformClient
       project = Project.find_by(platform_project_id: result.project_id)
 
       if project
-        # Sync: Update key if regenerated in Platform
-        if project.settings.nil? || project.settings["api_key"] != api_key
-          project.update!(settings: (project.settings || {}).merge("api_key" => api_key))
-          Rails.logger.info "[PlatformClient] Synced regenerated key for project #{project.name}"
+        # Track the Platform key separately (don't overwrite pls_api_* keys)
+        if project.settings.nil? || project.settings["platform_api_key"] != api_key
+          project.update!(settings: (project.settings || {}).merge("platform_api_key" => api_key))
+          Rails.logger.info "[PlatformClient] Synced Platform key for project #{project.name}"
         end
         return project
       end
 
-      # Create new project
+      # Create new project (no pls_ keys yet — provisioning generates those)
       Project.create!(
         platform_project_id: result.project_id,
         name: result.project_slug || "Project #{result.project_id}",
         environment: result.environment || "production",
-        settings: { "api_key" => api_key }
+        settings: { "platform_api_key" => api_key }
       )
     rescue ActiveRecord::RecordNotUnique
       # Race condition - another request created it, retry lookup
@@ -129,6 +129,7 @@ class PlatformClient
 
         request = Net::HTTP::Post.new(uri.path)
         request["Content-Type"] = "application/json"
+        request["X-Service-Key"] = ENV["SERVICE_KEY"]
         request.body = {
           project_id: project_id,
           product: product,
