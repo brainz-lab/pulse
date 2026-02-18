@@ -1,7 +1,15 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict PzlF1EVwcRGaiVkhvbOybhvQtx4jtrjeZpeFFB5MRbzHk9dpE1vPbEqqF6gPyZf
+
+-- Dumped from database version 15.16 (Homebrew)
+-- Dumped by pg_dump version 15.16 (Homebrew)
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -18,6 +26,20 @@ SET row_security = off;
 
 
 --
+-- Name: timescaledb; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS timescaledb WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION timescaledb; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION timescaledb IS 'Enables scalable inserts and complex queries for time-series data (Community Edition)';
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -31,9 +53,47 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
+--
+-- Name: vector; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION vector; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION vector IS 'vector data type and ivfflat and hnsw access methods';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: _compressed_hypertable_2; Type: TABLE; Schema: _timescaledb_internal; Owner: -
+--
+
+CREATE TABLE _timescaledb_internal._compressed_hypertable_2 (
+);
+
+
+--
+-- Name: _compressed_hypertable_4; Type: TABLE; Schema: _timescaledb_internal; Owner: -
+--
+
+CREATE TABLE _timescaledb_internal._compressed_hypertable_4 (
+);
+
+
+--
+-- Name: _compressed_hypertable_6; Type: TABLE; Schema: _timescaledb_internal; Owner: -
+--
+
+CREATE TABLE _timescaledb_internal._compressed_hypertable_6 (
+);
+
 
 --
 -- Name: aggregated_metrics; Type: TABLE; Schema: public; Owner: -
@@ -41,19 +101,19 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.aggregated_metrics (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    avg double precision,
-    bucket timestamp(6) without time zone NOT NULL,
-    count double precision,
-    dimensions jsonb DEFAULT '{}'::jsonb,
-    granularity character varying NOT NULL,
-    max double precision,
-    min double precision,
+    project_id uuid NOT NULL,
     name character varying NOT NULL,
+    bucket timestamp(6) without time zone NOT NULL,
+    granularity character varying NOT NULL,
+    count double precision,
+    sum double precision,
+    min double precision,
+    max double precision,
+    avg double precision,
     p50 double precision,
     p95 double precision,
     p99 double precision,
-    project_id uuid NOT NULL,
-    sum double precision
+    dimensions jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -64,11 +124,11 @@ CREATE TABLE public.aggregated_metrics (
 CREATE TABLE public.alert_notifications (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     alert_id uuid NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    error_message text,
     notification_channel_id uuid NOT NULL,
-    sent_at timestamp(6) without time zone,
     status character varying DEFAULT 'pending'::character varying NOT NULL,
+    error_message text,
+    sent_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
@@ -80,8 +140,8 @@ CREATE TABLE public.alert_notifications (
 CREATE TABLE public.alert_rule_channels (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     alert_rule_id uuid NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
     notification_channel_id uuid NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
@@ -92,25 +152,25 @@ CREATE TABLE public.alert_rule_channels (
 
 CREATE TABLE public.alert_rules (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    aggregation character varying DEFAULT 'avg'::character varying,
-    cooldown_minutes integer DEFAULT 60,
-    created_at timestamp(6) without time zone NOT NULL,
+    project_id uuid NOT NULL,
+    name character varying NOT NULL,
     description text,
     enabled boolean DEFAULT true,
+    metric_type character varying NOT NULL,
+    metric_name character varying,
+    operator character varying NOT NULL,
+    threshold double precision NOT NULL,
+    aggregation character varying DEFAULT 'avg'::character varying,
+    window_minutes integer DEFAULT 5,
     endpoint character varying,
     environment character varying,
-    last_checked_at timestamp(6) without time zone,
-    last_triggered_at timestamp(6) without time zone,
-    metric_name character varying,
-    metric_type character varying NOT NULL,
-    name character varying NOT NULL,
-    operator character varying NOT NULL,
-    project_id uuid NOT NULL,
+    cooldown_minutes integer DEFAULT 60,
     severity character varying DEFAULT 'warning'::character varying,
     status character varying DEFAULT 'ok'::character varying,
-    threshold double precision NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    window_minutes integer DEFAULT 5
+    last_triggered_at timestamp(6) without time zone,
+    last_checked_at timestamp(6) without time zone,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -120,21 +180,21 @@ CREATE TABLE public.alert_rules (
 
 CREATE TABLE public.alerts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
     alert_rule_id uuid NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
+    status character varying DEFAULT 'firing'::character varying NOT NULL,
+    severity character varying NOT NULL,
+    metric_type character varying NOT NULL,
+    operator character varying NOT NULL,
+    threshold double precision NOT NULL,
+    value double precision NOT NULL,
+    triggered_at timestamp(6) without time zone NOT NULL,
+    resolved_at timestamp(6) without time zone,
     endpoint character varying,
     environment character varying,
     message text,
-    metric_type character varying NOT NULL,
-    operator character varying NOT NULL,
-    project_id uuid NOT NULL,
-    resolved_at timestamp(6) without time zone,
-    severity character varying NOT NULL,
-    status character varying DEFAULT 'firing'::character varying NOT NULL,
-    threshold double precision NOT NULL,
-    triggered_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL,
-    value double precision NOT NULL
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
 );
 
 
@@ -156,11 +216,11 @@ CREATE TABLE public.ar_internal_metadata (
 
 CREATE TABLE public.metric_points (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    metric_id uuid NOT NULL,
     project_id uuid NOT NULL,
-    tags jsonb DEFAULT '{}'::jsonb,
+    metric_id uuid NOT NULL,
     "timestamp" timestamp(6) without time zone NOT NULL,
-    value double precision NOT NULL
+    value double precision NOT NULL,
+    tags jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -170,13 +230,13 @@ CREATE TABLE public.metric_points (
 
 CREATE TABLE public.metrics (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    description text,
-    kind character varying DEFAULT 'gauge'::character varying NOT NULL,
-    name character varying NOT NULL,
     project_id uuid NOT NULL,
-    tags jsonb DEFAULT '{}'::jsonb,
+    name character varying NOT NULL,
+    kind character varying DEFAULT 'gauge'::character varying NOT NULL,
     unit character varying,
+    description text,
+    tags jsonb DEFAULT '{}'::jsonb,
+    created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
@@ -187,15 +247,15 @@ CREATE TABLE public.metrics (
 
 CREATE TABLE public.notification_channels (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    config jsonb DEFAULT '{}'::jsonb NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    enabled boolean DEFAULT true,
-    failure_count integer DEFAULT 0,
-    kind character varying NOT NULL,
-    last_used_at timestamp(6) without time zone,
-    name character varying NOT NULL,
     project_id uuid NOT NULL,
+    name character varying NOT NULL,
+    kind character varying NOT NULL,
+    enabled boolean DEFAULT true,
+    config jsonb DEFAULT '{}'::jsonb NOT NULL,
+    last_used_at timestamp(6) without time zone,
     success_count integer DEFAULT 0,
+    failure_count integer DEFAULT 0,
+    created_at timestamp(6) without time zone NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL
 );
 
@@ -206,13 +266,14 @@ CREATE TABLE public.notification_channels (
 
 CREATE TABLE public.projects (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    platform_project_id character varying NOT NULL,
+    name character varying,
+    environment character varying DEFAULT 'live'::character varying,
     apdex_t double precision DEFAULT 0.5,
     created_at timestamp(6) without time zone NOT NULL,
-    environment character varying DEFAULT 'live'::character varying,
-    name character varying,
-    platform_project_id character varying NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL,
     settings jsonb DEFAULT '{}'::jsonb NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    archived_at timestamp(6) without time zone
 );
 
 
@@ -226,24 +287,393 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: solid_queue_blocked_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_blocked_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    queue_name character varying NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    concurrency_key character varying NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_blocked_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_blocked_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_blocked_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_blocked_executions_id_seq OWNED BY public.solid_queue_blocked_executions.id;
+
+
+--
+-- Name: solid_queue_claimed_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_claimed_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    process_id bigint,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_claimed_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_claimed_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_claimed_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_claimed_executions_id_seq OWNED BY public.solid_queue_claimed_executions.id;
+
+
+--
+-- Name: solid_queue_failed_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_failed_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    error text,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_failed_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_failed_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_failed_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_failed_executions_id_seq OWNED BY public.solid_queue_failed_executions.id;
+
+
+--
+-- Name: solid_queue_jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_jobs (
+    id bigint NOT NULL,
+    queue_name character varying NOT NULL,
+    class_name character varying NOT NULL,
+    arguments text,
+    priority integer DEFAULT 0 NOT NULL,
+    active_job_id character varying,
+    scheduled_at timestamp(6) without time zone,
+    finished_at timestamp(6) without time zone,
+    concurrency_key character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_jobs_id_seq OWNED BY public.solid_queue_jobs.id;
+
+
+--
+-- Name: solid_queue_pauses; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_pauses (
+    id bigint NOT NULL,
+    queue_name character varying NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_pauses_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_pauses_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_pauses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_pauses_id_seq OWNED BY public.solid_queue_pauses.id;
+
+
+--
+-- Name: solid_queue_processes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_processes (
+    id bigint NOT NULL,
+    kind character varying NOT NULL,
+    last_heartbeat_at timestamp(6) without time zone NOT NULL,
+    supervisor_id bigint,
+    pid integer NOT NULL,
+    hostname character varying,
+    metadata text,
+    created_at timestamp(6) without time zone NOT NULL,
+    name character varying NOT NULL
+);
+
+
+--
+-- Name: solid_queue_processes_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_processes_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_processes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_processes_id_seq OWNED BY public.solid_queue_processes.id;
+
+
+--
+-- Name: solid_queue_ready_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_ready_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    queue_name character varying NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_ready_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_ready_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_ready_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_ready_executions_id_seq OWNED BY public.solid_queue_ready_executions.id;
+
+
+--
+-- Name: solid_queue_recurring_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_recurring_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    task_key character varying NOT NULL,
+    run_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_recurring_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_recurring_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_recurring_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_recurring_executions_id_seq OWNED BY public.solid_queue_recurring_executions.id;
+
+
+--
+-- Name: solid_queue_recurring_tasks; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_recurring_tasks (
+    id bigint NOT NULL,
+    key character varying NOT NULL,
+    schedule character varying NOT NULL,
+    command character varying(2048),
+    class_name character varying,
+    arguments text,
+    queue_name character varying,
+    priority integer DEFAULT 0,
+    static boolean DEFAULT true NOT NULL,
+    description text,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_recurring_tasks_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_recurring_tasks_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_recurring_tasks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_recurring_tasks_id_seq OWNED BY public.solid_queue_recurring_tasks.id;
+
+
+--
+-- Name: solid_queue_scheduled_executions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_scheduled_executions (
+    id bigint NOT NULL,
+    job_id bigint NOT NULL,
+    queue_name character varying NOT NULL,
+    priority integer DEFAULT 0 NOT NULL,
+    scheduled_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_scheduled_executions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_scheduled_executions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_scheduled_executions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_scheduled_executions_id_seq OWNED BY public.solid_queue_scheduled_executions.id;
+
+
+--
+-- Name: solid_queue_semaphores; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.solid_queue_semaphores (
+    id bigint NOT NULL,
+    key character varying NOT NULL,
+    value integer DEFAULT 1 NOT NULL,
+    expires_at timestamp(6) without time zone NOT NULL,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+--
+-- Name: solid_queue_semaphores_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.solid_queue_semaphores_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: solid_queue_semaphores_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.solid_queue_semaphores_id_seq OWNED BY public.solid_queue_semaphores.id;
+
+
+--
 -- Name: spans; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.spans (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    data jsonb DEFAULT '{}'::jsonb,
-    duration_ms double precision,
-    ended_at timestamp(6) without time zone,
-    error boolean DEFAULT false,
-    error_class character varying,
-    error_message text,
-    kind character varying NOT NULL,
-    name character varying NOT NULL,
-    parent_span_id character varying,
+    trace_id uuid NOT NULL,
     project_id uuid NOT NULL,
     span_id character varying NOT NULL,
+    parent_span_id character varying,
+    name character varying NOT NULL,
+    kind character varying NOT NULL,
     started_at timestamp(6) without time zone NOT NULL,
-    trace_id uuid NOT NULL
+    ended_at timestamp(6) without time zone,
+    duration_ms double precision,
+    data jsonb DEFAULT '{}'::jsonb,
+    error boolean DEFAULT false,
+    error_class character varying,
+    error_message text
 );
 
 
@@ -253,37 +683,116 @@ CREATE TABLE public.spans (
 
 CREATE TABLE public.traces (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    action character varying,
-    commit character varying,
-    controller character varying,
-    data jsonb DEFAULT '{}'::jsonb NOT NULL,
-    db_duration_ms double precision DEFAULT 0.0,
-    duration_ms double precision,
-    ended_at timestamp(6) without time zone,
-    environment character varying,
-    error boolean DEFAULT false,
-    error_class character varying,
-    error_message text,
-    executions integer DEFAULT 1,
-    external_duration_ms double precision DEFAULT 0.0,
-    host character varying,
-    job_class character varying,
-    job_id character varying,
-    kind character varying DEFAULT 'request'::character varying NOT NULL,
-    name character varying NOT NULL,
     project_id uuid NOT NULL,
-    queue character varying,
-    queue_wait_ms double precision,
+    trace_id character varying NOT NULL,
+    name character varying NOT NULL,
+    kind character varying DEFAULT 'request'::character varying NOT NULL,
+    started_at timestamp(6) without time zone NOT NULL,
+    ended_at timestamp(6) without time zone,
+    duration_ms double precision,
     request_id character varying,
     request_method character varying,
     request_path character varying,
-    span_count integer DEFAULT 0,
-    started_at timestamp(6) without time zone NOT NULL,
+    controller character varying,
+    action character varying,
     status integer,
-    trace_id character varying NOT NULL,
+    job_class character varying,
+    job_id character varying,
+    queue character varying,
+    environment character varying,
+    commit character varying,
+    host character varying,
     user_id character varying,
-    view_duration_ms double precision DEFAULT 0.0
+    error boolean DEFAULT false,
+    error_class character varying,
+    error_message text,
+    span_count integer DEFAULT 0,
+    db_duration_ms double precision DEFAULT 0.0,
+    view_duration_ms double precision DEFAULT 0.0,
+    external_duration_ms double precision DEFAULT 0.0,
+    data jsonb DEFAULT '{}'::jsonb NOT NULL,
+    queue_wait_ms double precision,
+    executions integer DEFAULT 1,
+    created_at timestamp(6) without time zone DEFAULT '2025-01-01 00:00:00'::timestamp without time zone NOT NULL,
+    updated_at timestamp(6) without time zone DEFAULT '2025-01-01 00:00:00'::timestamp without time zone NOT NULL
 );
+
+
+--
+-- Name: solid_queue_blocked_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_blocked_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_blocked_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_claimed_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_claimed_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_claimed_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_failed_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_failed_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_failed_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_jobs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_jobs ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_jobs_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_pauses id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_pauses ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_pauses_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_processes id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_processes ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_processes_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_ready_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_ready_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_ready_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_recurring_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_recurring_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_recurring_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_recurring_tasks id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_recurring_tasks ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_recurring_tasks_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_scheduled_executions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_scheduled_executions ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_scheduled_executions_id_seq'::regclass);
+
+
+--
+-- Name: solid_queue_semaphores id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_semaphores ALTER COLUMN id SET DEFAULT nextval('public.solid_queue_semaphores_id_seq'::regclass);
 
 
 --
@@ -339,7 +848,7 @@ ALTER TABLE ONLY public.ar_internal_metadata
 --
 
 ALTER TABLE ONLY public.metric_points
-    ADD CONSTRAINT metric_points_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT metric_points_pkey PRIMARY KEY (id, "timestamp");
 
 
 --
@@ -375,11 +884,99 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: solid_queue_blocked_executions solid_queue_blocked_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_blocked_executions
+    ADD CONSTRAINT solid_queue_blocked_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_claimed_executions solid_queue_claimed_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_claimed_executions
+    ADD CONSTRAINT solid_queue_claimed_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_failed_executions solid_queue_failed_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_failed_executions
+    ADD CONSTRAINT solid_queue_failed_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_jobs solid_queue_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_jobs
+    ADD CONSTRAINT solid_queue_jobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_pauses solid_queue_pauses_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_pauses
+    ADD CONSTRAINT solid_queue_pauses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_processes solid_queue_processes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_processes
+    ADD CONSTRAINT solid_queue_processes_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_ready_executions solid_queue_ready_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_ready_executions
+    ADD CONSTRAINT solid_queue_ready_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_recurring_executions solid_queue_recurring_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_recurring_executions
+    ADD CONSTRAINT solid_queue_recurring_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_recurring_tasks solid_queue_recurring_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_recurring_tasks
+    ADD CONSTRAINT solid_queue_recurring_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_scheduled_executions solid_queue_scheduled_executions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_scheduled_executions
+    ADD CONSTRAINT solid_queue_scheduled_executions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: solid_queue_semaphores solid_queue_semaphores_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_semaphores
+    ADD CONSTRAINT solid_queue_semaphores_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: spans spans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.spans
-    ADD CONSTRAINT spans_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT spans_pkey PRIMARY KEY (id, started_at);
 
 
 --
@@ -387,7 +984,7 @@ ALTER TABLE ONLY public.spans
 --
 
 ALTER TABLE ONLY public.traces
-    ADD CONSTRAINT traces_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT traces_pkey PRIMARY KEY (id, started_at);
 
 
 --
@@ -594,10 +1191,206 @@ CREATE UNIQUE INDEX index_notification_channels_on_project_id_and_name ON public
 
 
 --
+-- Name: index_projects_on_archived_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_projects_on_archived_at ON public.projects USING btree (archived_at);
+
+
+--
 -- Name: index_projects_on_platform_project_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX index_projects_on_platform_project_id ON public.projects USING btree (platform_project_id);
+
+
+--
+-- Name: index_solid_queue_blocked_executions_for_maintenance; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_blocked_executions_for_maintenance ON public.solid_queue_blocked_executions USING btree (expires_at, concurrency_key);
+
+
+--
+-- Name: index_solid_queue_blocked_executions_for_release; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_blocked_executions_for_release ON public.solid_queue_blocked_executions USING btree (concurrency_key, priority, job_id);
+
+
+--
+-- Name: index_solid_queue_blocked_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_blocked_executions_on_job_id ON public.solid_queue_blocked_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_claimed_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_claimed_executions_on_job_id ON public.solid_queue_claimed_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_claimed_executions_on_process_id_and_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_claimed_executions_on_process_id_and_job_id ON public.solid_queue_claimed_executions USING btree (process_id, job_id);
+
+
+--
+-- Name: index_solid_queue_dispatch_all; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_dispatch_all ON public.solid_queue_scheduled_executions USING btree (scheduled_at, priority, job_id);
+
+
+--
+-- Name: index_solid_queue_failed_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_failed_executions_on_job_id ON public.solid_queue_failed_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_jobs_for_alerting; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_jobs_for_alerting ON public.solid_queue_jobs USING btree (scheduled_at, finished_at);
+
+
+--
+-- Name: index_solid_queue_jobs_for_filtering; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_jobs_for_filtering ON public.solid_queue_jobs USING btree (queue_name, finished_at);
+
+
+--
+-- Name: index_solid_queue_jobs_on_active_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_jobs_on_active_job_id ON public.solid_queue_jobs USING btree (active_job_id);
+
+
+--
+-- Name: index_solid_queue_jobs_on_class_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_jobs_on_class_name ON public.solid_queue_jobs USING btree (class_name);
+
+
+--
+-- Name: index_solid_queue_jobs_on_finished_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_jobs_on_finished_at ON public.solid_queue_jobs USING btree (finished_at);
+
+
+--
+-- Name: index_solid_queue_pauses_on_queue_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_pauses_on_queue_name ON public.solid_queue_pauses USING btree (queue_name);
+
+
+--
+-- Name: index_solid_queue_poll_all; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_poll_all ON public.solid_queue_ready_executions USING btree (priority, job_id);
+
+
+--
+-- Name: index_solid_queue_poll_by_queue; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_poll_by_queue ON public.solid_queue_ready_executions USING btree (queue_name, priority, job_id);
+
+
+--
+-- Name: index_solid_queue_processes_on_last_heartbeat_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_processes_on_last_heartbeat_at ON public.solid_queue_processes USING btree (last_heartbeat_at);
+
+
+--
+-- Name: index_solid_queue_processes_on_name_and_supervisor_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_processes_on_name_and_supervisor_id ON public.solid_queue_processes USING btree (name, supervisor_id);
+
+
+--
+-- Name: index_solid_queue_processes_on_supervisor_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_processes_on_supervisor_id ON public.solid_queue_processes USING btree (supervisor_id);
+
+
+--
+-- Name: index_solid_queue_ready_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_ready_executions_on_job_id ON public.solid_queue_ready_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_recurring_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_recurring_executions_on_job_id ON public.solid_queue_recurring_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_recurring_executions_on_task_key_and_run_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_recurring_executions_on_task_key_and_run_at ON public.solid_queue_recurring_executions USING btree (task_key, run_at);
+
+
+--
+-- Name: index_solid_queue_recurring_tasks_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_recurring_tasks_on_key ON public.solid_queue_recurring_tasks USING btree (key);
+
+
+--
+-- Name: index_solid_queue_recurring_tasks_on_static; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_recurring_tasks_on_static ON public.solid_queue_recurring_tasks USING btree (static);
+
+
+--
+-- Name: index_solid_queue_scheduled_executions_on_job_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_scheduled_executions_on_job_id ON public.solid_queue_scheduled_executions USING btree (job_id);
+
+
+--
+-- Name: index_solid_queue_semaphores_on_expires_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_semaphores_on_expires_at ON public.solid_queue_semaphores USING btree (expires_at);
+
+
+--
+-- Name: index_solid_queue_semaphores_on_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX index_solid_queue_semaphores_on_key ON public.solid_queue_semaphores USING btree (key);
+
+
+--
+-- Name: index_solid_queue_semaphores_on_key_and_value; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX index_solid_queue_semaphores_on_key_and_value ON public.solid_queue_semaphores USING btree (key, value);
 
 
 --
@@ -660,7 +1453,28 @@ CREATE INDEX index_traces_on_request_id ON public.traces USING btree (request_id
 -- Name: index_traces_on_trace_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX index_traces_on_trace_id ON public.traces USING btree (trace_id);
+CREATE UNIQUE INDEX index_traces_on_trace_id ON public.traces USING btree (trace_id, started_at);
+
+
+--
+-- Name: metric_points_timestamp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX metric_points_timestamp_idx ON public.metric_points USING btree ("timestamp" DESC);
+
+
+--
+-- Name: spans_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX spans_started_at_idx ON public.spans USING btree (started_at DESC);
+
+
+--
+-- Name: traces_started_at_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX traces_started_at_idx ON public.traces USING btree (started_at DESC);
 
 
 --
@@ -680,6 +1494,30 @@ ALTER TABLE ONLY public.alert_rule_channels
 
 
 --
+-- Name: solid_queue_recurring_executions fk_rails_318a5533ed; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_recurring_executions
+    ADD CONSTRAINT fk_rails_318a5533ed FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: solid_queue_failed_executions fk_rails_39bbc7a631; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_failed_executions
+    ADD CONSTRAINT fk_rails_39bbc7a631 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: solid_queue_blocked_executions fk_rails_4cd34e2228; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_blocked_executions
+    ADD CONSTRAINT fk_rails_4cd34e2228 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
 -- Name: metrics fk_rails_68c661ff7b; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -696,11 +1534,19 @@ ALTER TABLE ONLY public.alerts
 
 
 --
--- Name: spans fk_rails_9fb60f666f; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: solid_queue_ready_executions fk_rails_81fcbd66af; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.spans
-    ADD CONSTRAINT fk_rails_9fb60f666f FOREIGN KEY (trace_id) REFERENCES public.traces(id);
+ALTER TABLE ONLY public.solid_queue_ready_executions
+    ADD CONSTRAINT fk_rails_81fcbd66af FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
+
+
+--
+-- Name: solid_queue_claimed_executions fk_rails_9cfe4d4944; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_claimed_executions
+    ADD CONSTRAINT fk_rails_9cfe4d4944 FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
 
 
 --
@@ -709,6 +1555,14 @@ ALTER TABLE ONLY public.spans
 
 ALTER TABLE ONLY public.alert_rule_channels
     ADD CONSTRAINT fk_rails_afbb1dd2e3 FOREIGN KEY (notification_channel_id) REFERENCES public.notification_channels(id);
+
+
+--
+-- Name: solid_queue_scheduled_executions fk_rails_c4316f352d; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.solid_queue_scheduled_executions
+    ADD CONSTRAINT fk_rails_c4316f352d FOREIGN KEY (job_id) REFERENCES public.solid_queue_jobs(id) ON DELETE CASCADE;
 
 
 --
@@ -763,22 +1617,5 @@ ALTER TABLE ONLY public.alert_notifications
 -- PostgreSQL database dump complete
 --
 
-SET search_path TO "$user", public;
-
-INSERT INTO "schema_migrations" (version) VALUES
-('20251229062459'),
-('20251223200000'),
-('20251223023220'),
-('20251223020446'),
-('20251223015307'),
-('20251223015233'),
-('20251223015215'),
-('20241222000002'),
-('20241222000001'),
-('20241221000006'),
-('20241221000005'),
-('20241221000004'),
-('20241221000003'),
-('20241221000002'),
-('20241221000001');
+\unrestrict PzlF1EVwcRGaiVkhvbOybhvQtx4jtrjeZpeFFB5MRbzHk9dpE1vPbEqqF6gPyZf
 
