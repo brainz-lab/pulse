@@ -21,8 +21,8 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# NOTE: BUNDLE_DEPLOYMENT intentionally NOT set here (set in final stage only)
 ENV RAILS_ENV="production" \
-    BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
@@ -38,29 +38,35 @@ RUN apt-get update -qq && \
 # Install application gems
 COPY Gemfile Gemfile.lock vendor ./
 
-RUN bundle install && \
+RUN --mount=type=secret,id=bundle_github \
+    export BUNDLE_RUBYGEMS__PKG__GITHUB__COM=$(cat /run/secrets/bundle_github) && \
+    bundle lock && \
+    cp Gemfile.lock /tmp/Gemfile.lock.resolved && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
 # Copy application code
 COPY . .
 
-# Create symlink for brainzlab-ui assets (used by Tailwind CSS imports)
-RUN ln -s "$(bundle show brainzlab-ui)" /brainzlab-ui
+# Restore resolved Gemfile.lock (COPY . . overwrites with the PATH-based local one)
+RUN cp /tmp/Gemfile.lock.resolved Gemfile.lock
 
-# Precompile bootsnap code for faster boot times.
-# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-RUN bundle exec bootsnap precompile -j 1 app/ lib/
+# Fix brainzlab_ui symlink: COPY copies a broken absolute symlink from dev,
+# replace it with one pointing to the installed fluyenta-ui gem stylesheets
+RUN ln -sf "$(bundle show fluyenta-ui)/app/assets/stylesheets/brainzlab_ui" app/assets/tailwind/brainzlab_ui
+
+# Create root symlink for fluyenta-ui assets
+# Note: path must NOT be /fluyenta-ui to avoid collision with Gemfile path check
+RUN ln -s "$(bundle show fluyenta-ui)" /fluyenta-ui-gem
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
-
-
-
 # Final stage for app image
 FROM base
+
+ENV BUNDLE_DEPLOYMENT="1"
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
