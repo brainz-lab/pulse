@@ -62,7 +62,7 @@ end
 gem "phlex-rails", "~> 2.4"
 
 # Pagination
-gem "pagy", "~> 9.3"
+gem "pagy", "~> 43.2"
 
 group :development, :test do
   gem "simplecov", require: false
