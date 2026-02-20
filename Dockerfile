@@ -43,8 +43,7 @@ RUN --mount=type=secret,id=bundle_github \
     bundle lock && \
     cp Gemfile.lock /tmp/Gemfile.lock.resolved && \
     bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    bundle exec bootsnap precompile -j 1 --gemfile
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
 # Copy application code
 COPY . .
