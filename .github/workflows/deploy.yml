@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: registry.digitalocean.com
-  IMAGE_NAME: runmyprocess/pulse
+  IMAGE_NAME: ${{ secrets.DO_REGISTRY }}/pulse
 
 jobs:
   deploy:
