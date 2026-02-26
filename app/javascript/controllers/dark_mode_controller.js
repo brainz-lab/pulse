@@ -26,7 +26,7 @@ export default class extends Controller {
   // Unified localStorage key for all BrainzLab products
   static values = {
     storageKey: { type: String, default: "brainzlab-theme" },
-    defaultTheme: { type: String, default: "" }
+    defaultTheme: { type: String, default: "light" }
   }
 
   connect() {

@@ -20,7 +20,7 @@
   <script>
     (function() {
       const savedTheme = localStorage.getItem('brainzlab-theme');
-      const defaultLight = <%= ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? ? 'true' : 'false' %>;
+      const defaultLight = true;
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (savedTheme === 'dark' || (!savedTheme && !defaultLight && systemPrefersDark)) {
         document.documentElement.classList.add('dark');
