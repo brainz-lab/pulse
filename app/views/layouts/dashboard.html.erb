@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full" data-controller="dark-mode">
+<html lang="en" class="h-full" data-controller="dark-mode"<%= ' data-dark-mode-default-theme-value="light"'.html_safe if ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? %>>
 <head>
   <title>Pulse - <%= content_for(:title) || "APM" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -20,8 +20,9 @@
   <script>
     (function() {
       const savedTheme = localStorage.getItem('brainzlab-theme');
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      const defaultLight = <%= ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? ? 'true' : 'false' %>;
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (savedTheme === 'dark' || (!savedTheme && !defaultLight && systemPrefersDark)) {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.add('light');
@@ -194,7 +195,8 @@
             </div>
 
             <!-- Dark Mode Toggle -->
-            <button onclick="toggleDarkMode()"
+            <% unless ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? %>
+              <button onclick="toggleDarkMode()"
                     class="p-1.5 rounded-lg transition-all dm-text-muted hover:dm-text hover:bg-transparent"
                     data-dark-mode-target="icon"
                     title="Toggle dark mode">
@@ -205,6 +207,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
               </svg>
             </button>
+              <% end %>
           </div>
         </div>
       <% end %>
