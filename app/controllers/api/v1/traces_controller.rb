@@ -99,7 +99,7 @@ module Api
         value = case aggregation
         when "avg" then scope.average(metric)&.round(2)
         when "p95"
-                  durations = scope.pluck(metric).sort
+                  durations = scope.where.not(metric => nil).pluck(metric).sort
                   index = (durations.length * 0.95).ceil - 1
                   durations[index] || 0
         when "count" then scope.count

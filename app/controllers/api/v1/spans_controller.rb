@@ -22,6 +22,8 @@ module Api
           error_message: params[:error_message]
         )
 
+        update_trace_completion(trace, span)
+
         render json: { span_id: span.span_id, trace_id: trace.trace_id }, status: :created
       end
 
@@ -47,6 +49,8 @@ module Api
             error_class: span_params[:error_class],
             error_message: span_params[:error_message]
           )
+
+          update_trace_completion(trace, span)
 
           created_spans << { span_id: span.span_id, trace_id: trace.trace_id }
         end
@@ -96,6 +100,20 @@ module Api
           ended_at: nil,
           status: 0
         )
+      end
+
+      # Update trace ended_at based on span timing data.
+      # Uses the span's end time (or started_at + duration_ms) to keep
+      # the trace's ended_at reflecting the latest activity.
+      def update_trace_completion(trace, span)
+        span_ended_at = span.ended_at
+        span_ended_at ||= span.started_at + (span.duration_ms / 1000.0) if span.started_at && span.duration_ms
+
+        return unless span_ended_at
+
+        if trace.ended_at.nil? || span_ended_at > trace.ended_at
+          trace.update!(ended_at: span_ended_at, duration_ms: nil)
+        end
       end
 
       def build_span_data
