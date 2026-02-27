@@ -32,7 +32,7 @@ Rails.application.routes.draw do
       post "metrics", to: "metrics#create"
       post "metrics/batch", to: "metrics#batch"
       get "metrics", to: "metrics#index"
-      get "metrics/:name/stats", to: "metrics#stats"
+      get "metrics/:name/stats", to: "metrics#stats", constraints: { name: /[^\/]+/ }
 
       # Overview
       get "overview", to: "metrics#overview"
@@ -42,7 +42,7 @@ Rails.application.routes.draw do
   # MCP Server
   namespace :mcp do
     get "tools", to: "tools#index"
-    post "tools/:name", to: "tools#call"
+    post "tools/:name", to: "tools#call", constraints: { name: /[^\/]+/ }
     post "rpc", to: "tools#rpc"
   end
 

@@ -22,7 +22,7 @@ module Api
         results = { performance: 0, network: 0 }
 
         unless @project
-          render json: { error: "Project not found" }, status: :not_found
+          render json: { error: @auth_error || "Project not found" }, status: :unauthorized
           return
         end
 
@@ -214,23 +214,30 @@ module Api
 
       def find_project_from_token
         token = extract_browser_token
-        return unless token
+
+        unless token
+          @auth_error = "Authorization required. Use a pls_ingest_* token for browser endpoints."
+          return
+        end
 
         # Prefer ingest_key for browser access (write-only, safe for browser exposure)
         if token.start_with?("pls_ingest_")
           @project = Project.find_by("settings->>'ingest_key' = ?", token)
+          @auth_error = "Invalid ingest key" unless @project
         elsif token.start_with?("pls_api_")
           # Accept api_key but log warning - should use ingest_key for browser
           @project = Project.find_by("settings->>'api_key' = ?", token)
+          @auth_error = "Invalid API key" unless @project
           Rails.logger.warn("[BrowserController] API key used for browser endpoint - consider using ingest_key")
         elsif token.start_with?("pls_")
           # Legacy key format - try both
           @project = Project.find_by("settings->>'ingest_key' = ?", token) ||
                      Project.find_by("settings->>'api_key' = ?", token)
+          @auth_error = "Invalid Pulse key" unless @project
         else
-          # Try to find by project_id from context
-          project_id = params.dig(:context, :projectId)
-          @project = Project.find_by(platform_project_id: project_id) if project_id
+          @auth_error = "Browser endpoint requires a pls_ingest_* or pls_api_* token. " \
+                        "sk_live_* keys are not accepted here for security reasons - " \
+                        "they should not be exposed in browser JavaScript."
         end
       end
 
