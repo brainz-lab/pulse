@@ -136,9 +136,7 @@ jobs:
       - name: Run tests
         env:
           RAILS_ENV: test
-          PGHOST: postgres
-          PGUSER: postgres
-          PGPASSWORD: postgres
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432
         run: bin/rails db:create db:migrate && bundle exec rspec
 
       - name: Upload coverage to Codecov
