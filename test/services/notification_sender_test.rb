@@ -31,7 +31,7 @@ class NotificationSenderTest < ActiveSupport::TestCase
     channel = @project.notification_channels.create!(
       name: "Email Team",
       kind: "email",
-      config: { "addresses" => ["team@example.com"] },
+      config: { "addresses" => [ "team@example.com" ] },
       enabled: true
     )
     notification = AlertNotification.create!(
@@ -52,7 +52,7 @@ class NotificationSenderTest < ActiveSupport::TestCase
     channel = @project.notification_channels.create!(
       name: "Email Team",
       kind: "email",
-      config: { "addresses" => ["team@example.com"] },
+      config: { "addresses" => [ "team@example.com" ] },
       enabled: true
     )
     notification = AlertNotification.create!(
@@ -100,7 +100,7 @@ class NotificationSenderTest < ActiveSupport::TestCase
     channel = @project.notification_channels.create!(
       name: "Email Team",
       kind: "email",
-      config: { "addresses" => ["team@example.com"] },
+      config: { "addresses" => [ "team@example.com" ] },
       enabled: true
     )
     notification = AlertNotification.create!(
@@ -146,7 +146,7 @@ class NotificationSenderTest < ActiveSupport::TestCase
     channel = @project.notification_channels.create!(
       name: "Email Team",
       kind: "email",
-      config: { "addresses" => ["team@example.com", "admin@example.com"] },
+      config: { "addresses" => [ "team@example.com", "admin@example.com" ] },
       enabled: true
     )
     notification = AlertNotification.create!(
@@ -177,13 +177,13 @@ class NotificationSenderTest < ActiveSupport::TestCase
 
     # Mock successful HTTP response
     mock_response = Minitest::Mock.new
-    mock_response.expect :is_a?, true, [Net::HTTPSuccess]
+    mock_response.expect :is_a?, true, [ Net::HTTPSuccess ]
 
     mock_http = Minitest::Mock.new
-    mock_http.expect :use_ssl=, nil, [true]
-    mock_http.expect :open_timeout=, nil, [10]
-    mock_http.expect :read_timeout=, nil, [10]
-    mock_http.expect :request, mock_response, [Net::HTTP::Post]
+    mock_http.expect :use_ssl=, nil, [ true ]
+    mock_http.expect :open_timeout=, nil, [ 10 ]
+    mock_http.expect :read_timeout=, nil, [ 10 ]
+    mock_http.expect :request, mock_response, [ Net::HTTP::Post ]
 
     Net::HTTP.stub :new, mock_http do
       sender = NotificationSender.new(notification: notification)

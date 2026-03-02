@@ -10,7 +10,7 @@ FactoryBot.define do
 
     trait :email do
       kind { "email" }
-      config { { "addresses" => ["ops@example.com"] } }
+      config { { "addresses" => [ "ops@example.com" ] } }
     end
 
     trait :slack do

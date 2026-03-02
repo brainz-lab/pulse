@@ -51,7 +51,7 @@ class NPlusOneDetectorTest < ActiveSupport::TestCase
     trace = create_test_trace(@project, started_at: Time.current)
 
     # Create 4 queries with known durations
-    [10, 20, 30, 40].each do |duration|
+    [ 10, 20, 30, 40 ].each do |duration|
       create_db_span(trace, sql: "SELECT * FROM users WHERE id = 1", duration_ms: duration)
     end
 

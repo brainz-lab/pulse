@@ -54,7 +54,7 @@ RSpec.describe NPlusOneDetector do
     context "when queries are all structurally different" do
       it "returns an empty array" do
         trace = create(:trace, :completed, project: project)
-        ["users", "posts", "comments"].each do |table|
+        [ "users", "posts", "comments" ].each do |table|
           create(:span, trace: trace, project: project, kind: "db",
                  data: { "sql" => "SELECT * FROM #{table} WHERE id = 1", "table" => table },
                  duration_ms: 5.0)

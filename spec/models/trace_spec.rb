@@ -99,7 +99,7 @@ RSpec.describe Trace, type: :model do
                      started_at: trace.started_at + 0.05, duration_ms: 5)
 
       waterfall = trace.waterfall
-      expect(waterfall.map { |s| s[:id] }).to eq([span1.span_id, span2.span_id])
+      expect(waterfall.map { |s| s[:id] }).to eq([ span1.span_id, span2.span_id ])
       expect(waterfall.first[:offset_ms]).to be_within(1).of(10)
     end
   end

@@ -88,7 +88,7 @@ class SendAlertNotificationsJobTest < ActiveSupport::TestCase
     channel2 = @project.notification_channels.create!(
       name: "Email Team",
       kind: "email",
-      config: { "addresses" => ["team@example.com"] },
+      config: { "addresses" => [ "team@example.com" ] },
       enabled: true
     )
 

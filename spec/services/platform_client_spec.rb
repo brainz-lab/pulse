@@ -24,7 +24,7 @@ RSpec.describe PlatformClient do
           organization_id: "org-456",
           environment: "production",
           plan: "pro",
-          scopes: ["read", "write"]
+          scopes: [ "read", "write" ]
         }.to_json
       end
 
