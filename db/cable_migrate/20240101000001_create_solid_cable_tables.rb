@@ -6,9 +6,9 @@ class CreateSolidCableTables < ActiveRecord::Migration[7.1]
       t.datetime :created_at, null: false
       t.bigint :channel_hash, null: false
 
-      t.index [:channel]
-      t.index [:channel_hash]
-      t.index [:created_at]
+      t.index [ :channel ]
+      t.index [ :channel_hash ]
+      t.index [ :created_at ]
     end
   end
 end

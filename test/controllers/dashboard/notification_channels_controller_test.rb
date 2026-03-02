@@ -51,7 +51,7 @@ class Dashboard::NotificationChannelsControllerTest < ActionDispatch::Integratio
     channel = @project.notification_channels.create!(
       name: "Email Alerts",
       kind: "email",
-      config: { "addresses" => ["team@example.com"] },
+      config: { "addresses" => [ "team@example.com" ] },
       enabled: true
     )
 

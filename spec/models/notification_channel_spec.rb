@@ -59,7 +59,7 @@ RSpec.describe NotificationChannel, type: :model do
 
     it "#email_addresses returns the array from config" do
       ch = build(:notification_channel, :email)
-      expect(ch.email_addresses).to eq(["ops@example.com"])
+      expect(ch.email_addresses).to eq([ "ops@example.com" ])
     end
 
     it "#slack_webhook_url returns the webhook_url from config" do

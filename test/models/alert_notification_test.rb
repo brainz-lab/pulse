@@ -79,7 +79,7 @@ class AlertNotificationTest < ActiveSupport::TestCase
     other_channel = @project.notification_channels.create!(
       name: "Email",
       kind: "email",
-      config: { "addresses" => ["test@example.com"] },
+      config: { "addresses" => [ "test@example.com" ] },
       enabled: true
     )
     sent_notification = AlertNotification.create!(
@@ -102,7 +102,7 @@ class AlertNotificationTest < ActiveSupport::TestCase
     other_channel = @project.notification_channels.create!(
       name: "Email",
       kind: "email",
-      config: { "addresses" => ["test@example.com"] },
+      config: { "addresses" => [ "test@example.com" ] },
       enabled: true
     )
     pending_notification = AlertNotification.create!(
@@ -121,7 +121,7 @@ class AlertNotificationTest < ActiveSupport::TestCase
     other_channel = @project.notification_channels.create!(
       name: "Email",
       kind: "email",
-      config: { "addresses" => ["test@example.com"] },
+      config: { "addresses" => [ "test@example.com" ] },
       enabled: true
     )
     failed_notification = AlertNotification.create!(

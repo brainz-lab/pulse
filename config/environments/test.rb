@@ -50,4 +50,7 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Don't dump schema after migration in test (avoids TimescaleDB compatibility issues in CI)
+  config.active_record.dump_schema_after_migration = false
 end
