@@ -5,12 +5,90 @@
       <p class="text-[14px] mt-1 pulse-text-muted">Recent HTTP requests and background jobs</p>
     </div>
     <div class="flex gap-2">
-      <% [['All', nil], ['Slow', :slow], ['Errors', :errors]].each do |label, filter| %>
-        <% active = (filter == :slow && params[:slow]) || (filter == :errors && params[:errors]) || (filter.nil? && !params[:slow] && !params[:errors]) %>
-        <%= link_to label, filter ? dashboard_requests_path(filter => true) : dashboard_requests_path,
+      <% %w[1h 6h 24h 7d].each do |range| %>
+        <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
+        <%= link_to range, dashboard_requests_path(since: range),
             class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
       <% end %>
     </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="rounded-xl p-4 pulse-card">
+    <%= form_with url: dashboard_requests_path, method: :get, local: true, class: "space-y-3" do %>
+      <%= hidden_field_tag :since, params[:since] %>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <%# Quick filter buttons %>
+        <div class="flex gap-2">
+          <% [['All', {}], ['Slow', { slow: true }], ['Errors', { errors: true }]].each do |label, filter_params| %>
+            <% active = (filter_params[:slow] && params[:slow]) || (filter_params[:errors] && params[:errors]) || (filter_params.empty? && !params[:slow] && !params[:errors]) %>
+            <%= link_to label, dashboard_requests_path(since: params[:since], **filter_params),
+                class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
+          <% end %>
+        </div>
+
+        <div class="w-px h-6 pulse-border" style="border-right-width: 1px; border-right-style: solid;"></div>
+
+        <%# Controller filter %>
+        <% if @controllers.any? %>
+          <select name="controller_name" class="px-3 py-1.5 text-[13px] rounded-lg pulse-input">
+            <option value="">All Controllers</option>
+            <% @controllers.each do |ctrl| %>
+              <option value="<%= ctrl %>" <%= 'selected' if params[:controller_name] == ctrl %>><%= ctrl %></option>
+            <% end %>
+          </select>
+        <% end %>
+
+        <%# HTTP Method filter %>
+        <select name="method" class="px-3 py-1.5 text-[13px] rounded-lg pulse-input">
+          <option value="">All Methods</option>
+          <% %w[GET POST PUT PATCH DELETE].each do |method| %>
+            <option value="<%= method %>" <%= 'selected' if params[:method] == method %>><%= method %></option>
+          <% end %>
+        </select>
+
+        <%# Host filter %>
+        <% if @hosts.any? %>
+          <select name="host" class="px-3 py-1.5 text-[13px] rounded-lg pulse-input">
+            <option value="">All Hosts</option>
+            <% @hosts.each do |host| %>
+              <option value="<%= host %>" <%= 'selected' if params[:host] == host %>><%= host %></option>
+            <% end %>
+          </select>
+        <% end %>
+
+        <%# Environment filter %>
+        <% if @environments.any? %>
+          <select name="environment" class="px-3 py-1.5 text-[13px] rounded-lg pulse-input">
+            <option value="">All Environments</option>
+            <% @environments.each do |env| %>
+              <option value="<%= env %>" <%= 'selected' if params[:environment] == env %>><%= env %></option>
+            <% end %>
+          </select>
+        <% end %>
+
+        <%# Duration range %>
+        <div class="flex items-center gap-1">
+          <input type="number" name="min_duration" value="<%= params[:min_duration] %>"
+                 placeholder="Min ms" step="1" min="0"
+                 class="w-20 px-2 py-1.5 text-[13px] rounded-lg pulse-input">
+          <span class="text-[12px] pulse-text-muted">-</span>
+          <input type="number" name="max_duration" value="<%= params[:max_duration] %>"
+                 placeholder="Max ms" step="1" min="0"
+                 class="w-20 px-2 py-1.5 text-[13px] rounded-lg pulse-input">
+        </div>
+
+        <button type="submit" class="px-4 py-1.5 text-[13px] font-medium rounded-lg pulse-btn-active">
+          Filter
+        </button>
+
+        <% if params[:controller_name].present? || params[:method].present? || params[:host].present? || params[:environment].present? || params[:min_duration].present? || params[:max_duration].present? %>
+          <%= link_to "Clear", dashboard_requests_path(since: params[:since]),
+              class: "px-3 py-1.5 text-[13px] font-medium rounded-lg pulse-btn-inactive" %>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <div class="rounded-xl overflow-hidden pulse-card">

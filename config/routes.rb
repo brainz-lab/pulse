@@ -36,6 +36,9 @@ Rails.application.routes.draw do
 
       # Overview
       get "overview", to: "metrics#overview"
+
+      # Deploys
+      resources :deploys, only: [:create, :index]
     end
   end
 
@@ -72,6 +75,10 @@ Rails.application.routes.draw do
     resources :queries, only: [ :index, :show ]
     resources :metrics, only: [ :index, :show ]
     resources :endpoints, only: [ :index, :show ]
+    resource :service_map, only: [ :show ], controller: "service_map"
+
+    # Deploys
+    resources :deploys, only: [ :index, :show ]
 
     # Alerting
     resources :alerts, only: [ :index, :show ]

@@ -159,6 +159,32 @@ module Dashboard
         .map { |time, avg| { x: time.iso8601, y: avg&.round(2) } }
 
       @recent_requests = traces_scope.order(started_at: :desc).limit(10)
+
+      # Span kind breakdown
+      trace_ids = traces_scope.pluck(:id)
+      if trace_ids.any?
+        @span_breakdown = current_project.spans
+          .where(trace_id: trace_ids)
+          .group(:kind)
+          .select("kind, COUNT(*) as count, SUM(duration_ms) as total_duration")
+          .index_by(&:kind)
+      else
+        @span_breakdown = {}
+      end
+
+      # Trend indicator: compare current period avg to previous period
+      range_duration = Time.current - @since
+      previous_scope = current_project.traces.requests
+        .where(name: @endpoint_name)
+        .where(started_at: (@since - range_duration)..@since)
+        .where.not(duration_ms: nil)
+      prev_avg = previous_scope.average(:duration_ms)
+      curr_avg = @stats&.avg_duration
+      @trend_pct = if prev_avg && prev_avg > 0 && curr_avg
+        ((curr_avg.to_f - prev_avg.to_f) / prev_avg.to_f * 100).round(1)
+      else
+        0
+      end
     end
 
     private

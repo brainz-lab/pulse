@@ -1,79 +1,78 @@
 <div class="space-y-6">
   <div class="flex items-center gap-4">
-    <%= link_to "← Back", dashboard_requests_path, class: "text-[13px] hover:opacity-70", style: "color: #8B8780;" %>
+    <%= link_to "← Back", dashboard_requests_path, class: "text-[13px] hover:opacity-70 pulse-text-muted" %>
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight" style="color: #1A1A1A;"><%= @trace.name %></h1>
-      <p class="text-[14px] mt-1" style="color: #8B8780;"><%= @trace.started_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text"><%= @trace.name %></h1>
+      <p class="text-[14px] mt-1 pulse-text-muted"><%= @trace.started_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
     </div>
   </div>
 
   <!-- Summary cards -->
   <div class="grid grid-cols-4 gap-4">
-    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Duration</span>
-      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.duration_ms&.round(0) || '-' %><span class="text-[14px] font-normal">ms</span></p>
+    <div class="rounded-xl p-4 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Duration</span>
+      <p class="text-[20px] font-semibold mt-1 pulse-text"><%= @trace.duration_ms&.round(0) || '-' %><span class="text-[14px] font-normal">ms</span></p>
     </div>
-    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Status</span>
-      <p class="text-[20px] font-semibold mt-1" style="color: <%= @trace.error ? '#DC2626' : '#22C55E' %>;"><%= @trace.status || (@trace.error ? 'Error' : 'OK') %></p>
+    <div class="rounded-xl p-4 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Status</span>
+      <p class="text-[20px] font-semibold mt-1 <%= @trace.error ? 'pulse-error' : 'pulse-success' %>"><%= @trace.status || (@trace.error ? 'Error' : 'OK') %></p>
     </div>
-    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">DB Time</span>
-      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.db_duration_ms&.round(0) || 0 %><span class="text-[14px] font-normal">ms</span></p>
+    <div class="rounded-xl p-4 pulse-card">
+      <span class="text-[13px] pulse-text-muted">DB Time</span>
+      <p class="text-[20px] font-semibold mt-1 pulse-text"><%= @trace.db_duration_ms&.round(0) || 0 %><span class="text-[14px] font-normal">ms</span></p>
     </div>
-    <div class="rounded-xl p-4" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-      <span class="text-[13px]" style="color: #8B8780;">Spans</span>
-      <p class="text-[20px] font-semibold mt-1" style="color: #1A1A1A;"><%= @trace.span_count || @trace.spans.count %></p>
+    <div class="rounded-xl p-4 pulse-card">
+      <span class="text-[13px] pulse-text-muted">Spans</span>
+      <p class="text-[20px] font-semibold mt-1 pulse-text"><%= @trace.span_count || @trace.spans.count %></p>
     </div>
   </div>
 
   <!-- Metadata -->
-  <div class="rounded-xl p-5" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <h3 class="text-[14px] font-medium mb-4" style="color: #1A1A1A;">Details</h3>
+  <div class="rounded-xl p-5 pulse-card">
+    <h3 class="text-[14px] font-medium mb-4 pulse-text">Details</h3>
     <div class="grid grid-cols-2 gap-4 text-[13px]">
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Trace ID</span>
-        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.trace_id %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Trace ID</span>
+        <span class="font-mono pulse-text"><%= @trace.trace_id %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Request ID</span>
-        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.request_id || '-' %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Request ID</span>
+        <span class="font-mono pulse-text"><%= @trace.request_id || '-' %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Controller</span>
-        <span style="color: #1A1A1A;"><%= @trace.controller || '-' %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Controller</span>
+        <span class="pulse-text"><%= @trace.controller || '-' %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Action</span>
-        <span style="color: #1A1A1A;"><%= @trace.action || '-' %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Action</span>
+        <span class="pulse-text"><%= @trace.action || '-' %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Host</span>
-        <span style="color: #1A1A1A;"><%= @trace.host || '-' %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Host</span>
+        <span class="pulse-text"><%= @trace.host || '-' %></span>
       </div>
-      <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-        <span style="color: #8B8780;">Commit</span>
-        <span class="font-mono" style="color: #1A1A1A;"><%= @trace.commit || '-' %></span>
+      <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <span class="pulse-text-muted">Commit</span>
+        <span class="font-mono pulse-text"><%= @trace.commit || '-' %></span>
       </div>
       <% if @trace.user_id %>
-        <div class="flex justify-between py-2" style="border-bottom: 1px solid #F0EFED;">
-          <span style="color: #8B8780;">User ID</span>
-          <span style="color: #1A1A1A;"><%= @trace.user_id %></span>
+        <div class="flex justify-between py-2 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+          <span class="pulse-text-muted">User ID</span>
+          <span class="pulse-text"><%= @trace.user_id %></span>
         </div>
       <% end %>
     </div>
   </div>
 
   <% if @trace.error %>
-    <div class="rounded-xl p-5" style="background: #FEF2F2; border: 1px solid #FECACA;">
-      <h3 class="text-[14px] font-medium mb-2" style="color: #DC2626;"><%= @trace.error_class || 'Error' %></h3>
-      <p class="text-[13px]" style="color: #991B1B;"><%= @trace.error_message %></p>
+    <div class="rounded-xl p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40">
+      <h3 class="text-[14px] font-medium mb-2 text-red-600 dark:text-red-400"><%= @trace.error_class || 'Error' %></h3>
+      <p class="text-[13px] text-red-800 dark:text-red-300"><%= @trace.error_message %></p>
       <% if @trace.error_class.present? %>
         <div class="mt-3">
           <%= link_to ReflexClient.error_url_for(error_class: @trace.error_class, since: @trace.started_at - 1.hour),
                 target: "_blank", rel: "noopener noreferrer",
-                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
-                style: "background: #DC2626; color: #FFFFFF;" do %>
+                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg bg-red-600 text-white hover:bg-red-700" do %>
             View Error in Reflex &rarr;
           <% end %>
         </div>
@@ -87,45 +86,98 @@
       <% if @trace.request_id.present? %>
         <%= link_to RecallClient.logs_url_for(request_id: @trace.request_id, since: @trace.started_at - 5.minutes, until_time: @trace.started_at + 5.minutes),
               target: "_blank", rel: "noopener noreferrer",
-              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
-              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" do %>
+              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg pulse-card pulse-text" do %>
           View Logs in Recall &rarr;
         <% end %>
       <% end %>
       <% if @trace.host.present? %>
         <%= link_to "#{SentinelClient.external_url}/dashboard/hosts?host=#{ERB::Util.url_encode(@trace.host)}",
               target: "_blank", rel: "noopener noreferrer",
-              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
-              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" do %>
+              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg pulse-card pulse-text" do %>
           View Host Metrics &rarr;
         <% end %>
       <% end %>
     </div>
   <% end %>
 
-  <!-- Spans -->
-  <div class="rounded-xl" style="background: #FFFFFE; border: 1px solid #E8E5E0;">
-    <div class="p-5" style="border-bottom: 1px solid #F0EFED;">
-      <h3 class="text-[14px] font-medium" style="color: #1A1A1A;">Spans</h3>
+  <!-- Spans with Waterfall / Flame Chart toggle -->
+  <div class="rounded-xl pulse-card" id="spans-section">
+    <div class="p-5 flex justify-between items-center pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+      <h3 class="text-[14px] font-medium pulse-text">Spans</h3>
+      <% if @trace.spans.any? %>
+        <div class="flex rounded-lg overflow-hidden pulse-border" style="border-width: 1px; border-style: solid;">
+          <button class="px-3 py-1.5 text-[13px] font-medium pulse-btn-active"
+                  onclick="switchSpanView('waterfall', this)">Waterfall</button>
+          <button class="px-3 py-1.5 text-[13px] font-medium pulse-surface pulse-text-secondary"
+                  onclick="switchSpanView('flamechart', this)">Flame Chart</button>
+        </div>
+      <% end %>
     </div>
-    <div>
+
+    <!-- Waterfall view -->
+    <div id="span-view-waterfall">
       <% @trace.spans.order(:started_at).each do |span| %>
-        <div class="p-4 flex items-center gap-4" style="border-bottom: 1px solid #F0EFED;">
-          <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: <%= span_kind_bg(span.kind) %>; color: <%= span_kind_color(span.kind) %>;">
+        <div class="p-4 flex items-center gap-4 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= span_badge_color(span.kind) %>">
             <%= span.kind.upcase %>
           </span>
           <div class="flex-1 min-w-0">
-            <p class="text-[14px] font-medium truncate" style="color: #1A1A1A;"><%= span.display_name %></p>
+            <p class="text-[14px] font-medium truncate pulse-text"><%= span.display_name %></p>
           </div>
-          <span class="text-[13px] font-mono" style="color: #8B8780;"><%= span.duration_ms&.round(2) || '-' %>ms</span>
+          <span class="text-[13px] font-mono pulse-text-muted"><%= span.duration_ms&.round(2) || '-' %>ms</span>
         </div>
       <% end %>
 
       <% if @trace.spans.empty? %>
-        <div class="p-8 text-center text-[14px]" style="color: #8B8780;">
+        <div class="p-8 text-center text-[14px] pulse-text-muted">
           No spans recorded
         </div>
       <% end %>
     </div>
+
+    <!-- Flame Chart view (hidden by default) -->
+    <% if @trace.spans.any? %>
+      <div id="span-view-flamechart" class="hidden">
+        <%
+          trace_start_ms = @trace.started_at.to_f * 1000
+          spans_json = @trace.spans.order(:started_at).map { |s|
+            {
+              span_id: s.span_id,
+              parent_span_id: s.parent_span_id,
+              name: s.display_name,
+              kind: s.kind,
+              started_at_ms: s.started_at.to_f * 1000,
+              duration_ms: s.duration_ms || 0
+            }
+          }
+        %>
+        <div class="p-4" style="height: 300px;"
+             data-controller="flame-chart"
+             data-flame-chart-spans-value="<%= spans_json.to_json %>"
+             data-flame-chart-trace-start-value="<%= trace_start_ms %>">
+          <canvas></canvas>
+        </div>
+      </div>
+    <% end %>
   </div>
 </div>
+
+<script>
+  function switchSpanView(view, clickedBtn) {
+    // Toggle panels
+    document.getElementById("span-view-waterfall").classList.toggle("hidden", view !== "waterfall")
+    var flamechart = document.getElementById("span-view-flamechart")
+    if (flamechart) flamechart.classList.toggle("hidden", view !== "flamechart")
+
+    // Toggle button styles
+    var container = clickedBtn.parentElement
+    var buttons = container.querySelectorAll("button")
+    buttons.forEach(function(btn) {
+      if (btn === clickedBtn) {
+        btn.className = btn.className.replace("pulse-surface pulse-text-secondary", "pulse-btn-active")
+      } else {
+        btn.className = btn.className.replace("pulse-btn-active", "pulse-surface pulse-text-secondary")
+      }
+    })
+  }
+</script>

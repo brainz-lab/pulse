@@ -1,0 +1,97 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Service Map</h1>
+      <p class="text-[14px] mt-1 pulse-text-muted">Service dependencies and communication patterns</p>
+    </div>
+    <div class="flex gap-2">
+      <% %w[1h 6h 24h 7d].each do |range| %>
+        <% active = params[:since] == range || (params[:since].nil? && range == '1h') %>
+        <%= link_to range, dashboard_service_map_path(since: range),
+            class: "px-3 py-1.5 text-[13px] font-medium rounded-lg #{active ? 'pulse-btn-active' : 'pulse-btn-inactive'}" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="flex items-center gap-6 text-[12px] pulse-text-muted">
+    <div class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+      Application
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-green-500"></span>
+      External Service
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+      Database
+    </div>
+    <div class="flex items-center gap-1.5">
+      <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+      Cache
+    </div>
+  </div>
+
+  <!-- Service Map Canvas -->
+  <div class="rounded-xl pulse-card overflow-hidden">
+    <div class="relative" style="height: 500px;"
+         data-controller="service-map"
+         data-service-map-nodes-value="<%= @nodes.to_json %>"
+         data-service-map-edges-value="<%= @edges.to_json %>">
+      <svg class="w-full h-full"></svg>
+    </div>
+  </div>
+
+  <!-- Edge Details Table -->
+  <% if @edges.any? %>
+    <div class="rounded-xl overflow-hidden pulse-card">
+      <div class="p-5 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+        <h3 class="text-[14px] font-medium pulse-text">Dependencies</h3>
+      </div>
+      <table class="w-full">
+        <thead class="pulse-table-header">
+          <tr class="text-left text-[13px]">
+            <th class="p-4 font-medium">Service</th>
+            <th class="p-4 font-medium">Type</th>
+            <th class="p-4 font-medium">Calls</th>
+            <th class="p-4 font-medium">Avg Duration</th>
+            <th class="p-4 font-medium">Error Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @edges.each do |edge| %>
+            <tr class="pulse-table-row">
+              <td class="p-4 text-[14px] font-medium pulse-text"><%= @nodes[edge[:to]][:name] %></td>
+              <td class="p-4">
+                <span class="px-2 py-0.5 text-[11px] font-medium rounded
+                  <%= case @nodes[edge[:to]][:type]
+                      when 'external' then 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      when 'database' then 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+                      when 'cache' then 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                      else 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      end %>">
+                  <%= @nodes[edge[:to]][:type].capitalize %>
+                </span>
+              </td>
+              <td class="p-4 text-[13px] pulse-text"><%= number_with_delimiter(edge[:calls]) %></td>
+              <td class="p-4 font-mono text-[13px] pulse-text"><%= edge[:avg_ms] || '-' %>ms</td>
+              <td class="p-4">
+                <span class="text-[13px] <%= edge[:error_rate] > 1 ? 'pulse-error' : 'pulse-success' %>">
+                  <%= edge[:error_rate] %>%
+                </span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <% if @edges.empty? %>
+    <div class="rounded-xl p-12 text-center pulse-card">
+      <p class="text-[14px] pulse-text-muted">No service dependencies detected in this time range.</p>
+      <p class="text-[13px] pulse-text-muted mt-1">External HTTP calls, database queries, and cache operations will appear here.</p>
+    </div>
+  <% end %>
+</div>

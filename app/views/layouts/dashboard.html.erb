@@ -142,6 +142,16 @@
             Metrics
           <% end %>
 
+          <%= link_to dashboard_service_map_path, class: nav_link_class('/service_map') do %>
+            <%= icon(:service_map) %>
+            Service Map
+          <% end %>
+
+          <%= link_to dashboard_deploys_path, class: nav_link_class('/deploys') do %>
+            <%= icon(:deploys) %>
+            Deploys
+          <% end %>
+
           <%= link_to dashboard_alerts_path, class: nav_link_class('/alerts') do %>
             <%= icon(:alerts) %>
             Alerts

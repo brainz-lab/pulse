@@ -21,7 +21,7 @@
     </div>
   </div>
 
-  <!-- Key metrics cards -->
+  <!-- Key metrics cards with comparison deltas -->
   <div class="grid grid-cols-4 gap-4">
     <!-- Apdex -->
     <div class="rounded-xl p-5 pulse-card">
@@ -29,23 +29,50 @@
         <span class="text-[13px] pulse-text-muted">Apdex</span>
         <span class="w-3 h-3 rounded-full <%= apdex_color(@overview[:apdex]) %>" data-realtime-metrics-target="apdexIndicator"></span>
       </div>
-      <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="apdex"><%= @overview[:apdex] %></p>
+      <div class="flex items-baseline gap-2">
+        <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="apdex"><%= @overview[:apdex] %></p>
+        <% if @deltas[:apdex] != 0 %>
+          <span class="text-[12px] font-medium <%= @deltas[:apdex] > 0 ? 'text-green-500' : 'text-red-500' %>">
+            <%= @deltas[:apdex] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:apdex].abs %>%
+          </span>
+        <% end %>
+      </div>
       <p class="text-[12px] mt-1 pulse-text-muted">T = <%= current_project.apdex_t %>s</p>
     </div>
 
     <!-- Throughput -->
     <div class="rounded-xl p-5 pulse-card">
       <span class="text-[13px] pulse-text-muted">Throughput</span>
-      <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="throughput"><%= number_with_delimiter(@overview[:rpm]) %></p>
+      <div class="flex items-baseline gap-2">
+        <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="throughput"><%= number_with_delimiter(@overview[:rpm]) %></p>
+        <% if @deltas[:rpm] != 0 %>
+          <span class="text-[12px] font-medium <%= @deltas[:rpm] > 0 ? 'text-green-500' : 'text-red-500' %>">
+            <%= @deltas[:rpm] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:rpm].abs %>%
+          </span>
+        <% end %>
+      </div>
       <p class="text-[12px] mt-1 pulse-text-muted">requests/min</p>
     </div>
 
     <!-- Response Time -->
     <div class="rounded-xl p-5 pulse-card">
       <span class="text-[13px] pulse-text-muted">Response Time</span>
-      <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="responseTime"><%= @overview[:avg_duration]&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+      <div class="flex items-baseline gap-2">
+        <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="responseTime"><%= @overview[:avg_duration]&.round(0) || '—' %><span class="text-[16px] font-normal">ms</span></p>
+        <% if @deltas[:avg_duration] != 0 %>
+          <%# For duration, lower is better, so invert the color logic %>
+          <span class="text-[12px] font-medium <%= @deltas[:avg_duration] < 0 ? 'text-green-500' : 'text-red-500' %>">
+            <%= @deltas[:avg_duration] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:avg_duration].abs %>%
+          </span>
+        <% end %>
+      </div>
       <p class="text-[12px] mt-1 pulse-text-muted">
         <span data-realtime-metrics-target="responseTimeP95">P95: <%= @overview[:p95_duration]&.round(0) || '-' %>ms</span>
+        <% if @deltas[:p95_duration] != 0 %>
+          <span class="<%= @deltas[:p95_duration] < 0 ? 'text-green-500' : 'text-red-500' %>">
+            (<%= @deltas[:p95_duration] > 0 ? '+' : '' %><%= @deltas[:p95_duration] %>%)
+          </span>
+        <% end %>
         <span data-realtime-metrics-target="responseTimeP99">P99: <%= @overview[:p99_duration]&.round(0) || '-' %>ms</span>
       </p>
     </div>
@@ -56,9 +83,17 @@
         <span class="text-[13px] pulse-text-muted">Error Rate</span>
         <span class="w-2 h-2 rounded-full <%= @overview[:error_rate] > 1 ? '' : 'hidden' %>" style="background: var(--pulse-error);" data-realtime-metrics-target="errorIndicator"></span>
       </div>
-      <p class="text-[28px] font-semibold mt-2 <%= @overview[:error_rate] > 1 ? 'pulse-error' : 'pulse-text' %>" data-realtime-metrics-target="errorRate">
-        <%= @overview[:error_rate] %>%
-      </p>
+      <div class="flex items-baseline gap-2">
+        <p class="text-[28px] font-semibold mt-2 <%= @overview[:error_rate] > 1 ? 'pulse-error' : 'pulse-text' %>" data-realtime-metrics-target="errorRate">
+          <%= @overview[:error_rate] %>%
+        </p>
+        <% if @deltas[:error_rate] != 0 %>
+          <%# For error rate, lower is better %>
+          <span class="text-[12px] font-medium <%= @deltas[:error_rate] < 0 ? 'text-green-500' : 'text-red-500' %>">
+            <%= @deltas[:error_rate] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:error_rate].abs %>%
+          </span>
+        <% end %>
+      </div>
       <p class="text-[12px] mt-1 pulse-text-muted" data-realtime-metrics-target="errorCount"><%= @overview[:error_count] %> errors</p>
     </div>
   </div>
@@ -79,6 +114,16 @@
       <div class="h-48 pulse-chart-container" data-controller="chart" data-chart-type-value="line" data-chart-metric-value="response_time" data-chart-data-value="<%= @response_time_data.to_json %>">
         <canvas></canvas>
       </div>
+    </div>
+  </div>
+
+  <!-- Latency Heatmap -->
+  <div class="rounded-xl p-5 pulse-card">
+    <h3 class="text-[14px] font-medium mb-4 pulse-text">Latency Heatmap</h3>
+    <div class="h-64" data-controller="heatmap"
+         data-heatmap-data-value="<%= @heatmap_data.to_json %>"
+         data-heatmap-buckets-value='["0-50ms","50-100ms","100-200ms","200-500ms","500-1000ms","1-2s","2-5s","5s+"]'>
+      <canvas></canvas>
     </div>
   </div>
 
