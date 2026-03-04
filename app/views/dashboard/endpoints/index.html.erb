@@ -171,6 +171,13 @@
     </table>
   </div>
 
+  <!-- Pagination -->
+  <% if @pagy && @pagy.pages > 1 %>
+    <div class="flex justify-center">
+      <%== pagy_nav(@pagy) %>
+    </div>
+  <% end %>
+
   <!-- Summary Stats -->
   <% if @endpoints.any? %>
     <div class="flex items-center justify-between text-[12px] pulse-text-muted">

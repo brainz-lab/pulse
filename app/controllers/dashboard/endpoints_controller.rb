@@ -11,7 +11,8 @@ module Dashboard
       @sort_dir = params[:sort_dir] || "desc"
 
       if @group_by == "prefix"
-        @endpoints = fetch_endpoint_groups
+        endpoints = fetch_endpoint_groups
+        @pagy, @endpoints = pagy_array(endpoints, items: 25)
       else
         @endpoints = fetch_endpoints.to_a
       end
@@ -154,7 +155,7 @@ module Dashboard
         .sort
         .map { |time, avg| { x: time.iso8601, y: avg&.round(2) } }
 
-      @recent_requests = traces_scope.order(started_at: :desc).limit(10)
+      @recent_requests = traces_scope.includes(:spans).order(started_at: :desc).limit(10)
 
       # Span kind breakdown
       trace_ids = traces_scope.pluck(:id)
