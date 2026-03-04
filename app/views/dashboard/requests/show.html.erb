@@ -68,6 +68,38 @@
     <div class="rounded-xl p-5" style="background: #FEF2F2; border: 1px solid #FECACA;">
       <h3 class="text-[14px] font-medium mb-2" style="color: #DC2626;"><%= @trace.error_class || 'Error' %></h3>
       <p class="text-[13px]" style="color: #991B1B;"><%= @trace.error_message %></p>
+      <% if @trace.error_class.present? %>
+        <div class="mt-3">
+          <%= link_to ReflexClient.error_url_for(error_class: @trace.error_class, since: @trace.started_at - 1.hour),
+                target: "_blank", rel: "noopener noreferrer",
+                class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
+                style: "background: #DC2626; color: #FFFFFF;" do %>
+            View Error in Reflex &rarr;
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Cross-service links -->
+  <% if @trace.request_id.present? || @trace.host.present? %>
+    <div class="flex items-center gap-3">
+      <% if @trace.request_id.present? %>
+        <%= link_to RecallClient.logs_url_for(request_id: @trace.request_id, since: @trace.started_at - 5.minutes, until_time: @trace.started_at + 5.minutes),
+              target: "_blank", rel: "noopener noreferrer",
+              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
+              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" do %>
+          View Logs in Recall &rarr;
+        <% end %>
+      <% end %>
+      <% if @trace.host.present? %>
+        <%= link_to "#{SentinelClient.external_url}/dashboard/hosts?host=#{ERB::Util.url_encode(@trace.host)}",
+              target: "_blank", rel: "noopener noreferrer",
+              class: "inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg",
+              style: "background: #FFFFFE; border: 1px solid #E8E5E0; color: #1A1A1A;" do %>
+          View Host Metrics &rarr;
+        <% end %>
+      <% end %>
     </div>
   <% end %>
 
