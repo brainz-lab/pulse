@@ -76,9 +76,9 @@ class AlertEvaluator
   end
 
   def calculate_percentile(scope, p)
-    sorted = scope.order(:duration_ms)
-    offset = (scope.count * p).to_i
-    sorted.offset(offset).limit(1).pick(:duration_ms)
+    scope.where.not(duration_ms: nil).pick(
+      Arel.sql("PERCENTILE_CONT(#{p}) WITHIN GROUP (ORDER BY duration_ms)")
+    )
   end
 
   def fetch_custom_metric(rule)

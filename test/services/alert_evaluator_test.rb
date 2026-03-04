@@ -183,10 +183,11 @@ class AlertEvaluatorTest < ActiveSupport::TestCase
       status: "ok"
     )
 
-    # Create 100 traces with varying durations
-    95.times { |i| create_test_trace(@project, trace_id: "fast_#{i}", duration_ms: 100, started_at: 2.minutes.ago) }
-    5.times { |i| create_test_trace(@project, trace_id: "slow_#{i}", duration_ms: 2000, started_at: 2.minutes.ago) }
-    # P95 should be around 2000ms > 1000ms
+    # Create 100 traces where P95 clearly exceeds threshold
+    # PERCENTILE_CONT interpolates, so we need enough slow traces above the threshold
+    80.times { |i| create_test_trace(@project, trace_id: "fast_#{i}", duration_ms: 100, started_at: 2.minutes.ago) }
+    20.times { |i| create_test_trace(@project, trace_id: "slow_#{i}", duration_ms: 2000, started_at: 2.minutes.ago) }
+    # P95 should be 2000ms > 1000ms
 
     assert_difference "Alert.count", 1 do
       @evaluator.evaluate_rule!(rule)
@@ -311,6 +312,19 @@ class AlertEvaluatorTest < ActiveSupport::TestCase
 
     disabled_rule.reload
     assert_nil disabled_rule.last_checked_at
+  end
+
+  test "calculate_percentile uses SQL percentile function" do
+    100.times { |i| create_test_trace(@project, duration_ms: i.to_f, kind: "request") }
+    evaluator = AlertEvaluator.new(project: @project)
+
+    rule = @project.alert_rules.create!(
+      name: "P95 test", metric_type: "p95", operator: "gt",
+      threshold: 999, window_minutes: 60, severity: "warning",
+      aggregation: "p95", enabled: true, status: "ok"
+    )
+    evaluator.evaluate_rule!(rule)
+    assert_equal "ok", rule.reload.status
   end
 
   test "evaluate_rule! should not trigger if no data in window" do
