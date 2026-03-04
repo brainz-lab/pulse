@@ -1,0 +1,82 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-4">
+    <%= link_to "<- Back", dashboard_deploys_path, class: "text-[13px] hover:opacity-70 pulse-text-muted" %>
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Deploy: <%= @deploy.version %></h1>
+      <p class="text-[14px] mt-1 pulse-text-muted"><%= @deploy.deployed_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
+    </div>
+  </div>
+
+  <!-- Deploy details -->
+  <div class="rounded-xl p-5 pulse-card">
+    <h3 class="text-[14px] font-medium mb-4 pulse-text">Details</h3>
+    <div class="grid grid-cols-2 gap-4 text-[13px]">
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Version</span>
+        <span class="font-medium pulse-text"><%= @deploy.version %></span>
+      </div>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Commit</span>
+        <span class="font-mono pulse-text"><%= @deploy.commit_sha || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Deployed By</span>
+        <span class="pulse-text"><%= @deploy.deployed_by || '-' %></span>
+      </div>
+      <div class="flex justify-between py-2 pulse-table-row">
+        <span class="pulse-text-muted">Environment</span>
+        <span class="pulse-text"><%= @deploy.environment || '-' %></span>
+      </div>
+      <% if @deploy.description.present? %>
+        <div class="col-span-2 flex justify-between py-2 pulse-table-row">
+          <span class="pulse-text-muted">Description</span>
+          <span class="pulse-text"><%= @deploy.description %></span>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Impact analysis -->
+  <% if @impact[:status] != :no_data %>
+    <div class="rounded-xl p-5 pulse-card">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-[14px] font-medium pulse-text">Performance Impact (1h window)</h3>
+        <% if @impact[:status] == :improved %>
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: #DCFCE7; color: #16A34A;">IMPROVED</span>
+        <% elsif @impact[:status] == :degraded %>
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: #FEE2E2; color: #DC2626;">DEGRADED</span>
+        <% else %>
+          <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #8B8780;">NEUTRAL</span>
+        <% end %>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4">
+        <% [
+          { label: "Avg Duration", key: :avg_duration, unit: "ms" },
+          { label: "P95 Duration", key: :p95_duration, unit: "ms" },
+          { label: "Error Rate", key: :error_rate, unit: "%" }
+        ].each do |metric| %>
+          <div class="rounded-lg p-4" style="background: var(--dm-surface-secondary, #F9F8F6);">
+            <span class="text-[12px] pulse-text-muted"><%= metric[:label] %></span>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="text-[18px] font-semibold pulse-text">
+                <%= @impact[:after][metric[:key]] %><span class="text-[12px] font-normal"><%= metric[:unit] %></span>
+              </span>
+              <% delta = @impact[:deltas][metric[:key]] %>
+              <% if delta != 0 %>
+                <span class="text-[12px] font-medium" style="color: <%= delta > 0 ? '#DC2626' : '#16A34A' %>;">
+                  <%= delta > 0 ? '+' : '' %><%= delta %>%
+                </span>
+              <% end %>
+            </div>
+            <span class="text-[11px] pulse-text-muted">was <%= @impact[:before][metric[:key]] %><%= metric[:unit] %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="rounded-xl p-8 text-center pulse-card">
+      <p class="text-[14px] pulse-text-muted">Not enough trace data to compute impact analysis for this deploy.</p>
+    </div>
+  <% end %>
+</div>
