@@ -8,6 +8,8 @@ class Project < ApplicationRecord
   has_many :alert_rules, dependent: :destroy
   has_many :alerts, dependent: :destroy
   has_many :deploys, dependent: :destroy
+  has_many :service_level_objectives, dependent: :destroy
+  has_many :saved_views, dependent: :destroy
 
   validates :platform_project_id, presence: true, uniqueness: true
 
@@ -44,12 +46,16 @@ class Project < ApplicationRecord
     traces_scope = traces.where("started_at >= ?", since).where(kind: "request")
 
     # Single query to get all counts and averages to avoid N+1
+    # Ensure apdex thresholds are always numeric to prevent SQL injection via settings JSONB
+    satisfied_threshold = Float(apdex_t * 1000)
+    tolerating_threshold = Float(apdex_t * 4000)
+
     stats = traces_scope.pick(
       Arel.sql("COUNT(*)"),
       Arel.sql("AVG(duration_ms)"),
       Arel.sql("COUNT(*) FILTER (WHERE error = true)"),
-      Arel.sql("COUNT(*) FILTER (WHERE duration_ms <= #{apdex_t * 1000})"),
-      Arel.sql("COUNT(*) FILTER (WHERE duration_ms > #{apdex_t * 1000} AND duration_ms <= #{apdex_t * 4000})")
+      Arel.sql("COUNT(*) FILTER (WHERE duration_ms <= #{satisfied_threshold})"),
+      Arel.sql("COUNT(*) FILTER (WHERE duration_ms > #{satisfied_threshold} AND duration_ms <= #{tolerating_threshold})")
     )
 
     total, avg_duration, error_count, satisfied, tolerating = stats

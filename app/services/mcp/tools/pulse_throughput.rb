@@ -11,14 +11,16 @@ module Mcp
         }
       }.freeze
 
+      ALLOWED_GRANULARITIES = %w[minute hour].freeze
+
       def call(args)
         since = parse_since(args[:since] || "1h")
-        granularity = args[:granularity] || "minute"
+        granularity = ALLOWED_GRANULARITIES.include?(args[:granularity]) ? args[:granularity] : "minute"
 
         data = @project.traces
           .requests
           .where("started_at >= ?", since)
-          .group("date_trunc('#{granularity}', started_at)")
+          .group(Arel.sql("date_trunc(#{ActiveRecord::Base.connection.quote(granularity)}, started_at)"))
           .count
           .sort
           .map { |bucket, count| { time: bucket, count: count } }
