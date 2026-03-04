@@ -197,6 +197,159 @@ class Mcp::ToolsTest < ActiveSupport::TestCase
     assert_equal "Trace not found", result[:error]
   end
 
+  # PulseServiceMap tests
+  test "PulseServiceMap should return app node" do
+    tool = Mcp::Tools::PulseServiceMap.new(@project)
+    result = tool.call({})
+
+    assert_includes result[:nodes].keys, @project.name
+    assert_equal "app", result[:nodes][@project.name][:type]
+  end
+
+  test "PulseServiceMap should detect external HTTP dependencies" do
+    trace = create_test_trace(@project,
+      kind: "request",
+      started_at: 30.minutes.ago,
+      ended_at: 30.minutes.ago + 0.5,
+      duration_ms: 500
+    )
+    create_test_span(trace, name: "HTTP GET", kind: "http", duration_ms: 100,
+      data: { "host" => "api.stripe.com" })
+    create_test_span(trace, name: "HTTP POST", kind: "http", duration_ms: 200,
+      data: { "host" => "api.stripe.com" })
+
+    tool = Mcp::Tools::PulseServiceMap.new(@project)
+    result = tool.call({})
+
+    assert_includes result[:nodes].keys, "api.stripe.com"
+    assert_equal "external_service", result[:nodes]["api.stripe.com"][:type]
+    stripe_edge = result[:edges].find { |e| e[:to] == "api.stripe.com" }
+    assert_not_nil stripe_edge
+    assert_equal 2, stripe_edge[:calls]
+  end
+
+  test "PulseServiceMap should detect database spans" do
+    trace = create_test_trace(@project,
+      kind: "request",
+      started_at: 30.minutes.ago,
+      ended_at: 30.minutes.ago + 0.5,
+      duration_ms: 500
+    )
+    create_test_span(trace, name: "SELECT users", kind: "db", duration_ms: 10)
+
+    tool = Mcp::Tools::PulseServiceMap.new(@project)
+    result = tool.call({})
+
+    assert_includes result[:nodes].keys, "database"
+    assert_equal "database", result[:nodes]["database"][:type]
+  end
+
+  # PulseCompare tests
+  test "PulseCompare should return metrics with deltas" do
+    # Period A traces (last 1h)
+    3.times do
+      create_test_trace(@project,
+        kind: "request",
+        started_at: 30.minutes.ago,
+        ended_at: 30.minutes.ago + 0.2,
+        duration_ms: 200
+      )
+    end
+    # Period B traces (last 24h but older than 1h)
+    5.times do
+      create_test_trace(@project,
+        kind: "request",
+        started_at: 12.hours.ago,
+        ended_at: 12.hours.ago + 0.1,
+        duration_ms: 100
+      )
+    end
+
+    tool = Mcp::Tools::PulseCompare.new(@project)
+    result = tool.call(period_a: "1h", period_b: "24h")
+
+    assert_equal "1h", result[:period_a]
+    assert_equal "24h", result[:period_b]
+    assert result[:metrics].key?(:throughput)
+  end
+
+  test "PulseCompare should return empty metrics when no data" do
+    tool = Mcp::Tools::PulseCompare.new(@project)
+    result = tool.call(period_a: "1h", period_b: "24h")
+
+    assert_equal({}, result[:metrics])
+  end
+
+  # PulseRootCause tests
+  test "PulseRootCause should analyze high_latency" do
+    create_test_trace(@project,
+      name: "GET /slow",
+      kind: "request",
+      started_at: 30.minutes.ago,
+      ended_at: 30.minutes.ago + 5,
+      duration_ms: 5000
+    )
+
+    tool = Mcp::Tools::PulseRootCause.new(@project)
+    result = tool.call(symptom: "high_latency")
+
+    assert_equal "high_latency", result[:symptom]
+    assert_not_empty result[:top_slow_endpoints]
+    assert_equal "GET /slow", result[:top_slow_endpoints].first[:endpoint]
+  end
+
+  test "PulseRootCause should analyze high_errors" do
+    create_test_trace(@project,
+      name: "GET /fail",
+      kind: "request",
+      started_at: 30.minutes.ago,
+      ended_at: 30.minutes.ago + 0.1,
+      duration_ms: 100,
+      error: true
+    )
+
+    tool = Mcp::Tools::PulseRootCause.new(@project)
+    result = tool.call(symptom: "high_errors")
+
+    assert_equal "high_errors", result[:symptom]
+    assert_not_empty result[:top_error_endpoints]
+    assert_equal "GET /fail", result[:top_error_endpoints].first[:endpoint]
+  end
+
+  test "PulseRootCause should analyze low_apdex" do
+    # Create a frustrated trace (duration > 4T where T=0.5s, so > 2000ms)
+    create_test_trace(@project,
+      name: "GET /frustrated",
+      kind: "request",
+      started_at: 30.minutes.ago,
+      ended_at: 30.minutes.ago + 5,
+      duration_ms: 5000
+    )
+
+    tool = Mcp::Tools::PulseRootCause.new(@project)
+    result = tool.call(symptom: "low_apdex")
+
+    assert_equal "low_apdex", result[:symptom]
+    assert_not_nil result[:threshold_ms]
+    assert_not_empty result[:top_frustrated_endpoints]
+  end
+
+  # PulseSloStatus tests
+  test "PulseSloStatus should return helpful message when SLOs not available" do
+    tool = Mcp::Tools::PulseSloStatus.new(@project)
+    result = tool.call({})
+
+    assert_not_nil result[:message]
+  end
+
+  # PulseDeployImpact tests
+  test "PulseDeployImpact should return helpful message when deploys not available" do
+    tool = Mcp::Tools::PulseDeployImpact.new(@project)
+    result = tool.call({})
+
+    assert_not_nil result[:message]
+  end
+
   # Base tool tests
   test "Base parse_since should parse minute format" do
     tool = Mcp::Tools::PulseOverview.new(@project)

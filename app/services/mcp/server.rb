@@ -7,7 +7,12 @@ module Mcp
       "pulse_errors" => Tools::PulseErrors,
       "pulse_trace" => Tools::PulseTrace,
       "pulse_endpoints" => Tools::PulseEndpoints,
-      "pulse_metrics" => Tools::PulseMetrics
+      "pulse_metrics" => Tools::PulseMetrics,
+      "pulse_service_map" => Tools::PulseServiceMap,
+      "pulse_compare" => Tools::PulseCompare,
+      "pulse_root_cause" => Tools::PulseRootCause,
+      "pulse_slo_status" => Tools::PulseSloStatus,
+      "pulse_deploy_impact" => Tools::PulseDeployImpact
     }.freeze
 
     def initialize(project)
