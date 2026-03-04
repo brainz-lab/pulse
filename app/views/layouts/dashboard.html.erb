@@ -156,6 +156,11 @@
             <%= icon(:alerts) %>
             Alerts
           <% end %>
+
+          <%= link_to dashboard_slos_path, class: nav_link_class('/slos') do %>
+            <%= icon(:slos) %>
+            SLOs
+          <% end %>
         </nav>
 
         <% if Rails.env.development? %>

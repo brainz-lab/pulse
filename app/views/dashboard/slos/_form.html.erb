@@ -1,0 +1,77 @@
+<div class="space-y-6">
+  <% if @slo.errors.any? %>
+    <div class="rounded-xl p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40">
+      <p class="text-[14px] font-medium text-red-800 dark:text-red-300"><%= pluralize(@slo.errors.count, "error") %> prevented this SLO from being saved:</p>
+      <ul class="mt-2 text-[13px] list-disc list-inside text-red-800 dark:text-red-300">
+        <% @slo.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-2 gap-6">
+    <!-- Basic Info -->
+    <div class="rounded-xl p-5" style="background: var(--dm-surface); border: 1px solid var(--dm-border);">
+      <h3 class="text-[14px] font-medium mb-4" style="color: var(--dm-text);">Basic Info</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Name</label>
+          <%= f.text_field :name, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);", placeholder: "P95 Latency < 500ms" %>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Description</label>
+          <%= f.text_area :description, rows: 2, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);", placeholder: "95th percentile latency should stay below 500ms" %>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <%= f.check_box :enabled, class: "rounded accent-green-500" %>
+          <label class="text-[13px]" style="color: var(--dm-text-secondary);">Enabled</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target -->
+    <div class="rounded-xl p-5" style="background: var(--dm-surface); border: 1px solid var(--dm-border);">
+      <h3 class="text-[14px] font-medium mb-4" style="color: var(--dm-text);">Target</h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Metric</label>
+          <%= f.select :target_metric, [['Error Rate', 'error_rate'], ['Availability', 'availability'], ['P95 Latency', 'p95'], ['P99 Latency', 'p99'], ['Apdex', 'apdex']], {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);" %>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Operator</label>
+            <%= f.select :operator, [['<= (at most)', 'lte'], ['>= (at least)', 'gte'], ['< (less than)', 'lt'], ['> (greater than)', 'gt']], {}, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);" %>
+          </div>
+
+          <div>
+            <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Threshold</label>
+            <%= f.number_field :threshold, step: "any", class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);", placeholder: "500" %>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Window (days)</label>
+          <%= f.number_field :window_days, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);", placeholder: "30" %>
+          <p class="text-[12px] mt-1" style="color: var(--dm-text-muted);">Rolling window for SLI calculation</p>
+        </div>
+
+        <div>
+          <label class="block text-[13px] mb-1.5" style="color: var(--dm-text-secondary);">Endpoint (optional)</label>
+          <%= f.text_field :endpoint, class: "w-full px-3 py-2 rounded-lg text-[14px]", style: "background: var(--dm-input-bg); border: 1px solid var(--dm-input-border); color: var(--dm-text);", placeholder: "GET /api/v1/users" %>
+          <p class="text-[12px] mt-1" style="color: var(--dm-text-muted);">Leave blank to track all endpoints</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex justify-end gap-3">
+    <%= link_to "Cancel", dashboard_slos_path, class: "px-4 py-2 text-[14px] font-medium rounded-lg", style: "background: var(--dm-surface); border: 1px solid var(--dm-border); color: var(--dm-text-secondary);" %>
+    <%= f.submit "Save SLO", class: "px-4 py-2 text-[14px] font-medium rounded-lg cursor-pointer", style: "background: var(--dm-text); color: var(--dm-surface);" %>
+  </div>
+</div>

@@ -80,6 +80,9 @@ Rails.application.routes.draw do
     # Deploys
     resources :deploys, only: [ :index, :show ]
 
+    # SLOs
+    resources :slos, controller: "slos"
+
     # Alerting
     resources :alerts, only: [ :index, :show ]
     resources :alert_rules, except: [ :edit ]

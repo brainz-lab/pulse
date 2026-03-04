@@ -1,0 +1,13 @@
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to dashboard_slos_path, class: "text-[14px] hover:opacity-70", style: "color: var(--dm-text-secondary);" do %>
+      &larr; SLOs
+    <% end %>
+  </div>
+
+  <h1 class="text-[22px] font-semibold tracking-tight" style="color: var(--dm-text);">New SLO</h1>
+
+  <%= form_with model: @slo, url: dashboard_slos_path, local: true do |f| %>
+    <%= render 'form', f: f %>
+  <% end %>
+</div>
