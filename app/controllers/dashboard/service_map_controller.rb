@@ -18,13 +18,13 @@ module Dashboard
       http_stats = current_project.spans
         .joins(:trace)
         .where(traces: { started_at: @since.. })
-        .where(kind: "http")
-        .where.not("data->>'host' IS NULL")
-        .group("data->>'host'")
+        .where(spans: { kind: "http" })
+        .where.not("spans.data->>'host' IS NULL")
+        .group("spans.data->>'host'")
         .select(
-          "data->>'host' as host",
+          "spans.data->>'host' as host",
           "COUNT(*) as call_count",
-          "AVG(duration_ms) as avg_duration",
+          "AVG(spans.duration_ms) as avg_duration",
           "SUM(CASE WHEN spans.error THEN 1 ELSE 0 END) as error_count"
         )
 
@@ -38,7 +38,7 @@ module Dashboard
 
       # Database calls
       db_stats = current_project.spans.joins(:trace)
-        .where(traces: { started_at: @since.. }).where("kind LIKE 'db%'")
+        .where(traces: { started_at: @since.. }).where("spans.kind LIKE 'db%'")
       db_count = db_stats.count
       if db_count > 0
         avg_db = db_stats.average(:duration_ms)
@@ -48,7 +48,7 @@ module Dashboard
 
       # Cache calls
       cache_stats = current_project.spans.joins(:trace)
-        .where(traces: { started_at: @since.. }).where("kind LIKE 'cache%'")
+        .where(traces: { started_at: @since.. }).where("spans.kind LIKE 'cache%'")
       cache_count = cache_stats.count
       if cache_count > 0
         avg_cache = cache_stats.average(:duration_ms)
