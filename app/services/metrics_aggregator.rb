@@ -139,7 +139,6 @@ class MetricsAggregator
   end
 
   def aggregate_external_http!(bucket)
-    # Get all HTTP spans from traces in this minute
     spans = @project.spans
       .joins(:trace)
       .where(traces: { started_at: bucket...bucket + 1.minute })
@@ -147,16 +146,16 @@ class MetricsAggregator
 
     return if spans.empty?
 
-    # Group by host (extracted from span data)
-    spans_by_host = spans.group_by { |s| s.data&.dig("host") || "unknown" }
+    # Use SQL to extract hosts from JSONB instead of loading all spans into memory
+    hosts = spans.select("spans.data->>'host' as host").distinct.pluck(Arel.sql("spans.data->>'host'"))
 
-    spans_by_host.each do |host, host_spans|
-      next if host == "unknown"
-
-      durations = host_spans.map(&:duration_ms).compact.sort
+    hosts.compact.reject { |h| h == "unknown" }.each do |host|
+      host_spans = spans.where("spans.data->>'host' = ?", host)
+      durations = host_spans.where.not(duration_ms: nil).pluck(:duration_ms).sort
       next if durations.empty?
 
-      error_count = host_spans.count { |s| s.error }
+      error_count = host_spans.where(error: true).count
+      total = host_spans.count
 
       create_or_update_aggregate(
         name: "external_http_duration",
@@ -170,7 +169,7 @@ class MetricsAggregator
         name: "external_http_count",
         bucket: bucket,
         granularity: "minute",
-        values: [ host_spans.count ],
+        values: [ total ],
         dimensions: { host: host }
       )
 
@@ -178,14 +177,13 @@ class MetricsAggregator
         name: "external_http_error_rate",
         bucket: bucket,
         granularity: "minute",
-        values: [ (error_count.to_f / host_spans.count * 100).round(2) ],
+        values: [ (error_count.to_f / total * 100).round(2) ],
         dimensions: { host: host }
       )
     end
   end
 
   def aggregate_cache!(bucket)
-    # Get all cache spans from traces in this minute
     spans = @project.spans
       .joins(:trace)
       .where(traces: { started_at: bucket...bucket + 1.minute })
@@ -193,13 +191,15 @@ class MetricsAggregator
 
     return if spans.empty?
 
-    # Calculate hit rate
-    reads = spans.select { |s| s.data&.dig("operation") == "read" }
-    hits = reads.select { |s| s.data&.dig("hit") == true }
-    misses = reads.select { |s| s.data&.dig("hit") == false }
+    # Use SQL to filter by operation and hit status instead of loading all spans
+    reads = spans.where("spans.data->>'operation' = ?", "read")
+    read_count = reads.count
 
-    if reads.any?
-      hit_rate = (hits.count.to_f / reads.count * 100).round(2)
+    if read_count > 0
+      hits_count = reads.where("spans.data->>'hit' = ?", "true").count
+      misses_count = reads.where("spans.data->>'hit' = ?", "false").count
+
+      hit_rate = (hits_count.to_f / read_count * 100).round(2)
       create_or_update_aggregate(
         name: "cache_hit_rate",
         bucket: bucket,
@@ -211,19 +211,19 @@ class MetricsAggregator
         name: "cache_hits",
         bucket: bucket,
         granularity: "minute",
-        values: [ hits.count ]
+        values: [ hits_count ]
       )
 
       create_or_update_aggregate(
         name: "cache_misses",
         bucket: bucket,
         granularity: "minute",
-        values: [ misses.count ]
+        values: [ misses_count ]
       )
     end
 
-    # Cache operation durations
-    durations = spans.map(&:duration_ms).compact.sort
+    # Cache operation durations via SQL
+    durations = spans.where.not(duration_ms: nil).order(:duration_ms).pluck(:duration_ms)
     if durations.any?
       create_or_update_aggregate(
         name: "cache_duration",

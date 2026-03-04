@@ -170,6 +170,18 @@ class MetricsAggregatorTest < ActiveSupport::TestCase
   end
 
   # External HTTP aggregation tests
+  test "aggregate_external_http uses SQL grouping not Ruby" do
+    trace = create_test_trace(@project, started_at: @bucket + 10.seconds, duration_ms: 100, kind: "request")
+    create_test_span(trace, kind: "http", duration_ms: 100, data: { "host" => "api.stripe.com" })
+    create_test_span(trace, kind: "http", duration_ms: 200, data: { "host" => "api.stripe.com" })
+
+    @aggregator.aggregate_minute!(@bucket)
+
+    agg = @project.aggregated_metrics.find_by(name: "external_http_duration")
+    assert_not_nil agg
+    assert_equal 2, agg.count
+  end
+
   test "aggregate_minute! should aggregate external HTTP calls" do
     trace = create_test_trace(@project, started_at: @bucket + 10.seconds, duration_ms: 100, kind: "request")
     create_test_span(trace, kind: "http", duration_ms: 50, data: { "host" => "api.stripe.com" })
