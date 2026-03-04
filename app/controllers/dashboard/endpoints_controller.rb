@@ -72,37 +72,33 @@ module Dashboard
     end
 
     def fetch_endpoint_groups
-      traces = current_project.traces
+      scope = current_project.traces
         .requests
         .where("started_at >= ?", @since)
         .where.not(duration_ms: nil)
         .where.not(name: nil)
 
-      # Group by path prefix
-      grouped = traces.pluck(:name, :duration_ms, :error).group_by do |name, _, _|
-        extract_path_prefix(name)
-      end
+      # Use SQL GROUP BY with path prefix extraction instead of loading all records into Ruby
+      prefix_expr = "CONCAT('/', split_part(split_part(name, ' ', 2), '/', 2), '/', split_part(split_part(name, ' ', 2), '/', 3))"
 
-      grouped.map do |prefix, records|
-        next if prefix.nil?
+      results = scope.select(
+        "#{prefix_expr} as prefix",
+        "CONCAT(#{prefix_expr}, '/*') as name",
+        "COUNT(*) as count",
+        "AVG(duration_ms) as avg_duration",
+        "MAX(duration_ms) as max_duration",
+        "PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) as p95_duration",
+        "PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms) as p99_duration",
+        "SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count",
+        "(SUM(CASE WHEN error THEN 1 ELSE 0 END)::float / COUNT(*) * 100) as error_rate",
+        "COUNT(DISTINCT traces.name) as endpoint_count"
+      )
+      .group(Arel.sql(prefix_expr))
+      .having("#{prefix_expr} IS NOT NULL AND #{prefix_expr} != '//'")
+      .order("count DESC")
+      .limit(50)
 
-        durations = records.map { |r| r[1] }.compact.sort
-        error_count = records.count { |r| r[2] }
-        total = records.count
-
-        OpenStruct.new(
-          name: "#{prefix}/*",
-          prefix: prefix,
-          count: total,
-          avg_duration: durations.any? ? (durations.sum.to_f / durations.length) : 0,
-          max_duration: durations.max || 0,
-          p95_duration: percentile(durations, 0.95),
-          p99_duration: percentile(durations, 0.99),
-          error_count: error_count,
-          error_rate: total > 0 ? (error_count.to_f / total * 100) : 0,
-          endpoint_count: records.map { |r| r[0] }.uniq.count
-        )
-      end.compact.sort_by { |e| -e.count }.first(50)
+      results.to_a
     end
 
     def extract_path_prefix(endpoint_name)
