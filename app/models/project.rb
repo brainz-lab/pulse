@@ -7,6 +7,7 @@ class Project < ApplicationRecord
   has_many :notification_channels, dependent: :destroy
   has_many :alert_rules, dependent: :destroy
   has_many :alerts, dependent: :destroy
+  has_many :deploys, dependent: :destroy
 
   validates :platform_project_id, presence: true, uniqueness: true
 
@@ -60,10 +61,13 @@ class Project < ApplicationRecord
     # Calculate Apdex from the aggregated counts
     apdex_score = total > 0 ? ((satisfied + (tolerating / 2.0)) / total).round(2) : 1.0
 
-    # Get percentiles with a single query
-    durations = traces_scope.where.not(duration_ms: nil).order(:duration_ms).pluck(:duration_ms)
-    p95_duration = durations.any? ? durations[(durations.length * 0.95).to_i] : nil
-    p99_duration = durations.any? ? durations[(durations.length * 0.99).to_i] : nil
+    # Get percentiles with a single SQL query
+    percentiles = traces_scope.where.not(duration_ms: nil).pick(
+      Arel.sql("PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms)"),
+      Arel.sql("PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms)")
+    )
+    p95_duration = percentiles&.first&.round(2)
+    p99_duration = percentiles&.last&.round(2)
 
     {
       apdex: apdex_score,

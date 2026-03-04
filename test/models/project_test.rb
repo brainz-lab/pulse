@@ -121,6 +121,16 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal 50.0, overview[:error_rate]
   end
 
+  test "overview uses SQL percentiles instead of pluck" do
+    project = create_test_project
+    50.times { |i| create_test_trace(project, duration_ms: i * 10.0, kind: "request") }
+
+    result = project.overview(since: 1.hour.ago)
+    assert_not_nil result[:p95_duration]
+    assert_not_nil result[:p99_duration]
+    assert result[:p95_duration] > result[:avg_duration]
+  end
+
   test "overview should return zero values for empty project" do
     overview = @project.overview(since: 1.hour.ago)
 
