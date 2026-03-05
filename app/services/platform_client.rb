@@ -129,7 +129,7 @@ class PlatformClient
 
         request = Net::HTTP::Post.new(uri.path)
         request["Content-Type"] = "application/json"
-        request["X-Service-Key"] = ENV["SERVICE_KEY"]
+        request["X-Service-Key"] = Rails.application.credentials.dig(:service_key) || ENV["SERVICE_KEY"]
         request.body = {
           project_id: project_id,
           product: product,
