@@ -88,6 +88,13 @@ Rails.application.routes.draw do
     resources :alert_rules, except: [ :edit ]
     resources :notification_channels, except: [ :edit ]
 
+    # AI Assistant
+    resources :assistant, only: [:index, :show, :create] do
+      member do
+        post :message
+      end
+    end
+
     # Dev Tools (development only)
     resource :dev_tools, only: [ :show ], controller: "dev_tools" do
       post "clean_traces"
