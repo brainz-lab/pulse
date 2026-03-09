@@ -1,12 +1,12 @@
 <div class="space-y-6">
   <div>
-    <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Metrics</h1>
-    <p class="text-[14px] mt-1 pulse-text-muted">Custom application metrics</p>
+    <h1 class="text-[22px] font-semibold tracking-tight dm-text">Metrics</h1>
+    <p class="text-[14px] mt-1 dm-text-muted">Custom application metrics</p>
   </div>
 
-  <div class="rounded-xl overflow-hidden pulse-card">
+  <div class="rounded-xl overflow-hidden dm-card">
     <table class="w-full">
-      <thead class="pulse-table-header">
+      <thead class="dm-table-header">
         <tr class="text-left text-[13px]">
           <th class="p-4 font-medium">Name</th>
           <th class="p-4 font-medium">Type</th>
@@ -16,23 +16,23 @@
       </thead>
       <tbody>
         <% @metrics.each do |metric| %>
-          <tr class="hover:opacity-80 pulse-table-row">
+          <tr class="hover:opacity-80 dm-table-row">
             <td class="p-4">
-              <%= link_to metric.name, dashboard_metric_path(metric), class: "text-[14px] font-medium hover:opacity-70 pulse-text" %>
+              <%= link_to metric.name, dashboard_metric_path(metric), class: "text-[14px] font-medium hover:opacity-70 dm-text" %>
             </td>
             <td class="p-4">
-              <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded pulse-surface-alt pulse-text-secondary">
+              <span class="inline-block px-2 py-0.5 text-[11px] font-medium rounded dm-surface-alt dm-text-secondary">
                 <%= metric.kind %>
               </span>
             </td>
-            <td class="p-4 text-[13px] pulse-text-muted"><%= metric.unit || '-' %></td>
-            <td class="p-4 text-[13px] pulse-text-muted"><%= metric.description || '-' %></td>
+            <td class="p-4 text-[13px] dm-text-muted"><%= metric.unit || '-' %></td>
+            <td class="p-4 text-[13px] dm-text-muted"><%= metric.description || '-' %></td>
           </tr>
         <% end %>
 
         <% if @metrics.empty? %>
           <tr>
-            <td colspan="4" class="p-8 text-center text-[14px] pulse-text-muted">
+            <td colspan="4" class="p-8 text-center text-[14px] dm-text-muted">
               No custom metrics recorded yet
             </td>
           </tr>

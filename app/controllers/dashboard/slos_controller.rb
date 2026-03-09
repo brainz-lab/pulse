@@ -61,8 +61,8 @@ module Dashboard
       case slo.target_metric
       when "error_rate"
         scope.group("date_trunc('hour', started_at)")
-          .select("date_trunc('hour', started_at) as bucket, COUNT(*) as total, SUM(CASE WHEN error THEN 1 ELSE 0 END) as errors")
-          .map { |r| { x: r.bucket.iso8601, y: r.total > 0 ? (r.errors.to_f / r.total * 100).round(2) : 0 } }
+          .select("date_trunc('hour', started_at) as bucket, COUNT(*) as total, SUM(CASE WHEN error THEN 1 ELSE 0 END) as error_count")
+          .map { |r| { x: r.bucket.iso8601, y: r.total > 0 ? (r.error_count.to_f / r.total * 100).round(2) : 0 } }
       when "availability"
         scope.group("date_trunc('hour', started_at)")
           .select("date_trunc('hour', started_at) as bucket, COUNT(*) as total, SUM(CASE WHEN NOT error THEN 1 ELSE 0 END) as ok")

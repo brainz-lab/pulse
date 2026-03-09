@@ -1,12 +1,12 @@
 <div class="space-y-6">
   <div>
-    <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Deploys</h1>
-    <p class="text-[14px] mt-1 pulse-text-muted">Recent deployments with performance impact analysis</p>
+    <h1 class="text-[22px] font-semibold tracking-tight dm-text">Deploys</h1>
+    <p class="text-[14px] mt-1 dm-text-muted">Recent deployments with performance impact analysis</p>
   </div>
 
-  <div class="rounded-xl pulse-card">
-    <div class="p-4 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
-      <div class="grid grid-cols-7 gap-4 text-[12px] font-medium uppercase tracking-wider pulse-text-muted">
+  <div class="rounded-xl dm-card">
+    <div class="p-4 border-b dm-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+      <div class="grid grid-cols-7 gap-4 text-[12px] font-medium uppercase tracking-wider dm-text-muted">
         <span class="col-span-2">Version</span>
         <span>Environment</span>
         <span>Deployed By</span>
@@ -19,16 +19,16 @@
     <% if @deploys.any? %>
       <% @deploys.each do |deploy| %>
         <% impact = @deploy_impacts[deploy.id] %>
-        <%= link_to dashboard_deploy_path(deploy), class: "grid grid-cols-7 gap-4 p-4 items-center hover:opacity-80 pulse-table-row" do %>
+        <%= link_to dashboard_deploy_path(deploy), class: "grid grid-cols-7 gap-4 p-4 items-center hover:opacity-80 dm-table-row" do %>
           <div class="col-span-2">
-            <p class="text-[14px] font-medium pulse-text"><%= deploy.version %></p>
+            <p class="text-[14px] font-medium dm-text"><%= deploy.version %></p>
             <% if deploy.commit_sha.present? %>
-              <p class="text-[12px] font-mono pulse-text-muted"><%= deploy.commit_sha.first(8) %></p>
+              <p class="text-[12px] font-mono dm-text-muted"><%= deploy.commit_sha.first(8) %></p>
             <% end %>
           </div>
-          <span class="text-[13px] pulse-text-secondary"><%= deploy.environment || '-' %></span>
-          <span class="text-[13px] pulse-text-secondary"><%= deploy.deployed_by || '-' %></span>
-          <span class="text-[13px] pulse-text-muted"><%= time_ago_in_words(deploy.deployed_at) %> ago</span>
+          <span class="text-[13px] dm-text-secondary"><%= deploy.environment || '-' %></span>
+          <span class="text-[13px] dm-text-secondary"><%= deploy.deployed_by || '-' %></span>
+          <span class="text-[13px] dm-text-muted"><%= time_ago_in_words(deploy.deployed_at) %> ago</span>
           <div>
             <% if impact[:status] == :no_data %>
               <span class="px-2 py-0.5 text-[11px] font-medium rounded" style="background: #F0EFED; color: #8B8780;">NO DATA</span>
@@ -46,15 +46,15 @@
                 <%= impact[:deltas][:p95_duration] > 0 ? '+' : '' %><%= impact[:deltas][:p95_duration] %>%
               </span>
             <% else %>
-              <span class="text-[13px] pulse-text-muted">-</span>
+              <span class="text-[13px] dm-text-muted">-</span>
             <% end %>
           </div>
         <% end %>
       <% end %>
     <% else %>
-      <div class="p-8 text-center text-[14px] pulse-text-muted">
+      <div class="p-8 text-center text-[14px] dm-text-muted">
         No deploys recorded yet. Send deploys via the API:
-        <code class="block mt-2 text-[12px] font-mono pulse-text-secondary">POST /api/v1/deploys { "version": "1.2.3", "commit_sha": "abc123" }</code>
+        <code class="block mt-2 text-[12px] font-mono dm-text-secondary">POST /api/v1/deploys { "version": "1.2.3", "commit_sha": "abc123" }</code>
       </div>
     <% end %>
   </div>
