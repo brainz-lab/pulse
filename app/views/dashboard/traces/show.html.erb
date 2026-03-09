@@ -1,31 +1,31 @@
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center gap-4">
-    <%= link_to "← Back", dashboard_requests_path, class: "text-[13px] hover:opacity-70 pulse-text-muted" %>
+    <%= link_to "← Back", dashboard_requests_path, class: "text-[13px] hover:opacity-70 dm-text-muted" %>
     <div class="flex-1">
       <div class="flex items-center justify-between">
-        <h1 class="text-[22px] font-semibold tracking-tight pulse-text"><%= @trace.name %></h1>
+        <h1 class="text-[22px] font-semibold tracking-tight dm-text"><%= @trace.name %></h1>
         <div class="flex items-center gap-3">
-          <span class="text-[28px] font-semibold pulse-text"><%= @trace.duration_ms&.round(0) || '-' %><span class="text-[16px] font-normal">ms</span></span>
+          <span class="text-[28px] font-semibold dm-text"><%= @trace.duration_ms&.round(0) || '-' %><span class="text-[16px] font-normal">ms</span></span>
           <span class="text-[11px] px-2 py-1 rounded font-medium" style="background: <%= duration_badge_bg(@trace.duration_ms) %>; color: <%= duration_color(@trace.duration_ms) %>;"><%= duration_label(@trace.duration_ms) %></span>
         </div>
       </div>
-      <p class="text-[14px] mt-1 pulse-text-muted"><%= @trace.started_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
+      <p class="text-[14px] mt-1 dm-text-muted"><%= @trace.started_at.strftime('%b %d, %Y at %H:%M:%S') %></p>
     </div>
   </div>
 
   <!-- Breakdown Bar -->
-  <div class="rounded-xl p-5 pulse-card">
+  <div class="rounded-xl p-5 dm-card">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-[14px] font-medium pulse-text">Time Breakdown</h3>
+      <h3 class="text-[14px] font-medium dm-text">Time Breakdown</h3>
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full" style="background: <%= @trace.error ? 'var(--pulse-error)' : 'var(--pulse-success)' %>;"></span>
-        <span class="text-[13px] <%= @trace.error ? 'pulse-error' : 'pulse-success' %>"><%= @trace.status || (@trace.error ? 'Error' : 'OK') %></span>
+        <span class="w-2 h-2 rounded-full" style="background: <%= @trace.error ? 'var(--dm-error)' : 'var(--dm-success)' %>;"></span>
+        <span class="text-[13px] <%= @trace.error ? 'dm-error' : 'dm-success' %>"><%= @trace.status || (@trace.error ? 'Error' : 'OK') %></span>
       </div>
     </div>
 
     <!-- Stacked Bar -->
-    <div class="h-8 rounded-lg overflow-hidden flex pulse-breakdown-bg">
+    <div class="h-8 rounded-lg overflow-hidden flex dm-surface-alt">
       <% if @trace.duration_ms && @trace.duration_ms > 0 %>
         <% db_pct = ((@trace.db_duration_ms || 0) / @trace.duration_ms * 100).round(1) %>
         <% view_pct = ((@trace.view_duration_ms || 0) / @trace.duration_ms * 100).round(1) %>
@@ -33,36 +33,36 @@
         <% other_pct = [100 - db_pct - view_pct - ext_pct, 0].max %>
 
         <% if other_pct > 0 %>
-          <div class="h-full" style="width: <%= other_pct %>%; background: var(--pulse-chart-primary);"></div>
+          <div class="h-full" style="width: <%= other_pct %>%; background: var(--dm-text);"></div>
         <% end %>
         <% if db_pct > 0 %>
-          <div class="h-full" style="width: <%= db_pct %>%; background: var(--pulse-chart-db);"></div>
+          <div class="h-full" style="width: <%= db_pct %>%; background: var(--dm-text-secondary);"></div>
         <% end %>
         <% if ext_pct > 0 %>
-          <div class="h-full" style="width: <%= ext_pct %>%; background: var(--pulse-chart-external);"></div>
+          <div class="h-full" style="width: <%= ext_pct %>%; background: var(--dm-text-muted);"></div>
         <% end %>
         <% if view_pct > 0 %>
-          <div class="h-full" style="width: <%= view_pct %>%; background: var(--pulse-chart-view);"></div>
+          <div class="h-full" style="width: <%= view_pct %>%; background: var(--dm-text-secondary);"></div>
         <% end %>
       <% end %>
     </div>
 
     <!-- Legend -->
-    <div class="flex gap-6 mt-4 text-[13px] pulse-text-secondary">
+    <div class="flex gap-6 mt-4 text-[13px] dm-text-secondary">
       <span class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded" style="background: var(--pulse-chart-primary);"></span>
+        <span class="w-2.5 h-2.5 rounded" style="background: var(--dm-text);"></span>
         Controller: <%= (@trace.duration_ms.to_f - (@trace.db_duration_ms || 0) - (@trace.view_duration_ms || 0) - (@trace.external_duration_ms || 0)).round(0) %>ms
       </span>
       <span class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded" style="background: var(--pulse-chart-db);"></span>
+        <span class="w-2.5 h-2.5 rounded" style="background: var(--dm-text-secondary);"></span>
         Database: <%= @trace.db_duration_ms&.round(0) || 0 %>ms
       </span>
       <span class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded" style="background: var(--pulse-chart-external);"></span>
+        <span class="w-2.5 h-2.5 rounded" style="background: var(--dm-text-muted);"></span>
         External: <%= @trace.external_duration_ms&.round(0) || 0 %>ms
       </span>
       <span class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded" style="background: var(--pulse-chart-view);"></span>
+        <span class="w-2.5 h-2.5 rounded" style="background: var(--dm-text-secondary);"></span>
         View: <%= @trace.view_duration_ms&.round(0) || 0 %>ms
       </span>
     </div>
@@ -70,19 +70,19 @@
 
   <% if @trace.error %>
     <!-- Error details -->
-    <div class="rounded-xl p-5 pulse-error-card">
-      <h3 class="text-[14px] font-medium pulse-error"><%= @trace.error_class || 'Error' %></h3>
-      <p class="text-[13px] mt-2 pulse-error-text"><%= @trace.error_message %></p>
+    <div class="rounded-xl p-5 dm-card dm-error">
+      <h3 class="text-[14px] font-medium dm-error"><%= @trace.error_class || 'Error' %></h3>
+      <p class="text-[13px] mt-2 dm-text"><%= @trace.error_message %></p>
     </div>
   <% end %>
 
   <!-- Spans -->
-  <div class="rounded-xl pulse-card">
-    <div class="p-5 pulse-card-inner-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
-      <h3 class="text-[14px] font-medium pulse-text">Spans</h3>
+  <div class="rounded-xl dm-card">
+    <div class="p-5 border-b dm-border" style="border-bottom-width: 1px; border-bottom-style: solid;">
+      <h3 class="text-[14px] font-medium dm-text">Spans</h3>
     </div>
 
-    <div class="divide-y pulse-card-inner-border">
+    <div class="divide-y border-b dm-border">
       <% @trace.waterfall.each do |span| %>
         <div class="p-4">
           <div class="flex items-center gap-3 mb-2">
@@ -90,14 +90,14 @@
                   style="background: <%= span_kind_bg(span[:kind]) %>; color: <%= span_kind_color(span[:kind]) %>;">
               <%= span[:kind] %>
             </span>
-            <span class="text-[14px] font-medium flex-1 truncate pulse-text"><%= span[:name] %></span>
-            <span class="text-[13px] font-mono pulse-text-muted"><%= span[:duration_ms]&.round(2) %>ms</span>
+            <span class="text-[14px] font-medium flex-1 truncate dm-text"><%= span[:name] %></span>
+            <span class="text-[13px] font-mono dm-text-muted"><%= span[:duration_ms]&.round(2) %>ms</span>
           </div>
 
           <!-- Span bar -->
           <div class="flex items-center gap-3">
-            <span class="text-[11px] font-mono w-12 text-right pulse-text-muted">+<%= span[:offset_ms].round(0) %></span>
-            <div class="flex-1 h-2 rounded-full pulse-breakdown-bg">
+            <span class="text-[11px] font-mono w-12 text-right dm-text-muted">+<%= span[:offset_ms].round(0) %></span>
+            <div class="flex-1 h-2 rounded-full dm-surface-alt">
               <% if @trace.duration_ms && @trace.duration_ms > 0 %>
                 <div class="h-full rounded-full"
                      style="margin-left: <%= (span[:offset_ms] / @trace.duration_ms * 100).round(2) %>%;
@@ -111,7 +111,7 @@
       <% end %>
 
       <% if @trace.spans.empty? %>
-        <div class="p-8 text-center text-[14px] pulse-text-muted">
+        <div class="p-8 text-center text-[14px] dm-text-muted">
           No spans recorded
         </div>
       <% end %>
@@ -119,37 +119,37 @@
   </div>
 
   <!-- Context -->
-  <div class="rounded-xl p-5 pulse-card">
-    <h3 class="text-[14px] font-medium mb-4 pulse-text">Context</h3>
+  <div class="rounded-xl p-5 dm-card">
+    <h3 class="text-[14px] font-medium mb-4 dm-text">Context</h3>
     <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-[13px]">
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Trace ID</span>
-        <span class="font-mono truncate ml-4 pulse-text"><%= @trace.trace_id %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Trace ID</span>
+        <span class="font-mono truncate ml-4 dm-text"><%= @trace.trace_id %></span>
       </div>
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Request ID</span>
-        <span class="font-mono truncate ml-4 pulse-text"><%= @trace.request_id || '-' %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Request ID</span>
+        <span class="font-mono truncate ml-4 dm-text"><%= @trace.request_id || '-' %></span>
       </div>
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Controller</span>
-        <span class="pulse-text"><%= @trace.controller || '-' %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Controller</span>
+        <span class="dm-text"><%= @trace.controller || '-' %></span>
       </div>
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Action</span>
-        <span class="pulse-text"><%= @trace.action || '-' %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Action</span>
+        <span class="dm-text"><%= @trace.action || '-' %></span>
       </div>
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Host</span>
-        <span class="pulse-text"><%= @trace.host || '-' %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Host</span>
+        <span class="dm-text"><%= @trace.host || '-' %></span>
       </div>
-      <div class="flex justify-between py-2 pulse-table-row">
-        <span class="pulse-text-muted">Commit</span>
-        <span class="font-mono pulse-text"><%= @trace.commit || '-' %></span>
+      <div class="flex justify-between py-2 dm-table-row">
+        <span class="dm-text-muted">Commit</span>
+        <span class="font-mono dm-text"><%= @trace.commit || '-' %></span>
       </div>
       <% if @trace.user_id %>
-        <div class="flex justify-between py-2 pulse-table-row">
-          <span class="pulse-text-muted">User ID</span>
-          <span class="pulse-text"><%= @trace.user_id %></span>
+        <div class="flex justify-between py-2 dm-table-row">
+          <span class="dm-text-muted">User ID</span>
+          <span class="dm-text"><%= @trace.user_id %></span>
         </div>
       <% end %>
     </div>

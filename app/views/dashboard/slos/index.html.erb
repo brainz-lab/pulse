@@ -1,8 +1,8 @@
 <div class="space-y-6">
   <div class="flex justify-between items-center">
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight pulse-text">Service Level Objectives</h1>
-      <p class="text-[14px] mt-1 pulse-text-muted">Track reliability targets for your application</p>
+      <h1 class="text-[22px] font-semibold tracking-tight dm-text">Service Level Objectives</h1>
+      <p class="text-[14px] mt-1 dm-text-muted">Track reliability targets for your application</p>
     </div>
     <%= link_to "New SLO", new_dashboard_slo_path, class: "px-3 py-1.5 text-[13px] font-medium rounded-lg", style: "background: var(--dm-text); color: var(--dm-surface);" %>
   </div>
@@ -12,11 +12,11 @@
       <% @slos.each do |slo| %>
         <% budget = slo.error_budget_remaining || 100.0 %>
         <% status = budget <= 0 ? "breached" : budget < 20 ? "at_risk" : "meeting" %>
-        <%= link_to dashboard_slo_path(slo), class: "block rounded-xl p-5 pulse-card hover:opacity-90 transition" do %>
+        <%= link_to dashboard_slo_path(slo), class: "block rounded-xl p-5 dm-card hover:opacity-90 transition" do %>
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-3">
               <span class="w-2.5 h-2.5 rounded-full <%= status == 'meeting' ? 'bg-green-500' : status == 'at_risk' ? 'bg-amber-500' : 'bg-red-500' %>"></span>
-              <h3 class="text-[15px] font-medium pulse-text"><%= slo.name %></h3>
+              <h3 class="text-[15px] font-medium dm-text"><%= slo.name %></h3>
             </div>
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 text-[11px] font-medium rounded <%= status == 'meeting' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status == 'at_risk' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' %>">
@@ -30,20 +30,20 @@
 
           <div class="grid grid-cols-4 gap-4 mb-3">
             <div>
-              <p class="text-[12px] pulse-text-muted">Target</p>
-              <p class="text-[14px] font-medium pulse-text"><%= slo.target_metric.titleize %> <%= slo.operator %> <%= slo.threshold %></p>
+              <p class="text-[12px] dm-text-muted">Target</p>
+              <p class="text-[14px] font-medium dm-text"><%= slo.target_metric.titleize %> <%= slo.operator %> <%= slo.threshold %></p>
             </div>
             <div>
-              <p class="text-[12px] pulse-text-muted">Current</p>
-              <p class="text-[14px] font-medium pulse-text"><%= slo.current_value&.round(2) || '-' %></p>
+              <p class="text-[12px] dm-text-muted">Current</p>
+              <p class="text-[14px] font-medium dm-text"><%= slo.current_value&.round(2) || '-' %></p>
             </div>
             <div>
-              <p class="text-[12px] pulse-text-muted">Error Budget</p>
-              <p class="text-[14px] font-medium pulse-text"><%= budget.round(1) %>%</p>
+              <p class="text-[12px] dm-text-muted">Error Budget</p>
+              <p class="text-[14px] font-medium dm-text"><%= budget.round(1) %>%</p>
             </div>
             <div>
-              <p class="text-[12px] pulse-text-muted">Burn Rate</p>
-              <p class="text-[14px] font-medium pulse-text"><%= slo.burn_rate&.round(2) || '0' %>x</p>
+              <p class="text-[12px] dm-text-muted">Burn Rate</p>
+              <p class="text-[14px] font-medium dm-text"><%= slo.burn_rate&.round(2) || '0' %>x</p>
             </div>
           </div>
 
@@ -56,9 +56,9 @@
       <% end %>
     </div>
   <% else %>
-    <div class="rounded-xl p-8 text-center pulse-card">
-      <p class="text-[14px] pulse-text-muted">No SLOs configured yet</p>
-      <%= link_to "Create your first SLO", new_dashboard_slo_path, class: "text-[14px] font-medium mt-2 inline-block pulse-text" %>
+    <div class="rounded-xl p-8 text-center dm-card">
+      <p class="text-[14px] dm-text-muted">No SLOs configured yet</p>
+      <%= link_to "Create your first SLO", new_dashboard_slo_path, class: "text-[14px] font-medium mt-2 inline-block dm-text" %>
     </div>
   <% end %>
 </div>

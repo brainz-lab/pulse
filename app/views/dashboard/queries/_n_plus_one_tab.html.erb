@@ -1,10 +1,10 @@
 <div class="space-y-6">
   <!-- Detected Patterns -->
   <div>
-    <h2 class="text-[16px] font-semibold mb-3 pulse-text">Detected Patterns</h2>
-    <div class="rounded-xl overflow-hidden pulse-card">
+    <h2 class="text-[16px] font-semibold mb-3 dm-text">Detected Patterns</h2>
+    <div class="rounded-xl overflow-hidden dm-card">
       <table class="w-full">
-        <thead class="pulse-table-header">
+        <thead class="dm-table-header">
           <tr class="text-left text-[13px]">
             <th class="p-4 font-medium">Query Pattern</th>
             <th class="p-4 font-medium">Table</th>
@@ -15,22 +15,22 @@
         </thead>
         <tbody>
           <% @n_plus_one_patterns.each do |pattern| %>
-            <tr class="pulse-table-row">
+            <tr class="dm-table-row">
               <td class="p-4">
-                <div class="font-mono text-[12px] leading-relaxed max-w-xl truncate pulse-text" title="<%= pattern[:normalized_sql] %>">
+                <div class="font-mono text-[12px] leading-relaxed max-w-xl truncate dm-text" title="<%= pattern[:normalized_sql] %>">
                   <%= pattern[:normalized_sql] %>
                 </div>
               </td>
-              <td class="p-4 text-[13px] pulse-text-muted"><%= pattern[:table] || '-' %></td>
-              <td class="p-4 text-[13px] text-right font-medium pulse-error"><%= number_with_delimiter(pattern[:count]) %></td>
-              <td class="p-4 text-[13px] text-right pulse-text"><%= pattern[:trace_count] %></td>
-              <td class="p-4 text-[13px] text-right font-mono pulse-text-muted"><%= pattern[:total_duration_ms].round(0) %>ms</td>
+              <td class="p-4 text-[13px] dm-text-muted"><%= pattern[:table] || '-' %></td>
+              <td class="p-4 text-[13px] text-right font-medium dm-error"><%= number_with_delimiter(pattern[:count]) %></td>
+              <td class="p-4 text-[13px] text-right dm-text"><%= pattern[:trace_count] %></td>
+              <td class="p-4 text-[13px] text-right font-mono dm-text-muted"><%= pattern[:total_duration_ms].round(0) %>ms</td>
             </tr>
           <% end %>
 
           <% if @n_plus_one_patterns.empty? %>
             <tr>
-              <td colspan="5" class="p-8 text-center text-[14px] pulse-text-muted">
+              <td colspan="5" class="p-8 text-center text-[14px] dm-text-muted">
                 <div class="text-[20px] mb-2">✓</div>
                 No N+1 patterns detected
               </td>
@@ -44,10 +44,10 @@
   <!-- Affected Traces -->
   <% if @affected_traces.any? %>
     <div>
-      <h2 class="text-[16px] font-semibold mb-3 pulse-text">Affected Traces</h2>
-      <div class="rounded-xl overflow-hidden pulse-card">
+      <h2 class="text-[16px] font-semibold mb-3 dm-text">Affected Traces</h2>
+      <div class="rounded-xl overflow-hidden dm-card">
         <table class="w-full">
-          <thead class="pulse-table-header">
+          <thead class="dm-table-header">
             <tr class="text-left text-[13px]">
               <th class="p-4 font-medium">Trace</th>
               <th class="p-4 font-medium text-right">Patterns</th>
@@ -58,17 +58,17 @@
           </thead>
           <tbody>
             <% @affected_traces.each do |affected| %>
-              <tr class="hover:opacity-80 pulse-table-row">
+              <tr class="hover:opacity-80 dm-table-row">
                 <td class="p-4">
-                  <div class="text-[14px] font-medium pulse-text"><%= affected[:trace].name %></div>
-                  <div class="text-[12px] pulse-text-muted"><%= affected[:trace].started_at.strftime('%H:%M:%S') %></div>
+                  <div class="text-[14px] font-medium dm-text"><%= affected[:trace].name %></div>
+                  <div class="text-[12px] dm-text-muted"><%= affected[:trace].started_at.strftime('%H:%M:%S') %></div>
                 </td>
-                <td class="p-4 text-[13px] text-right pulse-text"><%= affected[:patterns].size %></td>
-                <td class="p-4 text-[13px] text-right font-medium pulse-error"><%= affected[:total_repeated_queries] %></td>
-                <td class="p-4 text-[13px] text-right font-mono pulse-success"><%= affected[:potential_savings_ms].round(0) %>ms</td>
+                <td class="p-4 text-[13px] text-right dm-text"><%= affected[:patterns].size %></td>
+                <td class="p-4 text-[13px] text-right font-medium dm-error"><%= affected[:total_repeated_queries] %></td>
+                <td class="p-4 text-[13px] text-right font-mono dm-success"><%= affected[:potential_savings_ms].round(0) %>ms</td>
                 <td class="p-4 text-right">
                   <%= link_to 'Analyze', dashboard_query_path(affected[:trace].trace_id, since: params[:since]),
-                      class: "text-[13px] font-medium px-3 py-1.5 rounded-md pulse-btn-active" %>
+                      class: "text-[13px] font-medium px-3 py-1.5 rounded-md dm-btn-primary" %>
                 </td>
               </tr>
             <% end %>

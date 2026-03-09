@@ -5,12 +5,12 @@
   <div class="flex justify-between items-center">
     <div>
       <div class="flex items-center gap-2 mb-1">
-        <%= link_to "SLOs", dashboard_slos_path, class: "text-[13px] pulse-text-muted hover:opacity-70" %>
-        <span class="text-[13px] pulse-text-muted">/</span>
+        <%= link_to "SLOs", dashboard_slos_path, class: "text-[13px] dm-text-muted hover:opacity-70" %>
+        <span class="text-[13px] dm-text-muted">/</span>
       </div>
-      <h1 class="text-[22px] font-semibold tracking-tight pulse-text"><%= @slo.name %></h1>
+      <h1 class="text-[22px] font-semibold tracking-tight dm-text"><%= @slo.name %></h1>
       <% if @slo.description.present? %>
-        <p class="text-[14px] mt-1 pulse-text-muted"><%= @slo.description %></p>
+        <p class="text-[14px] mt-1 dm-text-muted"><%= @slo.description %></p>
       <% end %>
     </div>
     <div class="flex gap-2">
@@ -26,20 +26,20 @@
 
   <!-- KPI Cards -->
   <div class="grid grid-cols-4 gap-4">
-    <div class="rounded-xl p-5 pulse-card">
-      <span class="text-[13px] pulse-text-muted">Current Value</span>
-      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @slo.current_value&.round(2) || '-' %></p>
-      <p class="text-[12px] mt-1 pulse-text-muted"><%= @slo.target_metric.titleize %></p>
+    <div class="rounded-xl p-5 dm-card">
+      <span class="text-[13px] dm-text-muted">Current Value</span>
+      <p class="text-[28px] font-semibold mt-2 dm-text"><%= @slo.current_value&.round(2) || '-' %></p>
+      <p class="text-[12px] mt-1 dm-text-muted"><%= @slo.target_metric.titleize %></p>
     </div>
 
-    <div class="rounded-xl p-5 pulse-card">
-      <span class="text-[13px] pulse-text-muted">Target</span>
-      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @slo.threshold %></p>
-      <p class="text-[12px] mt-1 pulse-text-muted"><%= @slo.operator %> over <%= @slo.window_days %> days</p>
+    <div class="rounded-xl p-5 dm-card">
+      <span class="text-[13px] dm-text-muted">Target</span>
+      <p class="text-[28px] font-semibold mt-2 dm-text"><%= @slo.threshold %></p>
+      <p class="text-[12px] mt-1 dm-text-muted"><%= @slo.operator %> over <%= @slo.window_days %> days</p>
     </div>
 
-    <div class="rounded-xl p-5 pulse-card">
-      <span class="text-[13px] pulse-text-muted">Error Budget Remaining</span>
+    <div class="rounded-xl p-5 dm-card">
+      <span class="text-[13px] dm-text-muted">Error Budget Remaining</span>
       <p class="text-[28px] font-semibold mt-2 <%= budget > 50 ? 'text-green-500' : budget > 20 ? 'text-amber-500' : 'text-red-500' %>"><%= budget.round(1) %>%</p>
       <div class="w-full h-2 rounded-full bg-stone-200 dark:bg-stone-700 mt-2 overflow-hidden">
         <div class="h-full rounded-full transition-all <%= budget > 50 ? 'bg-green-500' : budget > 20 ? 'bg-amber-500' : 'bg-red-500' %>"
@@ -47,10 +47,10 @@
       </div>
     </div>
 
-    <div class="rounded-xl p-5 pulse-card">
-      <span class="text-[13px] pulse-text-muted">Burn Rate</span>
-      <p class="text-[28px] font-semibold mt-2 pulse-text"><%= @slo.burn_rate&.round(2) || '0' %><span class="text-[14px]">x</span></p>
-      <p class="text-[12px] mt-1 pulse-text-muted">
+    <div class="rounded-xl p-5 dm-card">
+      <span class="text-[13px] dm-text-muted">Burn Rate</span>
+      <p class="text-[28px] font-semibold mt-2 dm-text"><%= @slo.burn_rate&.round(2) || '0' %><span class="text-[14px]">x</span></p>
+      <p class="text-[12px] mt-1 dm-text-muted">
         <% if (@slo.burn_rate || 0) > 1 %>
           <span class="text-red-500">Burning faster than expected</span>
         <% else %>
@@ -61,9 +61,9 @@
   </div>
 
   <!-- SLI Time Series Chart -->
-  <div class="rounded-xl p-5 pulse-card">
-    <h3 class="text-[14px] font-medium mb-4 pulse-text"><%= @slo.target_metric.titleize %> over time</h3>
-    <div class="h-64 pulse-chart-container"
+  <div class="rounded-xl p-5 dm-card">
+    <h3 class="text-[14px] font-medium mb-4 dm-text"><%= @slo.target_metric.titleize %> over time</h3>
+    <div class="h-64"
          data-controller="chart"
          data-chart-type-value="line"
          data-chart-metric-value="sli"
@@ -74,32 +74,32 @@
   </div>
 
   <!-- SLO Configuration -->
-  <div class="rounded-xl p-5 pulse-card">
-    <h3 class="text-[14px] font-medium mb-4 pulse-text">Configuration</h3>
+  <div class="rounded-xl p-5 dm-card">
+    <h3 class="text-[14px] font-medium mb-4 dm-text">Configuration</h3>
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <p class="text-[12px] pulse-text-muted">Target Metric</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.target_metric.titleize %></p>
+        <p class="text-[12px] dm-text-muted">Target Metric</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.target_metric.titleize %></p>
       </div>
       <div>
-        <p class="text-[12px] pulse-text-muted">Condition</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.operator %> <%= @slo.threshold %></p>
+        <p class="text-[12px] dm-text-muted">Condition</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.operator %> <%= @slo.threshold %></p>
       </div>
       <div>
-        <p class="text-[12px] pulse-text-muted">Window</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.window_days %> days</p>
+        <p class="text-[12px] dm-text-muted">Window</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.window_days %> days</p>
       </div>
       <div>
-        <p class="text-[12px] pulse-text-muted">Endpoint</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.endpoint.presence || 'All endpoints' %></p>
+        <p class="text-[12px] dm-text-muted">Endpoint</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.endpoint.presence || 'All endpoints' %></p>
       </div>
       <div>
-        <p class="text-[12px] pulse-text-muted">Status</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.enabled? ? 'Enabled' : 'Disabled' %></p>
+        <p class="text-[12px] dm-text-muted">Status</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.enabled? ? 'Enabled' : 'Disabled' %></p>
       </div>
       <div>
-        <p class="text-[12px] pulse-text-muted">Last Calculated</p>
-        <p class="text-[14px] font-medium pulse-text"><%= @slo.last_calculated_at ? time_ago_in_words(@slo.last_calculated_at) + " ago" : 'Never' %></p>
+        <p class="text-[12px] dm-text-muted">Last Calculated</p>
+        <p class="text-[14px] font-medium dm-text"><%= @slo.last_calculated_at ? time_ago_in_words(@slo.last_calculated_at) + " ago" : 'Never' %></p>
       </div>
     </div>
   </div>

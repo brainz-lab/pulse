@@ -17,17 +17,33 @@ class Metric < ApplicationRecord
   end
 
   def stats(since: 1.hour.ago, granularity: :minute)
-    points
-      .where("timestamp >= ?", since)
+    scoped = points.where("timestamp >= ?", since)
+
+    aggregates = scoped.pick(
+      Arel.sql("AVG(value)"),
+      Arel.sql("MIN(value)"),
+      Arel.sql("MAX(value)"),
+      Arel.sql("COUNT(*)"),
+      Arel.sql("(ARRAY_AGG(value ORDER BY timestamp DESC))[1]")
+    ) || [nil, nil, nil, 0, nil]
+
+    buckets = scoped
       .group("date_trunc('#{granularity}', timestamp)")
       .select(
         "date_trunc('#{granularity}', timestamp) as bucket",
-        "COUNT(*) as count",
-        "AVG(value) as avg",
-        "MIN(value) as min",
-        "MAX(value) as max",
-        "SUM(value) as sum"
+        "AVG(value) as avg"
       )
       .order("bucket")
+
+    chart_data = buckets.map { |b| { label: b.bucket.strftime("%H:%M"), value: b.avg.to_f } }
+
+    {
+      current: aggregates[4]&.to_f,
+      avg: aggregates[0]&.to_f,
+      min: aggregates[1]&.to_f,
+      max: aggregates[2]&.to_f,
+      count: aggregates[3].to_i,
+      chart_data: chart_data
+    }
   end
 end
