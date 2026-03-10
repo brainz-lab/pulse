@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full" data-controller="dark-mode"<%= ' data-dark-mode-default-theme-value="light"'.html_safe if ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? %>>
+<html lang="en" class="h-full" data-controller="dark-mode"<%= ' data-dark-mode-default-theme-value="light"'.html_safe if ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? || ENV['BRAINZLAB_LOGO_DARK_URL'].present? %>>
 <head>
   <title>Pulse - <%= content_for(:title) || "APM" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -19,12 +19,17 @@
   <%# Prevent flash of wrong theme on page load and provide toggle function %>
   <script>
     (function() {
-      const savedTheme = localStorage.getItem('brainzlab-theme');
-      const defaultLight = true;
+      const hasCustomLogos = <%= (ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? || ENV['BRAINZLAB_LOGO_DARK_URL'].present?).to_json %>;
+      const defaultLight = hasCustomLogos;
+      // En modo RMP, ignorar y limpiar preferencia guardada
+      if (hasCustomLogos) localStorage.removeItem('brainzlab-theme');
+      const savedTheme = hasCustomLogos ? null : localStorage.getItem('brainzlab-theme');
         const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (savedTheme === 'dark' || (!savedTheme && !defaultLight && systemPrefersDark)) {
+      if (!hasCustomLogos && savedTheme === 'dark' || (!savedTheme && !defaultLight && systemPrefersDark)) {
+        document.documentElement.classList.remove('light');
         document.documentElement.classList.add('dark');
       } else {
+        document.documentElement.classList.remove('dark');
         document.documentElement.classList.add('light');
       }
 
@@ -91,23 +96,20 @@
           <%= link_to dashboard_projects_path, class: "flex flex-col items-end gap-1 group" do %>
             <div class="flex items-center">
               <img src="<%= ENV.fetch('BRAINZLAB_LOGO_LIGHT_URL', '/fluyenta-logo-light.png') %>" alt="Fluyenta" class="h-12 dark:hidden">
-                  <img src="<%= ENV.fetch('BRAINZLAB_LOGO_DARK_URL', '/fluyenta-logo-dark.png') %>" alt="Fluyenta" class="h-12 hidden dark:block">
+              <img src="<%= ENV.fetch('BRAINZLAB_LOGO_DARK_URL', '/fluyenta-logo-dark.png') %>" alt="Fluyenta" class="h-12 hidden dark:block">
             </div>
             <span class="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded" style="color: var(--dm-brand); background: color-mix(in srgb, var(--dm-brand) 12%, transparent);">Pulse</span>
           <% end %>
-          <% unless ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? %>
-          <button onclick="toggleDarkMode()"
-                  class="p-1.5 rounded-lg transition-all dm-text-muted hover:dm-text hover:bg-transparent"
-                  data-dark-mode-target="icon"
-                  aria-label="Toggle dark mode"
-                  title="Toggle dark mode">
-            <svg data-dark-mode-target="sunIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-            </svg>
-            <svg data-dark-mode-target="moonIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-            </svg>
-          </button>
+          <%# Dark Mode Toggle — independiente de current_user %>
+          <% unless ENV['BRAINZLAB_LOGO_LIGHT_URL'].present? || ENV['BRAINZLAB_LOGO_DARK_URL'].present? %>
+            <button onclick="toggleDarkMode()"
+                    class="p-1.5 rounded-lg transition-all dm-text-muted hover:dm-text hover:bg-transparent"
+                    data-dark-mode-target="icon"
+                    title="Toggle dark mode">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            </button>
           <% end %>
         </div>
       </div>
@@ -231,6 +233,7 @@
               <p class="text-[13px] font-medium truncate dm-text"><%= current_user.name || current_user.email.split('@').first %></p>
               <p class="text-[11px] truncate dm-text-muted"><%= current_user.email %></p>
             </div>
+
           </div>
         </div>
       <% end %>
