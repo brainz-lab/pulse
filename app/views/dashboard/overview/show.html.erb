@@ -33,7 +33,7 @@
         <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="apdex"><%= @overview[:apdex] %></p>
         <% if @deltas[:apdex] != 0 %>
           <span class="text-[12px] font-medium <%= @deltas[:apdex] > 0 ? 'text-green-500' : 'text-red-500' %>">
-            <%= @deltas[:apdex] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:apdex].abs %>%
+            <%= @deltas[:apdex] > 0 ? '▲' : '▼' %> <%= @deltas[:apdex].abs %>%
           </span>
         <% end %>
       </div>
@@ -47,7 +47,7 @@
         <p class="text-[28px] font-semibold mt-2 pulse-text" data-realtime-metrics-target="throughput"><%= number_with_delimiter(@overview[:rpm]) %></p>
         <% if @deltas[:rpm] != 0 %>
           <span class="text-[12px] font-medium <%= @deltas[:rpm] > 0 ? 'text-green-500' : 'text-red-500' %>">
-            <%= @deltas[:rpm] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:rpm].abs %>%
+            <%= @deltas[:rpm] > 0 ? '▲' : '▼' %> <%= @deltas[:rpm].abs %>%
           </span>
         <% end %>
       </div>
@@ -62,7 +62,7 @@
         <% if @deltas[:avg_duration] != 0 %>
           <%# For duration, lower is better, so invert the color logic %>
           <span class="text-[12px] font-medium <%= @deltas[:avg_duration] < 0 ? 'text-green-500' : 'text-red-500' %>">
-            <%= @deltas[:avg_duration] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:avg_duration].abs %>%
+            <%= @deltas[:avg_duration] > 0 ? '▲' : '▼' %> <%= @deltas[:avg_duration].abs %>%
           </span>
         <% end %>
       </div>
@@ -90,7 +90,7 @@
         <% if @deltas[:error_rate] != 0 %>
           <%# For error rate, lower is better %>
           <span class="text-[12px] font-medium <%= @deltas[:error_rate] < 0 ? 'text-green-500' : 'text-red-500' %>">
-            <%= @deltas[:error_rate] > 0 ? '&#9650;' : '&#9660;' %> <%= @deltas[:error_rate].abs %>%
+            <%= @deltas[:error_rate] > 0 ? '▲' : '▼' %> <%= @deltas[:error_rate].abs %>%
           </span>
         <% end %>
       </div>
