@@ -52,7 +52,7 @@ gem "image_processing", "~> 1.2"
 gem "aws-sdk-s3", require: false
 
 # BrainzLab SDK
-gem "fluyenta-ruby", "~> 0.1.15", require: "brainzlab"
+gem "fluyenta-ruby", "~> 0.1.16", require: "brainzlab"
 
 # BrainzLab UI - Unified design system with Phlex components
 if File.exist?(File.expand_path("../fluyenta-ui", __dir__))
