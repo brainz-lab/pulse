@@ -99,14 +99,27 @@ class TraceProcessor
   def self.bulk_insert_traces(records)
     return if records.empty?
 
+    # Deduplicate by trace_id within this batch. A single payload can legitimately
+    # carry the same trace_id more than once (duplicate flush, client retry); without
+    # this the multi-row INSERT below would violate the unique index
+    # index_traces_on_trace_id in a single statement (ActiveRecord::RecordNotUnique).
+    records = records.uniq { |record| record[:trace_id] }
+
     columns = records.first.keys
     values = records.map do |record|
       columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
     end
 
+    # ON CONFLICT DO NOTHING makes ingestion idempotent under concurrency. The
+    # existing-trace pre-check in process_batch! is NOT atomic with this INSERT, so a
+    # concurrent request can insert the same trace_id in between, which would otherwise
+    # raise PG::UniqueViolation / ActiveRecord::RecordNotUnique on index_traces_on_trace_id.
+    # Skipped rows are re-fetched by trace_id after this call, so dropping them here is safe.
+    # No conflict target is specified so this is robust to the exact unique-index columns.
     sql = <<~SQL
       INSERT INTO traces (#{columns.join(', ')})
       VALUES #{values.map { |v| "(#{v})" }.join(', ')}
+      ON CONFLICT DO NOTHING
     SQL
 
     ActiveRecord::Base.connection.execute(sql)
@@ -236,6 +249,13 @@ class TraceProcessor
     trace.skip_uniqueness_validation = skip_uniqueness
     trace.save!
     trace
+  rescue ActiveRecord::RecordNotUnique
+    # A concurrent request inserted the same trace_id between our existence check
+    # (find_by / pre-check) and this INSERT. Ingestion is idempotent: return the
+    # row that won the race instead of crashing with RecordNotUnique.
+    existing = @project.traces.find_by(trace_id: @payload[:trace_id])
+    raise unless existing
+    existing
   end
 
   def create_spans_batch(trace, spans_data)
