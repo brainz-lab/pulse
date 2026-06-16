@@ -126,6 +126,62 @@ RSpec.describe TraceProcessor do
         expect(trace.name).to eq("ProcessOrderJob")
       end
     end
+
+    context "when the same trace_id is inserted concurrently (race)" do
+      it "returns the trace that won the race instead of raising RecordNotUnique" do
+        existing = create(:trace, project: project, trace_id: "trace-abc-123")
+
+        # Simulate the TOCTOU window: the existence check misses, but by the
+        # time we INSERT another request has already written the row, so the
+        # unique index raises. Ingestion must stay idempotent.
+        relation = project.traces
+        allow(project).to receive(:traces).and_return(relation)
+        allow(relation).to receive(:find_by).with(trace_id: "trace-abc-123").and_return(nil, existing)
+
+        result = nil
+        expect {
+          result = described_class.new(project: project, payload: payload).process!
+        }.not_to change(Trace, :count)
+        expect(result.id).to eq(existing.id)
+      end
+    end
+  end
+
+  describe ".process_batch!" do
+    def payload_for(trace_id, started_at: Time.current)
+      {
+        "trace_id" => trace_id,
+        "name" => "GET /api/v1/users",
+        "kind" => "request",
+        "started_at" => started_at.iso8601(3),
+        "status" => 200
+      }
+    end
+
+    it "collapses duplicate trace_ids within a single batch to one row" do
+      started = Time.current
+      payloads = [ payload_for("dup-trace", started_at: started), payload_for("dup-trace", started_at: started) ]
+
+      expect {
+        described_class.process_batch!(project: project, payloads: payloads)
+      }.to change(Trace, :count).by(1)
+
+      expect(project.traces.where(trace_id: "dup-trace").count).to eq(1)
+    end
+
+    it "skips trace_ids that already exist instead of raising" do
+      create(:trace, project: project, trace_id: "already-here")
+
+      expect {
+        described_class.process_batch!(project: project, payloads: [ payload_for("already-here") ])
+      }.not_to change(Trace, :count)
+    end
+
+    it "inserts genuinely new traces" do
+      expect {
+        described_class.process_batch!(project: project, payloads: [ payload_for("brand-new") ])
+      }.to change(Trace, :count).by(1)
+    end
   end
 
   describe "path normalization" do

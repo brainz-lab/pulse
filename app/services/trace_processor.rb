@@ -99,14 +99,30 @@ class TraceProcessor
   def self.bulk_insert_traces(records)
     return if records.empty?
 
+    # Collapse duplicate trace_ids within the same batch. Ingestion is
+    # at-least-once, so a single batch can legitimately repeat a trace_id; the
+    # unique index treats trace_id as the trace identity, and emitting two rows
+    # with the same trace_id in one INSERT would violate it. Keep the first.
+    records = records.uniq { |r| r[:trace_id] }
+
     columns = records.first.keys
     values = records.map do |record|
       columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
     end
 
+    # ON CONFLICT DO NOTHING (with no conflict target) makes the bulk insert
+    # idempotent against the unique index on traces, so a trace_id that was
+    # concurrently inserted by another request/batch is skipped instead of
+    # raising ActiveRecord::RecordNotUnique (PG::UniqueViolation on
+    # index_traces_on_trace_id). The target is intentionally omitted so it stays
+    # correct whether the live index covers (trace_id) or (trace_id, started_at)
+    # — the latter is what the TimescaleDB hypertable migration created. The
+    # caller re-SELECTs every trace_id afterwards, so skipped rows still resolve
+    # to the winning record.
     sql = <<~SQL
       INSERT INTO traces (#{columns.join(', ')})
       VALUES #{values.map { |v| "(#{v})" }.join(', ')}
+      ON CONFLICT DO NOTHING
     SQL
 
     ActiveRecord::Base.connection.execute(sql)
@@ -236,6 +252,16 @@ class TraceProcessor
     trace.skip_uniqueness_validation = skip_uniqueness
     trace.save!
     trace
+  rescue ActiveRecord::RecordNotUnique
+    # A concurrent request inserted the same trace_id between our existence
+    # check (find_by in #find_or_create_trace) and this INSERT. The unique
+    # index enforces idempotency at the DB level; treat ingestion as idempotent
+    # and return the trace that won the race instead of bubbling up
+    # ActiveRecord::RecordNotUnique.
+    existing = @project.traces.find_by(trace_id: @payload[:trace_id])
+    raise unless existing
+
+    existing
   end
 
   def create_spans_batch(trace, spans_data)
