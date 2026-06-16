@@ -99,6 +99,28 @@ class TraceProcessor
   def self.bulk_insert_traces(records)
     return if records.empty?
 
+    # Wrap in a SAVEPOINT (requires_new) so a duplicate doesn't poison the
+    # surrounding process_batch! transaction — on conflict we can keep working.
+    ActiveRecord::Base.transaction(requires_new: true) do
+      insert_trace_rows(records)
+    end
+  rescue ActiveRecord::RecordNotUnique
+    # A concurrent batch inserted one of these trace_ids first. The multi-row
+    # INSERT is atomic, so one conflict rolls back the whole statement; retry
+    # row-by-row, each in its own SAVEPOINT, and skip the trace_ids that now
+    # conflict. process_batch! re-reads every trace_id afterward, so skipped rows
+    # still resolve to the row that won the race. (Index-agnostic — no ON CONFLICT
+    # — so it holds whether the unique index is trace_id or (trace_id, started_at).)
+    records.each do |record|
+      ActiveRecord::Base.transaction(requires_new: true) do
+        insert_trace_rows([ record ])
+      end
+    rescue ActiveRecord::RecordNotUnique
+      next
+    end
+  end
+
+  def self.insert_trace_rows(records)
     columns = records.first.keys
     values = records.map do |record|
       columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
@@ -236,6 +258,16 @@ class TraceProcessor
     trace.skip_uniqueness_validation = skip_uniqueness
     trace.save!
     trace
+  rescue ActiveRecord::RecordNotUnique
+    # A concurrent ingest inserted a trace with the same trace_id between our
+    # find_by check (or uniqueness validation) and this INSERT. The unique index
+    # index_traces_on_trace_id guarantees only one row wins the race, so re-read
+    # the existing trace and attach to it instead of failing the whole ingest.
+    # Mirrors the find-or-create race guard in PlatformClient.
+    existing = @project.traces.find_by(trace_id: @payload[:trace_id])
+    raise unless existing
+
+    existing
   end
 
   def create_spans_batch(trace, spans_data)
