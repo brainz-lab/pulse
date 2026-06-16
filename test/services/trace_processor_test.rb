@@ -30,6 +30,33 @@ class TraceProcessorTest < ActiveSupport::TestCase
     assert_equal 200, trace.status
   end
 
+  test "create_trace! recovers from a concurrent-insert race instead of raising RecordNotUnique" do
+    # Regression for ActiveRecord::RecordNotUnique / PG::UniqueViolation on
+    # index_traces_on_trace_id (fingerprint 817e42fa5a303b6d). Two concurrent
+    # ingests for the same trace_id can both pass the find_by/uniqueness check and
+    # then race on the INSERT; the loser must re-read the winning row, not 500.
+    started = Time.utc(2026, 1, 1, 12, 0, 0)
+    existing = create_test_trace(@project, trace_id: "race_dup", started_at: started)
+
+    payload = {
+      trace_id: "race_dup",
+      name: "GET /users",
+      kind: "request",
+      started_at: started.iso8601
+    }
+    processor = TraceProcessor.new(project: @project, payload: payload)
+
+    result = nil
+    assert_no_difference "Trace.count" do
+      # skip_uniqueness mirrors the batch path where the in-memory pre-check
+      # passed but the DB unique index still rejects the duplicate — the exact
+      # race window that produced the production error.
+      result = processor.send(:create_trace!, skip_uniqueness: true)
+    end
+
+    assert_equal existing.id, result.id
+  end
+
   test "process! should find existing trace" do
     existing_trace = create_test_trace(@project, trace_id: "existing123")
 

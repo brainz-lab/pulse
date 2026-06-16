@@ -100,6 +100,12 @@ module Api
           ended_at: nil,
           status: 0
         )
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent span ingest created this trace between the find_by above
+        # and create!. Re-read the winning row instead of 500ing the request.
+        existing = (trace_id.present? && current_project.traces.find_by(trace_id: trace_id)) ||
+                   (request_id.present? && current_project.traces.find_by(request_id: request_id))
+        existing || raise
       end
 
       # Update trace ended_at based on span timing data.
