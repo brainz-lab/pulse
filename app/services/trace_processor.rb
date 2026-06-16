@@ -23,18 +23,28 @@ class TraceProcessor
 
     # Wrap all operations in a single transaction to avoid N+1 TRANSACTION
     ActiveRecord::Base.transaction do
+      # Track trace_ids already queued for insertion in THIS batch. A payload
+      # can legitimately contain the same trace_id twice (SDK retry buffer,
+      # at-least-once delivery). Without this guard both copies are treated as
+      # "new" and inserted in the same statement, violating the unique index
+      # index_traces_on_trace_id (trace_id, started_at) and creating duplicate
+      # spans. Treat the second occurrence like an already-existing trace.
+      queued_trace_ids = {}
+
       # First pass: collect new traces and identify existing ones
       payloads.each do |payload|
         existing = existing_traces[payload[:trace_id]]
-        if existing
-          results << existing
-        else
-          processor = new(project: project, payload: payload, preloaded_traces: existing_traces)
-          new_trace_records << processor.send(:build_trace_record)
-          # Collect spans for this trace (will be linked after bulk insert)
-          if payload[:spans].present?
-            spans_to_create << { payload: payload, index: new_trace_records.size - 1 }
-          end
+        if existing || queued_trace_ids.key?(payload[:trace_id])
+          results << existing if existing
+          next
+        end
+
+        processor = new(project: project, payload: payload, preloaded_traces: existing_traces)
+        new_trace_records << processor.send(:build_trace_record)
+        queued_trace_ids[payload[:trace_id]] = true
+        # Collect spans for this trace (will be linked after bulk insert)
+        if payload[:spans].present?
+          spans_to_create << { payload: payload, index: new_trace_records.size - 1 }
         end
       end
 
@@ -104,9 +114,16 @@ class TraceProcessor
       columns.map { |col| ActiveRecord::Base.connection.quote(record[col]) }.join(", ")
     end
 
+    # ON CONFLICT DO NOTHING keeps ingestion idempotent under concurrent /
+    # at-least-once delivery: if another request already inserted the same
+    # trace, the duplicate row is skipped instead of raising PG::UniqueViolation
+    # (ActiveRecord::RecordNotUnique). The conflict target matches the unique
+    # index index_traces_on_trace_id on (trace_id, started_at). The caller
+    # re-fetches the rows by trace_id afterwards, so skipped rows still resolve.
     sql = <<~SQL
       INSERT INTO traces (#{columns.join(', ')})
       VALUES #{values.map { |v| "(#{v})" }.join(', ')}
+      ON CONFLICT (trace_id, started_at) DO NOTHING
     SQL
 
     ActiveRecord::Base.connection.execute(sql)
@@ -236,6 +253,16 @@ class TraceProcessor
     trace.skip_uniqueness_validation = skip_uniqueness
     trace.save!
     trace
+  rescue ActiveRecord::RecordNotUnique
+    # Lost a race: a concurrent request (e.g. SDK retry / at-least-once
+    # delivery) inserted the same trace between our existence check and this
+    # INSERT. The unique index index_traces_on_trace_id (trace_id, started_at)
+    # rejected the duplicate. Treat ingestion as idempotent and return the
+    # trace that won the race instead of bubbling the error up to the client.
+    existing = @project.traces.find_by(trace_id: @payload[:trace_id])
+    raise unless existing
+
+    existing
   end
 
   def create_spans_batch(trace, spans_data)

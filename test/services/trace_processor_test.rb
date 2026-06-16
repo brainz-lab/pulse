@@ -337,4 +337,85 @@ class TraceProcessorTest < ActiveSupport::TestCase
     assert_equal "web-1", trace.host
     assert_equal "user_456", trace.user_id
   end
+
+  # --- Idempotency / unique-constraint regressions (index_traces_on_trace_id) ---
+
+  test "process! is idempotent when the same trace is re-sent" do
+    payload = {
+      trace_id: "resend-1",
+      name: "GET /users",
+      kind: "request",
+      started_at: Time.current.iso8601(6)
+    }
+
+    first = TraceProcessor.new(project: @project, payload: payload).process!
+
+    second = nil
+    assert_no_difference "Trace.count" do
+      assert_nothing_raised do
+        second = TraceProcessor.new(project: @project, payload: payload).process!
+      end
+    end
+
+    assert_equal first.id, second.id
+  end
+
+  test "create_trace! recovers from a lost unique race instead of raising" do
+    started = Time.current
+    existing = create_test_trace(@project, trace_id: "race-1", started_at: started)
+
+    # Simulate the race window: the existence check missed, so we go straight
+    # to create_trace! (skip_uniqueness mirrors the batch path) and hit the DB
+    # unique index. The processor must recover and return the winning trace.
+    processor = TraceProcessor.new(
+      project: @project,
+      payload: { trace_id: "race-1", name: "GET /users", kind: "request", started_at: started.iso8601(6) }
+    )
+
+    trace = nil
+    assert_no_difference "Trace.count" do
+      assert_nothing_raised do
+        trace = processor.send(:create_trace!, skip_uniqueness: true)
+      end
+    end
+
+    assert_equal existing.id, trace.id
+  end
+
+  test "process_batch! dedupes a trace_id duplicated within the batch" do
+    started = Time.current.iso8601(6)
+    payloads = [
+      { trace_id: "dup-batch-1", name: "GET /a", kind: "request", started_at: started },
+      { trace_id: "dup-batch-1", name: "GET /a", kind: "request", started_at: started }
+    ]
+
+    results = nil
+    assert_difference "Trace.count", 1 do
+      assert_nothing_raised do
+        results = TraceProcessor.process_batch!(project: @project, payloads: payloads)
+      end
+    end
+
+    assert_equal 2, results.size
+    assert_equal results.first.id, results.last.id
+  end
+
+  test "process_batch! is idempotent when a trace already exists" do
+    started = Time.current
+    create_test_trace(@project, trace_id: "exists-batch-1", started_at: started)
+
+    payloads = [
+      { trace_id: "exists-batch-1", name: "GET /a", kind: "request", started_at: started.iso8601(6) }
+    ]
+
+    results = nil
+    assert_no_difference "Trace.count" do
+      assert_nothing_raised do
+        results = TraceProcessor.process_batch!(project: @project, payloads: payloads)
+      end
+    end
+
+    assert_equal 1, results.size
+    assert_equal "exists-batch-1", results.first.trace_id
+  end
 end
